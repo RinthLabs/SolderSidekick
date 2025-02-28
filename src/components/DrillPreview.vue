@@ -241,6 +241,11 @@ const setSelectedSolder = (state) => {
   background-color: white;
   cursor: crosshair;
 }
+
+.table tbody tr {
+  --bs-table-bg: transparent !important;
+}
+
 .selected-row {
   background-color: cyan !important;
 }

@@ -1,14 +1,6 @@
 <template>
   <div class="container mt-4">
-    <h2 class="text-primary">Drill Hole Preview (D3.js)</h2>
-
-    <!-- Origin Position Inputs -->
-    <div class="mb-3">
-      <label class="form-label">Origin X:</label>
-      <input type="number" class="form-control d-inline w-auto mx-2" v-model.number="origin.x" @input="updateOrigin" />
-      <label class="form-label">Origin Y:</label>
-      <input type="number" class="form-control d-inline w-auto mx-2" v-model.number="origin.y" @input="updateOrigin" />
-    </div>
+    <h2 class="text-primary">Drill Hole Preview (Canvas)</h2>
 
     <!-- Toolbar -->
     <div class="mb-3">
@@ -18,8 +10,18 @@
       <button class="btn btn-danger ms-2" @click="setSelectedSolder(false)">Set Selected as Not Soldered</button>
     </div>
 
-    <!-- D3.js Canvas -->
-    <div ref="svgContainer" class="svg-container" @contextmenu.prevent></div>
+    <!-- Canvas -->
+    <canvas 
+      ref="canvas" 
+      class="drill-canvas" 
+      width="800" 
+      height="500"
+      @mousedown="startInteraction"
+      @mousemove="handleMouseMove"
+      @mouseup="endInteraction"
+      @wheel="handleZoom"
+      @contextmenu.prevent
+    ></canvas>
 
     <!-- Table for drill points -->
     <table v-if="drillStore.drillData.length" class="table table-striped mt-3">
@@ -39,7 +41,7 @@
           :class="{ 'selected-row': drill.selected, 'unselected-row': !drill.selected }"
         >
           <td>
-            <input type="checkbox" v-model="drill.solder" @change="updateDrillPoints" />
+            <input type="checkbox" v-model="drill.solder" @change="drawCanvas" />
           </td>
           <td>{{ drill.tool }}</td>
           <td>{{ drill.size ? drill.size.toFixed(2) : 'Unknown' }}</td>
@@ -54,206 +56,176 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
-import * as d3 from "d3";
+import { ref, onMounted } from "vue";
 import { useDrillStore } from "@/stores/drillStore";
 
 const drillStore = useDrillStore();
-const svgContainer = ref(null);
-const origin = ref({ x: 0, y: 0 });
-
-const printBedSize = 235; // Ender3 bed size
-const gridSize = 0.25;
-let svg, zoomGroup, originMarker, selectionBox;
+const canvas = ref(null);
+let ctx, scale = 1, offsetX = 0, offsetY = 0;
+let isPanning = false, startX, startY;
 let isSelecting = false, selectionStart, selectionEnd;
-let transform = d3.zoomIdentity;
 
-let zoomBehavior; // ✅ Declare globally before using it
-
-
-// **Update Origin Marker**
-const updateOriginMarker = () => {
-  if (!originMarker) return;
-  originMarker.attr("cx", parseFloat(origin.value.x)).attr("cy", -parseFloat(origin.value.y));
-};
-
-// **Initialize D3.js Scene**
+// ** Initialize Canvas Rendering **
 onMounted(() => {
-  initD3();
-  updateDrillPoints();
+  ctx = canvas.value.getContext("2d");
+  resetView();
+  drawCanvas();
 });
 
-const initD3 = () => {
-  svg = d3.select(svgContainer.value)
-    .append("svg")
-    .attr("width", 800)
-    .attr("height", 500)
-    .on("contextmenu", (event) => event.preventDefault());
-
-  zoomGroup = svg.append("g");
-
-  // ✅ Fix: Ensure zoomBehavior allows both zooming & panning
-  zoomBehavior = d3.zoom()
-    .scaleExtent([0.5, 5])
-    .filter((event) => event.type === "wheel" || event.button === 2) // ✅ Right-click pan, wheel zoom
-    .on("zoom", (event) => {
-      transform = event.transform;
-      zoomGroup.attr("transform", transform);
-    });
-
-  svg.call(zoomBehavior) // Attach zoom behavior
-     .on("mousedown", startSelection)
-     .on("mousemove", updateSelection)
-     .on("mouseup", endSelection)
-     .on("click", deselectAllIfClickedOutside); // ✅ Restore click-to-deselect
-
-  // Draw Print Bed
-  zoomGroup.append("rect")
-    .attr("x", 0)
-    .attr("y", -printBedSize)
-    .attr("width", printBedSize)
-    .attr("height", printBedSize)
-    .attr("fill", "#e0e0e0")
-    .attr("stroke", "black");
-
-  // Add Draggable Origin Marker
-  originMarker = zoomGroup.append("circle")
-    .attr("r", 5)
-    .attr("fill", "blue")
-    .attr("stroke", "black")
-    .attr("cursor", "pointer")
-    .call(d3.drag().on("drag", draggedOrigin));
-
-  updateOriginMarker();
-
-  // ✅ Ensure centering happens AFTER D3 initialization without disabling interactions
-  setTimeout(() => centerOnPrintBed(), 100);
+// ** Reset View: Move Origin to Bottom Left of Print Bed **
+const resetView = () => {
+  const canvasWidth = canvas.value.width;
+  const canvasHeight = canvas.value.height;
+  
+  offsetX = (canvasWidth - 235) / 2; // Center horizontally
+  offsetY = (canvasHeight + 235) / 2; // Bottom-left position
 };
 
+// ** Draw Everything on the Canvas **
+const drawCanvas = () => {
+  ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
 
+  // ** Draw Ender3 Print Bed **
+  ctx.fillStyle = "#e0e0e0";
+  ctx.fillRect(
+    offsetX * scale,
+    (offsetY - 235) * scale,
+    235 * scale,
+    235 * scale
+  );
 
+  // ** Draw Origin Marker (Bottom Left of Bed) **
+  ctx.strokeStyle = "blue";
+  ctx.lineWidth = 2;
+  const originX = offsetX * scale;
+  const originY = (offsetY) * scale;
+  ctx.beginPath();
+  ctx.moveTo(originX - 5, originY);
+  ctx.lineTo(originX + 5, originY);
+  ctx.moveTo(originX, originY - 5);
+  ctx.lineTo(originX, originY + 5);
+  ctx.stroke();
 
-// **Center the camera on the print bed properly**
-const centerOnPrintBed = () => {
-  if (!zoomBehavior) return; // Prevent errors if zoomBehavior is not ready
+  // ** Draw Drill Holes (Now Correctly Positioned) **
+  drillStore.drillData.forEach((drill) => {
+    const x = (offsetX + drill.x) * scale;
+    const y = (offsetY - drill.y) * scale;
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 4 * scale, 0, Math.PI * 2);
+    ctx.fillStyle = drill.selected ? "cyan" : drill.solder ? "red" : "gray";
+    ctx.fill();
+    ctx.stroke();
+  });
 
-  const svgWidth = 800;
-  const svgHeight = 500;
-  const scale = 1; // Initial zoom scale
-
-  // ✅ Center the print bed properly in the viewport
-  const centerX = (svgWidth - printBedSize * scale) / 2;
-  const centerY = (svgHeight - printBedSize * scale) * 1.4;
-
-  // ✅ Apply transform without disabling zoom & selection
-  const initialTransform = d3.zoomIdentity.translate(centerX, centerY).scale(scale);
-
-  // ✅ Use transition for smooth centering and preserve zoomBehavior
-  svg.transition().duration(500).call(zoomBehavior.transform, initialTransform);
-};
-
-
-
-
-
-// **Handle dragging origin marker**
-const draggedOrigin = (event) => {
-  let newX = Math.round(parseFloat(event.x) / gridSize) * gridSize;
-  let newY = Math.round(-parseFloat(event.y) / gridSize) * gridSize;
-
-  origin.value.x = Math.max(0, Math.min(printBedSize, newX));
-  origin.value.y = Math.max(0, Math.min(printBedSize, newY));
-
-  updateDrillPoints();
-  updateOriginMarker();
-};
-
-// **Deselect all when clicking empty space**
-const deselectAllIfClickedOutside = (event) => {
-  if (!event.target.closest(".drill") && originMarker && event.target !== originMarker.node()) {
-    deselectAll();
+  // ** Draw Selection Box (Fixed Scaling Issue) **
+  if (isSelecting) {
+    ctx.strokeStyle = "blue";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      selectionStart.x * scale + offsetX * scale,
+      selectionStart.y * scale + offsetY * scale,
+      (selectionEnd.x - selectionStart.x) * scale,
+      (selectionEnd.y - selectionStart.y) * scale
+    );
   }
 };
 
-// **Deselect all points**
-const deselectAll = () => {
-  drillStore.drillData.forEach((d) => (d.selected = false));
-  updateDrillPoints();
+// ** Handle Mouse Events **
+const startInteraction = (event) => {
+  const rect = canvas.value.getBoundingClientRect();
+  const x = (event.clientX - rect.left) / scale - offsetX;
+  const y = (event.clientY - rect.top) / scale - offsetY;
+
+  if (event.button === 2) {
+    isPanning = true;
+    startX = event.clientX;
+    startY = event.clientY;
+  } else {
+    isSelecting = true;
+    selectionStart = { x, y };
+    selectionEnd = { x, y };
+  }
 };
 
-// **Set Selected Drill Points as Soldered or Not Soldered**
+const handleMouseMove = (event) => {
+  if (isPanning) {
+    offsetX += (event.clientX - startX) / scale;
+    offsetY += (event.clientY - startY) / scale;
+    startX = event.clientX;
+    startY = event.clientY;
+    drawCanvas();
+  } else if (isSelecting) {
+    const rect = canvas.value.getBoundingClientRect();
+    selectionEnd = {
+      x: (event.clientX - rect.left) / scale - offsetX,
+      y: (event.clientY - rect.top) / scale - offsetY,
+    };
+    drawCanvas();
+  }
+};
+
+const endInteraction = () => {
+  if (isSelecting) {
+    drillStore.drillData.forEach((drill) => {
+      const drillX = drill.x;
+      const drillY = drill.y;
+
+      if (
+        drillX >= Math.min(selectionStart.x, selectionEnd.x) &&
+        drillX <= Math.max(selectionStart.x, selectionEnd.x) &&
+        drillY >= Math.min(selectionStart.y, selectionEnd.y) &&
+        drillY <= Math.max(selectionStart.y, selectionEnd.y)
+      ) {
+        drill.selected = true;
+      }
+    });
+  }
+  isPanning = false;
+  isSelecting = false;
+  drawCanvas();
+};
+
+// ** Handle Zooming **
+const handleZoom = (event) => {
+  event.preventDefault();
+  const zoomAmount = event.deltaY * -0.001;
+  scale += zoomAmount;
+  scale = Math.max(0.5, Math.min(5, scale));
+  drawCanvas();
+};
+
+// ** Helper Functions **
+const selectAll = () => {
+  drillStore.drillData.forEach((d) => (d.selected = true));
+  drawCanvas();
+};
+
+const deselectAll = () => {
+  drillStore.drillData.forEach((d) => (d.selected = false));
+  drawCanvas();
+};
+
 const setSelectedSolder = (state) => {
   drillStore.drillData.forEach((drill) => {
     if (drill.selected) {
       drill.solder = state;
     }
   });
-  updateDrillPoints();
+  drawCanvas();
 };
-
-
-// **Drag Selection**
-const startSelection = (event) => {
-  if (event.button !== 0) return;
-  isSelecting = true;
-  selectionStart = transform.invert(d3.pointer(event, svg.node()));
-
-  selectionBox = zoomGroup.append("rect")
-    .attr("class", "selection-box")
-    .attr("stroke", "blue")
-    .attr("stroke-dasharray", "4")
-    .attr("fill", "rgba(0, 0, 255, 0.2)");
-};
-
-const updateSelection = (event) => {
-  if (!isSelecting) return;
-
-  selectionEnd = transform.invert(d3.pointer(event, svg.node()));
-
-  const x = Math.min(selectionStart[0], selectionEnd[0]);
-  const y = Math.min(selectionStart[1], selectionEnd[1]);
-  const width = Math.abs(selectionEnd[0] - selectionStart[0]);
-  const height = Math.abs(selectionEnd[1] - selectionStart[1]);
-
-  selectionBox.attr("x", x).attr("y", y).attr("width", width).attr("height", height);
-};
-
-const endSelection = () => {
-  if (!isSelecting) return;
-  isSelecting = false;
-
-  zoomGroup.selectAll(".drill").each(function (d, i) {
-    const cx = parseFloat(d3.select(this).attr("cx"));
-    const cy = parseFloat(d3.select(this).attr("cy"));
-
-    if (cx >= selectionStart[0] && cx <= selectionEnd[0] && cy >= selectionStart[1] && cy <= selectionEnd[1]) {
-      drillStore.drillData[i].selected = true;
-    }
-  });
-
-  selectionBox.remove();
-  updateDrillPoints();
-};
-
-// **Update Drill Holes**
-const updateDrillPoints = () => {
-  if (!zoomGroup) return;
-  zoomGroup.selectAll(".drill").remove();
-
-  zoomGroup.selectAll(".drill")
-    .data(drillStore.drillData)
-    .enter()
-    .append("circle")
-    .attr("class", "drill")
-    .attr("r", 2)
-    .attr("fill", (d) => (d.solder ? "red" : "gray"))
-    .attr("stroke", (d) => (d.selected ? "cyan" : "black"))
-    .attr("cx", (d) => parseFloat(d.x) + parseFloat(origin.value.x))
-    .attr("cy", (d) => -parseFloat(d.y) - parseFloat(origin.value.y));
-};
-
-// **Watch for Updates**
-watch(origin, updateDrillPoints);
-watch(() => drillStore.drillData, updateDrillPoints, { deep: true });
-
 </script>
+
+<style>
+.drill-canvas {
+  border: 1px solid #ddd;
+  background-color: white;
+  cursor: crosshair;
+}
+.selected-row {
+  background-color: cyan !important;
+}
+.unselected-row {
+  background-color: white !important;
+}
+</style>

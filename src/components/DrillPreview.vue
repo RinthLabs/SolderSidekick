@@ -181,7 +181,7 @@ const endInteraction = () => {
     let selectedDrills = 0;
     drillStore.drillData.forEach((drill) => {
       const drillX = drill.x;
-      const drillY = drill.y;
+      const drillY = -drill.y;
 
       if (
         drillX >= Math.min(selectionStart.x, selectionEnd.x) &&

@@ -31,8 +31,8 @@
     <div class="mb-3">
       <button class="btn btn-primary" @click="selectAll">Select All</button>
       <button class="btn btn-secondary ms-2" @click="deselectAll">Deselect All</button>
-      <button class="btn btn-success ms-2" @click="setSelectedSolder(true)">Set Selected as Soldered</button>
-      <button class="btn btn-danger ms-2" @click="setSelectedSolder(false)">Set Selected as Not Soldered</button>
+      <button class="btn btn-danger ms-2" @click="setSelectedSolder(true)">Set Selected as Soldered</button>
+      <button class="btn btn-secondary ms-2" @click="setSelectedSolder(false)">Set Selected as Not Soldered</button>
     </div>
 
    
@@ -50,28 +50,31 @@
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-for="(drill, index) in drillStore.drillData"
-          :key="index"
-          :class="{ 'selected-row': drill.selected, 'unselected-row': !drill.selected }"
-        >
-          <td>
-            <input type="checkbox" v-model="drill.solder" @change="updateCanvas" />
-          </td>
-          <td>
-            <input 
-              type="number" 
-              min="0" step="0.05"
-              class="form-control d-inline w-auto" 
-              v-model.number="drill.solderFeed"
-              @input="updateCanvas"
-            />
-          </td>
-          <td>{{ drill.tool }}</td>
-          <td>{{ drill.x }}</td>
-          <td>{{ drill.y }}</td>
-        </tr>
-      </tbody>
+  <tr
+    v-for="(drill, index) in drillStore.drillData"
+    :key="index"
+    :class="{ 'selected-row': drill.selected, 'unselected-row': !drill.selected }"
+    @click="toggleDrillSelection(index)"
+  >
+    <td>
+      <input type="checkbox" v-model="drill.solder" @change="updateCanvas" @click.stop />
+    </td>
+    <td>
+      <input 
+        type="number" 
+        min="0" step="0.05"
+        class="form-control d-inline w-auto" 
+        v-model.number="drill.solderFeed"
+        @input="updateCanvas"
+        @click.stop
+      />
+    </td>
+    <td><span @click.stop>{{ drill.tool }}</span></td>
+    <td><span @click.stop>{{ drill.x }}</span></td>
+    <td><span @click.stop>{{ drill.y }}</span></td>
+  </tr>
+</tbody>
+
     </table>
 
     <button class="btn btn-success mt-3" @click="exportSelectedHoles">Export Selected Holes</button>
@@ -375,6 +378,15 @@ const setSelectedSolder = (state) => {
   });
   updateCanvas();
 };
+
+const toggleDrillSelection = (index) => {
+  // Toggle selection of the drill point
+  drillStore.drillData[index].selected = !drillStore.drillData[index].selected;
+  
+  // Update the canvas to reflect changes
+  updateCanvas();
+};
+
 
 // Watch for offset changes and update canvas
 

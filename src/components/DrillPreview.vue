@@ -84,58 +84,53 @@ const resetView = () => {
 // ** Draw Everything on the Canvas **
 const drawCanvas = () => {
   ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
+  console.log("🟢 Drawing Canvas...");
+  console.log(`➡ Drill Data Count: ${drillStore.drillData.length}`);
+
+  // ** Apply Scaling and Translation for Zoom **
+  ctx.save();
+  ctx.translate(offsetX, offsetY);
+  ctx.scale(scale, scale);
 
   // ** Draw Ender3 Print Bed **
   ctx.fillStyle = "#e0e0e0";
-  ctx.fillRect(
-    offsetX * scale,
-    (offsetY - 235) * scale,
-    235 * scale,
-    235 * scale
-  );
+  ctx.fillRect(0, -235, 235, 235);
+  console.log(`🛠️ Print Bed drawn at: X=0, Y=-235`);
 
   // ** Draw Origin Marker (Bottom Left of Bed) **
   ctx.strokeStyle = "blue";
   ctx.lineWidth = 2;
-  const originX = offsetX * scale;
-  const originY = (offsetY) * scale;
   ctx.beginPath();
-  ctx.moveTo(originX - 5, originY);
-  ctx.lineTo(originX + 5, originY);
-  ctx.moveTo(originX, originY - 5);
-  ctx.lineTo(originX, originY + 5);
+  ctx.moveTo(-5, 0);
+  ctx.lineTo(5, 0);
+  ctx.moveTo(0, -5);
+  ctx.lineTo(0, 5);
   ctx.stroke();
+  console.log(`📍 Origin drawn at: X=0, Y=0`);
 
-  // ** Draw Drill Holes (Now Correctly Positioned) **
-  drillStore.drillData.forEach((drill) => {
-    const x = (offsetX + drill.x) * scale;
-    const y = (offsetY - drill.y) * scale;
-    
+  // ** Draw Drill Holes (Now Zooms Correctly) **
+  drillStore.drillData.forEach((drill, index) => {
+    const x = drill.x;
+    const y = -drill.y; // Invert Y so the origin is at the bottom-left
+
+    console.log(`🔧 Drill #${index}: Original (X=${drill.x}, Y=${drill.y}) → Transformed (X=${x}, Y=${y})`);
+
     ctx.beginPath();
-    ctx.arc(x, y, 4 * scale, 0, Math.PI * 2);
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
     ctx.fillStyle = drill.selected ? "cyan" : drill.solder ? "red" : "gray";
     ctx.fill();
     ctx.stroke();
   });
 
-  // ** Draw Selection Box (Fixed Scaling Issue) **
-  if (isSelecting) {
-    ctx.strokeStyle = "blue";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(
-      selectionStart.x * scale + offsetX * scale,
-      selectionStart.y * scale + offsetY * scale,
-      (selectionEnd.x - selectionStart.x) * scale,
-      (selectionEnd.y - selectionStart.y) * scale
-    );
-  }
+  console.log("✅ Finished drawing drill points.");
+  ctx.restore();
 };
 
 // ** Handle Mouse Events **
 const startInteraction = (event) => {
   const rect = canvas.value.getBoundingClientRect();
-  const x = (event.clientX - rect.left) / scale - offsetX;
-  const y = (event.clientY - rect.top) / scale - offsetY;
+  const x = (event.clientX - rect.left - offsetX) / scale;
+  const y = (event.clientY - rect.top - offsetY) / scale;
 
   if (event.button === 2) {
     isPanning = true;
@@ -150,16 +145,16 @@ const startInteraction = (event) => {
 
 const handleMouseMove = (event) => {
   if (isPanning) {
-    offsetX += (event.clientX - startX) / scale;
-    offsetY += (event.clientY - startY) / scale;
+    offsetX += event.clientX - startX;
+    offsetY += event.clientY - startY;
     startX = event.clientX;
     startY = event.clientY;
     drawCanvas();
   } else if (isSelecting) {
     const rect = canvas.value.getBoundingClientRect();
     selectionEnd = {
-      x: (event.clientX - rect.left) / scale - offsetX,
-      y: (event.clientY - rect.top) / scale - offsetY,
+      x: (event.clientX - rect.left - offsetX) / scale,
+      y: (event.clientY - rect.top - offsetY) / scale,
     };
     drawCanvas();
   }

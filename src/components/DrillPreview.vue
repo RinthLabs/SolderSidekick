@@ -49,6 +49,9 @@
   <button class="btn btn-secondary ms-2" @click="setSelectedSolder(false)">
     <i class="fas fa-ban"></i> Not Soldered
   </button>
+  <button class="btn btn-success ms-2" @click="saveGcode">
+    <i class="fa-solid fa-floppy-disk"></i> Save Gcode
+  </button>
 </div>
 
 
@@ -83,9 +86,15 @@
       :class="{ 'selected-row': drill.selected, 'unselected-row': !drill.selected }"
       @click="toggleDrillSelection(index)"
     >
-      <td>
-        <input type="checkbox" v-model="drill.solder" @change="updateCanvas" @click.stop />
-      </td>
+    <td>
+  <input 
+    type="checkbox" 
+    :checked="drill.solder" 
+    @change="updateSolderCheckbox($event, index)"
+    @click.stop
+  />
+</td>
+
       <td>
   <input 
     type="number" 
@@ -112,7 +121,7 @@
 </table>
 
 
-    <button class="btn btn-success mt-3" @click="exportSelectedHoles">Export Selected Holes</button>
+    
   </div>
 </template>
 
@@ -435,6 +444,25 @@ const updateSolderFeed = (event, index) => {
 
   updateCanvas();
 };
+
+const updateSolderCheckbox = (event, index) => {
+  const newValue = event.target.checked; // Get the new checked state
+
+  // Update all selected drill holes with the new checkbox state
+  drillStore.drillData.forEach((drill) => {
+    if (drill.selected) {
+      drill.solder = newValue;
+    }
+  });
+
+  updateCanvas();
+};
+
+const saveGcode = () => {
+  const selectedDrills = drillStore.drillData.filter((d) => d.selected);
+  console.log("Selected Drills:", selectedDrills);
+};
+
 
 
 // Watch for offset changes and update canvas

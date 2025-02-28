@@ -17,65 +17,92 @@
       @contextmenu.prevent
     ></canvas>
 
-    <div class="mb-3">
-  <label class="form-label">PCB Offset X:</label>
+   <!-- PCB Offset & Solder Feed Multiplier Inputs -->
+<div class="mb-3">
+  <label class="form-label">
+    <i class="fas fa-arrows-alt-h"></i> PCB Offset X:
+  </label>
   <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
-  <label class="form-label ms-3">PCB Offset Y:</label>
+
+  <label class="form-label ms-3">
+    <i class="fas fa-arrows-alt-v"></i> PCB Offset Y:
+  </label>
   <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
-  <label class="form-label ms-3">Solder Feed Multiplier:</label>
+
+  <label class="form-label ms-3">
+    <i class="fas fa-tint"></i> Solder Feed Multiplier:
+  </label>
   <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.solderFeedMultiplier" min="0" step="0.01">
- 
 </div>
 
-    <!-- Toolbar -->
-    <div class="mb-3">
-      <button class="btn btn-primary" @click="selectAll">Select All</button>
-      <button class="btn btn-secondary ms-2" @click="deselectAll">Deselect All</button>
-      <button class="btn btn-danger ms-2" @click="setSelectedSolder(true)">Set Selected as Soldered</button>
-      <button class="btn btn-secondary ms-2" @click="setSelectedSolder(false)">Set Selected as Not Soldered</button>
-    </div>
+<!-- Toolbar with Icons -->
+<div class="mb-3">
+  <button class="btn btn-primary" @click="selectAll">
+    <i class="fas fa-check-square"></i> Select All
+  </button>
+  <button class="btn btn-secondary ms-2" @click="deselectAll">
+    <i class="fas fa-times-circle"></i> Deselect All
+  </button>
+  <button class="btn btn-danger ms-2" @click="setSelectedSolder(true)">
+    <i class="fas fa-fire"></i> Soldered
+  </button>
+  <button class="btn btn-secondary ms-2" @click="setSelectedSolder(false)">
+    <i class="fas fa-ban"></i> Not Soldered
+  </button>
+</div>
+
 
    
 
 
     <!-- Table for drill points -->
-    <table v-if="drillStore.drillData.length" class="table table-striped mt-3">
-      <thead class="table-dark">
-        <tr>
-          <th>Solder</th>
-          <th>Solder Feed (mm)</th>
-          <th>Tool</th>
-          <th>X (mm)</th>
-          <th>Y (mm)</th>
-        </tr>
-      </thead>
-      <tbody>
-  <tr
-    v-for="(drill, index) in drillStore.drillData"
-    :key="index"
-    :class="{ 'selected-row': drill.selected, 'unselected-row': !drill.selected }"
-    @click="toggleDrillSelection(index)"
-  >
-    <td>
-      <input type="checkbox" v-model="drill.solder" @change="updateCanvas" @click.stop />
-    </td>
-    <td>
-      <input 
-        type="number" 
-        min="0" step="0.05"
-        class="form-control d-inline w-auto" 
-        v-model.number="drill.solderFeed"
-        @input="updateCanvas"
-        @click.stop
-      />
-    </td>
-    <td><span @click.stop>{{ drill.tool }}</span></td>
-    <td><span @click.stop>{{ drill.x }}</span></td>
-    <td><span @click.stop>{{ drill.y }}</span></td>
-  </tr>
-</tbody>
+<table v-if="drillStore.drillData.length" class="table table-striped mt-3">
+  <thead class="table-dark">
+    <tr>
+      <th>
+        <i class="fas fa-check-circle"></i> Solder
+      </th>
+      <th>
+        <i class="fas fa-tint"></i> Solder Feed (mm)
+      </th>
+      <th>
+        <i class="fas fa-tools"></i> Tool
+      </th>
+      <th>
+        <i class="fas fa-arrows-alt-h"></i> X (mm)
+      </th>
+      <th>
+        <i class="fas fa-arrows-alt-v"></i> Y (mm)
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr
+      v-for="(drill, index) in drillStore.drillData"
+      :key="index"
+      :class="{ 'selected-row': drill.selected, 'unselected-row': !drill.selected }"
+      @click="toggleDrillSelection(index)"
+    >
+      <td>
+        <input type="checkbox" v-model="drill.solder" @change="updateCanvas" @click.stop />
+      </td>
+      <td>
+        <input 
+          type="number" 
+          min="0" step="0.05"
+          class="form-control d-inline w-auto" 
+          v-model.number="drill.solderFeed"
+          @input="updateCanvas"
+          @click.stop
+        />
+      </td>
+      <td><span @click.stop>{{ drill.tool }}</span></td>
+      <td><span @click.stop>{{ drill.x }}</span></td>
+      <td><span @click.stop>{{ drill.y }}</span></td>
+    </tr>
+  </tbody>
+</table>
 
-    </table>
 
     <button class="btn btn-success mt-3" @click="exportSelectedHoles">Export Selected Holes</button>
   </div>

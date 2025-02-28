@@ -5,8 +5,9 @@ export const useDrillStore = defineStore("drill", {
     drillFile: null,
     drillFilename: null,
     drillData: [],  // Stores parsed drill holes
-    originOffsetX: 0, // New: X offset
-    originOffsetY: 0, // New: Y offset
+    originOffsetX: 0, // X offset
+    originOffsetY: 0, // Y offset
+    solderFeedMultiplier: 1, // New: Solder Feed Multiplier
   }),
   actions: {
     setDrillFile(fileContent, filename) {
@@ -18,6 +19,7 @@ export const useDrillStore = defineStore("drill", {
         ...hole,
         solder: true, // Default: solder all holes
         selected: false, // Default: not selected
+        solderFeed: 3, // Default: 3mm solder feed per hole
       }));
     },
     toggleSolder(index) {
@@ -47,12 +49,16 @@ export const useDrillStore = defineStore("drill", {
       this.originOffsetX = x;
       this.originOffsetY = y;
     },
+    setSolderFeedMultiplier(value) {
+      this.solderFeedMultiplier = value;
+    },
     clearDrillFile() {
       this.drillFile = null;
       this.drillFilename = null;
       this.drillData = [];
       this.originOffsetX = 0;
       this.originOffsetY = 0;
+      this.solderFeedMultiplier = 1;
     },
   },
   persist: true, // Enable persistence

@@ -28,6 +28,9 @@
   <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
   <label class="form-label ms-3">PCB Offset Y:</label>
   <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
+  <label class="form-label ms-3">Solder Feed Multiplier:</label>
+  <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.solderFeedMultiplier" min="0" step="0.01">
+ 
 </div>
 
 
@@ -37,7 +40,7 @@
         <tr>
           <th>Solder</th>
           <th>Tool</th>
-          <th>Size (mm)</th>
+          <th>Solder Feed (mm)</th>
           <th>X (mm)</th>
           <th>Y (mm)</th>
         </tr>
@@ -52,7 +55,15 @@
             <input type="checkbox" v-model="drill.solder" @change="updateCanvas" />
           </td>
           <td>{{ drill.tool }}</td>
-          <td>{{ drill.size ? drill.size.toFixed(2) : 'Unknown' }}</td>
+          <td>
+            <input 
+              type="number" 
+              min="0" step="0.05"
+              class="form-control d-inline w-auto" 
+              v-model.number="drill.solderFeed"
+              @input="updateCanvas"
+            />
+          </td>
           <td>{{ drill.x }}</td>
           <td>{{ drill.y }}</td>
         </tr>
@@ -306,7 +317,7 @@ const setSelectedSolder = (state) => {
 };
 
 // Watch for offset changes and update canvas
-watch([() => drillStore.originOffsetX, () => drillStore.originOffsetY], updateCanvas);
+watch([() => drillStore.originOffsetX, () => drillStore.originOffsetY, () => drillStore.solderFeedMultiplier], updateCanvas);
 </script>
 
 <style>

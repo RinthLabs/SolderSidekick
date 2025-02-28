@@ -23,6 +23,14 @@
       @contextmenu.prevent
     ></canvas>
 
+    <div class="mb-3">
+  <label class="form-label">Origin Offset X:</label>
+  <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
+  <label class="form-label ms-3">Origin Offset Y:</label>
+  <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
+</div>
+
+
     <!-- Table for drill points -->
     <table v-if="drillStore.drillData.length" class="table table-striped mt-3">
       <thead class="table-dark">
@@ -56,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useDrillStore } from "@/stores/drillStore";
 
 const drillStore = useDrillStore();
@@ -73,6 +81,8 @@ onMounted(() => {
   updateCanvas();
 });
 
+
+
 // ** Reset View: Move Origin to Bottom Left of Print Bed **
 const resetView = () => {
   const canvasWidth = canvas.value.width;
@@ -88,14 +98,14 @@ const updateCanvas = () => {
 
   // ** Apply Scaling and Translation for Zoom **
   ctx.save();
-  ctx.translate(offsetX, offsetY);
+  ctx.translate(offsetX, offsetY); // Keep bed and axes fixed
   ctx.scale(scale, scale);
 
-  // ** Draw Ender3 Print Bed **
+  // ** Draw Ender3 Print Bed (Stays Fixed) **
   ctx.fillStyle = "#e0e0e0";
   ctx.fillRect(0, -235, 235, 235);
 
-  // ** Draw Origin Marker (Bottom Left of Bed) **
+  // ** Draw Origin Marker (Stays Fixed) **
   ctx.strokeStyle = "blue";
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -105,14 +115,23 @@ const updateCanvas = () => {
   ctx.lineTo(0, 5);
   ctx.stroke();
 
-  // ** Draw X and Y Axes with Arrows **
+  // ** Draw X and Y Axes (Stays Fixed) **
   drawArrow(ctx, { x: 0, y: 0 }, { x: 40, y: 0 }, "red"); // X-axis
   drawArrow(ctx, { x: 0, y: 0 }, { x: 0, y: -40 }, "green"); // Y-axis
 
-  // ** Draw Drill Holes **
+  // ** Move to New Origin (Only Affects Drill Positions) **
+  ctx.translate(drillStore.originOffsetX, -drillStore.originOffsetY);
+
+  // ** Draw Origin Drill Position (Now Moves with Offset) **
+  ctx.beginPath();
+  ctx.arc(0, 0, 5, 0, Math.PI * 2);
+  ctx.fillStyle = "blue";
+  ctx.fill();
+
+  // ** Draw Drill Holes (Now Moves with Offset) **
   drillStore.drillData.forEach((drill) => {
     const x = drill.x;
-    const y = -drill.y; // Invert Y so the origin is at the bottom-left
+    const y = -drill.y; // Invert Y for bottom-left origin
 
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -122,7 +141,7 @@ const updateCanvas = () => {
     ctx.stroke();
   });
 
-  // ** Draw Selection Box **
+  // ** Draw Selection Box (Moves with Offset) **
   if (isSelecting) {
     ctx.strokeStyle = "blue";
     ctx.lineWidth = 1;
@@ -136,6 +155,7 @@ const updateCanvas = () => {
 
   ctx.restore();
 };
+
 
 const drawArrow = (ctx, from, to, color) => {
   const headLength = 6; // Arrowhead size
@@ -179,8 +199,11 @@ const startInteraction = (event) => {
   const y = (event.clientY - rect.top - offsetY) / scale;
 
   clickedDrill = drillStore.drillData.find(
-    (drill) => Math.hypot(drill.x - x, -drill.y - y) < 5 // Click within 5px radius
-  );
+  (drill) => Math.hypot(
+    drill.x - (x - drillStore.originOffsetX),
+    -drill.y - (y + drillStore.originOffsetY)
+  ) < 5 // Click within 5px radius
+);
 
   if (event.button === 2) {
     isPanning = true;
@@ -191,10 +214,13 @@ const startInteraction = (event) => {
     clickedDrill.selected = !clickedDrill.selected;
     updateCanvas();
   } else {
-    // ** Clicking empty space starts selection box **
-    isSelecting = true;
-    selectionStart = { x, y };
-    selectionEnd = { x, y };
+     // ** Clicking empty space starts selection box **
+     isSelecting = true;
+    selectionStart = {
+      x: x - drillStore.originOffsetX,
+      y: y + drillStore.originOffsetY
+    };
+    selectionEnd = { ...selectionStart };
   }
 };
 
@@ -209,9 +235,10 @@ const handleMouseMove = (event) => {
   } else if (isSelecting) {
     const rect = canvas.value.getBoundingClientRect();
     selectionEnd = {
-      x: (event.clientX - rect.left - offsetX) / scale,
-      y: (event.clientY - rect.top - offsetY) / scale,
-    };
+  x: ((event.clientX - rect.left - offsetX) / scale) - drillStore.originOffsetX,
+  y: ((event.clientY - rect.top - offsetY) / scale) + drillStore.originOffsetY
+};
+
     updateCanvas();
   }
 };
@@ -220,8 +247,11 @@ const endInteraction = () => {
   if (isSelecting) {
     let selectedDrills = 0;
     drillStore.drillData.forEach((drill) => {
-      const drillX = drill.x;
-      const drillY = -drill.y;
+      const drillX = drill.x - drillStore.originOffsetX;
+const drillY = -drill.y + drillStore.originOffsetY;
+
+
+
 
       if (
         drillX >= Math.min(selectionStart.x, selectionEnd.x) &&
@@ -273,6 +303,9 @@ const setSelectedSolder = (state) => {
   });
   updateCanvas();
 };
+
+// Watch for offset changes and update canvas
+watch([() => drillStore.originOffsetX, () => drillStore.originOffsetY], updateCanvas);
 </script>
 
 <style>

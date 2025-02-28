@@ -5,6 +5,8 @@ export const useDrillStore = defineStore("drill", {
     drillFile: null,
     drillFilename: null,
     drillData: [],  // Stores parsed drill holes
+    originOffsetX: 0, // New: X offset
+    originOffsetY: 0, // New: Y offset
   }),
   actions: {
     setDrillFile(fileContent, filename) {
@@ -41,10 +43,16 @@ export const useDrillStore = defineStore("drill", {
         }
       });
     },
+    setOriginOffset(x, y) {
+      this.originOffsetX = x;
+      this.originOffsetY = y;
+    },
     clearDrillFile() {
       this.drillFile = null;
       this.drillFilename = null;
       this.drillData = [];
+      this.originOffsetX = 0;
+      this.originOffsetY = 0;
     },
   },
   persist: true, // Enable persistence

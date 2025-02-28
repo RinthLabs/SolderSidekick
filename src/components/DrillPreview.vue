@@ -2,13 +2,7 @@
   <div class="container mt-4">
     <h2 class="text-primary">Drill Hole Preview (Canvas)</h2>
 
-    <!-- Toolbar -->
-    <div class="mb-3">
-      <button class="btn btn-primary" @click="selectAll">Select All</button>
-      <button class="btn btn-secondary ms-2" @click="deselectAll">Deselect All</button>
-      <button class="btn btn-success ms-2" @click="setSelectedSolder(true)">Set Selected as Soldered</button>
-      <button class="btn btn-danger ms-2" @click="setSelectedSolder(false)">Set Selected as Not Soldered</button>
-    </div>
+    
 
     <!-- Canvas -->
     <canvas 
@@ -33,14 +27,24 @@
  
 </div>
 
+    <!-- Toolbar -->
+    <div class="mb-3">
+      <button class="btn btn-primary" @click="selectAll">Select All</button>
+      <button class="btn btn-secondary ms-2" @click="deselectAll">Deselect All</button>
+      <button class="btn btn-success ms-2" @click="setSelectedSolder(true)">Set Selected as Soldered</button>
+      <button class="btn btn-danger ms-2" @click="setSelectedSolder(false)">Set Selected as Not Soldered</button>
+    </div>
+
+   
+
 
     <!-- Table for drill points -->
     <table v-if="drillStore.drillData.length" class="table table-striped mt-3">
       <thead class="table-dark">
         <tr>
           <th>Solder</th>
-          <th>Tool</th>
           <th>Solder Feed (mm)</th>
+          <th>Tool</th>
           <th>X (mm)</th>
           <th>Y (mm)</th>
         </tr>
@@ -54,7 +58,6 @@
           <td>
             <input type="checkbox" v-model="drill.solder" @change="updateCanvas" />
           </td>
-          <td>{{ drill.tool }}</td>
           <td>
             <input 
               type="number" 
@@ -64,6 +67,7 @@
               @input="updateCanvas"
             />
           </td>
+          <td>{{ drill.tool }}</td>
           <td>{{ drill.x }}</td>
           <td>{{ drill.y }}</td>
         </tr>
@@ -84,6 +88,11 @@ let ctx, scale = 1, offsetX = 0, offsetY = 0;
 let isPanning = false, startX, startY;
 let isSelecting = false, selectionStart, selectionEnd;
 let clickedDrill = null;
+let isDraggingDrillOrigin = false;
+
+let animationFrameId = null;
+
+
 
 // ** Initialize Canvas Rendering **
 onMounted(() => {
@@ -91,6 +100,9 @@ onMounted(() => {
   resetView();
   updateCanvas();
 });
+
+const snapToGrid = (value) => Math.round(value * 2) / 2;
+
 
 
 
@@ -133,24 +145,36 @@ const updateCanvas = () => {
   // ** Move to New Origin (Only Affects Drill Positions) **
   ctx.translate(drillStore.originOffsetX, -drillStore.originOffsetY);
 
-  // ** Draw Origin Drill Position (Now Moves with Offset) **
+// ** Draw Drill Positions Origin Marker (Now Draggable) **
+ctx.strokeStyle = "blue";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(-5, 0);
+ctx.lineTo(5, 0);
+ctx.moveTo(0, -5);
+ctx.lineTo(0, 5);
+ctx.stroke();
+
+
+
+// ** Draw Drill Positions (Relative to Draggable Origin) **
+drillStore.drillData.forEach((drill, index) => {
+  // Compute drill position relative to the new origin
+  const x = drill.x; // Drill X position
+  const y = -drill.y; // Drill Y position (inverted)
+
+  // ** Debugging Log: Check computed positions before rendering **
+  console.log(`Drill #${index}: X=${x}, Y=${y}, OriginOffsetX=${drillStore.originOffsetX}, OriginOffsetY=${drillStore.originOffsetY}`);
+
   ctx.beginPath();
-  ctx.arc(0, 0, 5, 0, Math.PI * 2);
-  ctx.fillStyle = "blue";
+  ctx.arc(x, y, 4, 0, Math.PI * 2);
+  ctx.fillStyle = drill.solder ? "red" : "gray";
+  ctx.strokeStyle = drill.selected ? "cyan" : "black";
   ctx.fill();
+  ctx.stroke();
+});
 
-  // ** Draw Drill Holes (Now Moves with Offset) **
-  drillStore.drillData.forEach((drill) => {
-    const x = drill.x;
-    const y = -drill.y; // Invert Y for bottom-left origin
 
-    ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = drill.solder ? "red" : "gray";
-    ctx.strokeStyle = drill.selected ? "cyan" : "black";
-    ctx.fill();
-    ctx.stroke();
-  });
 
   // ** Draw Selection Box (Moves with Offset) **
   if (isSelecting) {
@@ -209,12 +233,21 @@ const startInteraction = (event) => {
   const x = (event.clientX - rect.left - offsetX) / scale;
   const y = (event.clientY - rect.top - offsetY) / scale;
 
+   // Check if the user clicks near the drill origin (within 5 pixels)
+   if (Math.hypot(x - drillStore.originOffsetX, y + drillStore.originOffsetY) < 5) {
+    isDraggingDrillOrigin = true;
+    startX = x - drillStore.originOffsetX;
+    startY = y + drillStore.originOffsetY;
+  }
+
   clickedDrill = drillStore.drillData.find(
   (drill) => Math.hypot(
     drill.x - (x - drillStore.originOffsetX),
     -drill.y - (y + drillStore.originOffsetY)
   ) < 5 // Click within 5px radius
 );
+
+
 
   if (event.button === 2) {
     isPanning = true;
@@ -237,6 +270,29 @@ const startInteraction = (event) => {
 
 
 const handleMouseMove = (event) => {
+  const rect = canvas.value.getBoundingClientRect();
+  const x = (event.clientX - rect.left - offsetX) / scale;
+  const y = (event.clientY - rect.top - offsetY) / scale;
+
+  if (isDraggingDrillOrigin) {
+    
+    let newOffsetX = snapToGrid(x - startX);
+    let newOffsetY = snapToGrid(-(y - startY));
+
+    if (newOffsetX !== drillStore.originOffsetX || newOffsetY !== drillStore.originOffsetY) {
+      drillStore.originOffsetX = newOffsetX;
+      drillStore.originOffsetY = newOffsetY;
+
+      // Use requestAnimationFrame to update the canvas efficiently
+      if (!animationFrameId) {
+        animationFrameId = requestAnimationFrame(() => {
+          updateCanvas();
+          animationFrameId = null; // Reset animation frame ID
+        });
+      }
+    }
+  }
+
   if (isPanning) {
     offsetX += event.clientX - startX;
     offsetY += event.clientY - startY;
@@ -244,15 +300,18 @@ const handleMouseMove = (event) => {
     startY = event.clientY;
     updateCanvas();
   } else if (isSelecting) {
-    const rect = canvas.value.getBoundingClientRect();
     selectionEnd = {
-  x: ((event.clientX - rect.left - offsetX) / scale) - drillStore.originOffsetX,
-  y: ((event.clientY - rect.top - offsetY) / scale) + drillStore.originOffsetY
-};
-
+      x: x - drillStore.originOffsetX,
+      y: y + drillStore.originOffsetY,
+    };
     updateCanvas();
   }
 };
+
+
+
+
+
 
 const endInteraction = () => {
   if (isSelecting) {
@@ -284,6 +343,7 @@ const drillY = -drill.y + drillStore.originOffsetY;
   
   isPanning = false;
   isSelecting = false;
+  isDraggingDrillOrigin  = false;
   updateCanvas();
 };
 
@@ -317,7 +377,21 @@ const setSelectedSolder = (state) => {
 };
 
 // Watch for offset changes and update canvas
-watch([() => drillStore.originOffsetX, () => drillStore.originOffsetY, () => drillStore.solderFeedMultiplier], updateCanvas);
+
+
+watch(
+  [() => drillStore.originOffsetX, () => drillStore.originOffsetY, () => drillStore.solderFeedMultiplier],
+  () => {
+    if (!animationFrameId) {
+      animationFrameId = requestAnimationFrame(() => {
+        updateCanvas();
+        animationFrameId = null; // Reset animation frame ID after execution
+      });
+    }
+  }
+);
+
+
 </script>
 
 <style>

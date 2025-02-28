@@ -5,9 +5,10 @@ export const useDrillStore = defineStore("drill", {
     drillFile: null,
     drillFilename: null,
     drillData: [],  // Stores parsed drill holes
-    originOffsetX: 0, // X offset
-    originOffsetY: 0, // Y offset
+    originOffsetX: 0, // X offset for drill origin
+    originOffsetY: 0, // Y offset for drill origin
     solderFeedMultiplier: 1, // New: Solder Feed Multiplier
+    isDraggingOrigin: false, // Track dragging state
   }),
   actions: {
     setDrillFile(fileContent, filename) {
@@ -59,6 +60,7 @@ export const useDrillStore = defineStore("drill", {
       this.originOffsetX = 0;
       this.originOffsetY = 0;
       this.solderFeedMultiplier = 1;
+      this.isDraggingOrigin = false;
     },
   },
   persist: true, // Enable persistence

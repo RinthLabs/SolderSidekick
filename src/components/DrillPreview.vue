@@ -41,7 +41,7 @@
           :class="{ 'selected-row': drill.selected, 'unselected-row': !drill.selected }"
         >
           <td>
-            <input type="checkbox" v-model="drill.solder" @change="drawCanvas" />
+            <input type="checkbox" v-model="drill.solder" @change="updateCanvas" />
           </td>
           <td>{{ drill.tool }}</td>
           <td>{{ drill.size ? drill.size.toFixed(2) : 'Unknown' }}</td>
@@ -69,7 +69,7 @@ let isSelecting = false, selectionStart, selectionEnd;
 onMounted(() => {
   ctx = canvas.value.getContext("2d");
   resetView();
-  drawCanvas();
+  updateCanvas();
 });
 
 // ** Reset View: Move Origin to Bottom Left of Print Bed **
@@ -82,10 +82,8 @@ const resetView = () => {
 };
 
 // ** Draw Everything on the Canvas **
-const drawCanvas = () => {
+const updateCanvas = () => {
   ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
-  console.log("🟢 Drawing Canvas...");
-  console.log(`➡ Drill Data Count: ${drillStore.drillData.length}`);
 
   // ** Apply Scaling and Translation for Zoom **
   ctx.save();
@@ -95,7 +93,6 @@ const drawCanvas = () => {
   // ** Draw Ender3 Print Bed **
   ctx.fillStyle = "#e0e0e0";
   ctx.fillRect(0, -235, 235, 235);
-  console.log(`🛠️ Print Bed drawn at: X=0, Y=-235`);
 
   // ** Draw Origin Marker (Bottom Left of Bed) **
   ctx.strokeStyle = "blue";
@@ -106,14 +103,11 @@ const drawCanvas = () => {
   ctx.moveTo(0, -5);
   ctx.lineTo(0, 5);
   ctx.stroke();
-  console.log(`📍 Origin drawn at: X=0, Y=0`);
 
-  // ** Draw Drill Holes (Now Zooms Correctly) **
-  drillStore.drillData.forEach((drill, index) => {
+  // ** Draw Drill Holes **
+  drillStore.drillData.forEach((drill) => {
     const x = drill.x;
     const y = -drill.y; // Invert Y so the origin is at the bottom-left
-
-    console.log(`🔧 Drill #${index}: Original (X=${drill.x}, Y=${drill.y}) → Transformed (X=${x}, Y=${y})`);
 
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -122,7 +116,18 @@ const drawCanvas = () => {
     ctx.stroke();
   });
 
-  console.log("✅ Finished drawing drill points.");
+  // ** Draw Selection Box **
+  if (isSelecting) {
+    ctx.strokeStyle = "blue";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      selectionStart.x,
+      selectionStart.y,
+      selectionEnd.x - selectionStart.x,
+      selectionEnd.y - selectionStart.y
+    );
+  }
+
   ctx.restore();
 };
 
@@ -149,14 +154,14 @@ const handleMouseMove = (event) => {
     offsetY += event.clientY - startY;
     startX = event.clientX;
     startY = event.clientY;
-    drawCanvas();
+    updateCanvas();
   } else if (isSelecting) {
     const rect = canvas.value.getBoundingClientRect();
     selectionEnd = {
       x: (event.clientX - rect.left - offsetX) / scale,
       y: (event.clientY - rect.top - offsetY) / scale,
     };
-    drawCanvas();
+    updateCanvas();
   }
 };
 
@@ -178,7 +183,7 @@ const endInteraction = () => {
   }
   isPanning = false;
   isSelecting = false;
-  drawCanvas();
+  updateCanvas();
 };
 
 // ** Handle Zooming **
@@ -187,18 +192,18 @@ const handleZoom = (event) => {
   const zoomAmount = event.deltaY * -0.001;
   scale += zoomAmount;
   scale = Math.max(0.5, Math.min(5, scale));
-  drawCanvas();
+  updateCanvas();
 };
 
 // ** Helper Functions **
 const selectAll = () => {
   drillStore.drillData.forEach((d) => (d.selected = true));
-  drawCanvas();
+  updateCanvas();
 };
 
 const deselectAll = () => {
   drillStore.drillData.forEach((d) => (d.selected = false));
-  drawCanvas();
+  updateCanvas();
 };
 
 const setSelectedSolder = (state) => {
@@ -207,7 +212,7 @@ const setSelectedSolder = (state) => {
       drill.solder = state;
     }
   });
-  drawCanvas();
+  updateCanvas();
 };
 </script>
 

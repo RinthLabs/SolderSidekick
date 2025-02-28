@@ -105,6 +105,10 @@ const updateCanvas = () => {
   ctx.lineTo(0, 5);
   ctx.stroke();
 
+  // ** Draw X and Y Axes with Arrows **
+  drawArrow(ctx, { x: 0, y: 0 }, { x: 40, y: 0 }, "red"); // X-axis
+  drawArrow(ctx, { x: 0, y: 0 }, { x: 0, y: -40 }, "green"); // Y-axis
+
   // ** Draw Drill Holes **
   drillStore.drillData.forEach((drill) => {
     const x = drill.x;
@@ -133,6 +137,41 @@ const updateCanvas = () => {
   ctx.restore();
 };
 
+const drawArrow = (ctx, from, to, color) => {
+  const headLength = 6; // Arrowhead size
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.fillStyle = color;
+
+  // ** Adjusted Line End to Stop Before Arrowhead **
+  const lineEndX = to.x - (headLength / 2) * Math.cos(angle);
+  const lineEndY = to.y - (headLength / 2) * Math.sin(angle);
+
+  // ** Draw Line **
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(lineEndX, lineEndY); // Stop the line before the arrowhead
+  ctx.stroke();
+
+  // ** Draw Arrowhead **
+  ctx.beginPath();
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(
+    to.x - headLength * Math.cos(angle - Math.PI / 6),
+    to.y - headLength * Math.sin(angle - Math.PI / 6)
+  );
+  ctx.lineTo(
+    to.x - headLength * Math.cos(angle + Math.PI / 6),
+    to.y - headLength * Math.sin(angle + Math.PI / 6)
+  );
+  ctx.lineTo(to.x, to.y);
+  ctx.fill();
+};
+
+
+
 // ** Handle Mouse Events **
 const startInteraction = (event) => {
   const rect = canvas.value.getBoundingClientRect();
@@ -140,7 +179,7 @@ const startInteraction = (event) => {
   const y = (event.clientY - rect.top - offsetY) / scale;
 
   clickedDrill = drillStore.drillData.find(
-    (drill) => Math.hypot(drill.x - x, drill.y - y) < 5 // Click within 5px
+    (drill) => Math.hypot(drill.x - x, -drill.y - y) < 5 // Click within 5px radius
   );
 
   if (event.button === 2) {
@@ -148,17 +187,17 @@ const startInteraction = (event) => {
     startX = event.clientX;
     startY = event.clientY;
   } else if (clickedDrill) {
-    // ** If clicking on a drill, only select that one **
-    drillStore.drillData.forEach((d) => (d.selected = false));
-    clickedDrill.selected = true;
+    // ** Toggle Selection on Click **
+    clickedDrill.selected = !clickedDrill.selected;
     updateCanvas();
   } else {
-    // ** Clicking empty space starts selection **
+    // ** Clicking empty space starts selection box **
     isSelecting = true;
     selectionStart = { x, y };
     selectionEnd = { x, y };
   }
 };
+
 
 const handleMouseMove = (event) => {
   if (isPanning) {

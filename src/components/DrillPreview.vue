@@ -96,7 +96,14 @@
           @click.stop
         />
       </td>
-      <td><span @click.stop>{{ drill.tool }}</span></td>
+      <td>
+        <span @click.stop>
+          {{ drill.tool }} 
+          <span v-if="drillStore.toolSizes[drill.tool]">
+            ({{ drillStore.toolSizes[drill.tool] }}")
+          </span>
+        </span>
+      </td>
       <td><span @click.stop>{{ drill.x }}</span></td>
       <td><span @click.stop>{{ drill.y }}</span></td>
     </tr>

@@ -63,10 +63,10 @@ const svgContainer = ref(null);
 const origin = ref({ x: 0, y: 0 });
 
 const printBedSize = 235; // Ender3 bed size
-const gridSize = 0.25; // ✅ Snapping interval for origin
+const gridSize = 0.25;
 let svg, zoomGroup, originMarker, selectionBox;
 let isSelecting = false, selectionStart, selectionEnd;
-let transform = d3.zoomIdentity; // ✅ Tracks current zoom & pan state
+let transform = d3.zoomIdentity;
 
 // **Update Origin Marker**
 const updateOriginMarker = () => {
@@ -86,11 +86,11 @@ const initD3 = () => {
     .append("svg")
     .attr("width", 800)
     .attr("height", 500)
-    .on("contextmenu", (event) => event.preventDefault()) // ✅ Prevent right-click menu
+    .on("contextmenu", (event) => event.preventDefault()) // Prevent right-click menu
     .call(
       d3.zoom()
         .scaleExtent([0.5, 5])
-        .filter((event) => event.type === "wheel" || event.button === 2) // ✅ Right-click to pan, wheel to zoom
+        .filter((event) => event.type === "wheel" || event.button === 2)
         .on("zoom", (event) => {
           transform = event.transform;
           zoomGroup.attr("transform", transform);
@@ -99,11 +99,12 @@ const initD3 = () => {
     .on("mousedown", startSelection)
     .on("mousemove", updateSelection)
     .on("mouseup", endSelection)
+    .on("click", deselectAllIfClickedOutside) // Deselect all when clicking in empty space
     .append("g");
 
   zoomGroup = svg.append("g");
 
-  // **Draw Print Bed (Bottom-left at 0,0)**
+  // Draw Print Bed (Bottom-left at 0,0)
   zoomGroup.append("rect")
     .attr("x", 0)
     .attr("y", -printBedSize)
@@ -112,7 +113,7 @@ const initD3 = () => {
     .attr("fill", "#e0e0e0")
     .attr("stroke", "black");
 
-  // **Add Draggable Origin Marker**
+  // Add Draggable Origin Marker
   originMarker = zoomGroup.append("circle")
     .attr("r", 5)
     .attr("fill", "blue")
@@ -121,12 +122,67 @@ const initD3 = () => {
     .call(d3.drag().on("drag", draggedOrigin));
 
   updateOriginMarker();
+  // ✅ **Ensure camera starts centered on print bed**
+  setTimeout(centerOnPrintBed, 100);
 };
 
-// **Handle Drag Selection**
-const startSelection = (event) => {
-  if (event.button !== 0) return; // Only allow left-click for selection
+// **Center the camera on the print bed**
+const centerOnPrintBed = () => {
+  console.log("Centering on print bed...");
+  const svgWidth = 800;
+  const svgHeight = 500;
+  const scale = 1; // Initial zoom scale
 
+  // Calculate the center offset to keep the print bed centered
+  const centerX = 200;
+  const centerY = 50;
+
+  // Apply the transformation correctly after zoom is initialized
+  const initialTransform = d3.zoomIdentity.translate(centerX, centerY).scale(scale);
+  svg.transition().duration(500).call(d3.zoom().transform, initialTransform);
+};
+
+
+
+// **Handle dragging origin marker**
+const draggedOrigin = (event) => {
+  let newX = Math.round(parseFloat(event.x) / gridSize) * gridSize;
+  let newY = Math.round(-parseFloat(event.y) / gridSize) * gridSize;
+
+  origin.value.x = Math.max(0, Math.min(printBedSize, newX));
+  origin.value.y = Math.max(0, Math.min(printBedSize, newY));
+
+  updateDrillPoints();
+  updateOriginMarker();
+};
+
+// **Deselect all when clicking empty space**
+const deselectAllIfClickedOutside = (event) => {
+  if (!event.target.closest(".drill") && originMarker && event.target !== originMarker.node()) {
+    deselectAll();
+  }
+};
+
+// **Deselect all points**
+const deselectAll = () => {
+  drillStore.drillData.forEach((d) => (d.selected = false));
+  updateDrillPoints();
+};
+
+// **Set Selected Drill Points as Soldered or Not Soldered**
+const setSelectedSolder = (state) => {
+  drillStore.drillData.forEach((drill) => {
+    if (drill.selected) {
+      drill.solder = state;
+    }
+  });
+  updateDrillPoints();
+};
+
+
+// **Drag Selection**
+const startSelection = (event) => {
+  if (event.button !== 0) return;
   isSelecting = true;
   selectionStart = transform.invert(d3.pointer(event, svg.node()));
 
@@ -139,7 +195,7 @@ const startSelection = (event) => {
 
 const updateSelection = (event) => {
   if (!isSelecting) return;
-  
+
   selectionEnd = transform.invert(d3.pointer(event, svg.node()));
 
   const x = Math.min(selectionStart[0], selectionEnd[0]);
@@ -189,24 +245,3 @@ watch(origin, updateDrillPoints);
 watch(() => drillStore.drillData, updateDrillPoints, { deep: true });
 
 </script>
-
-<style>
-.svg-container {
-  width: 800px;
-  height: 500px;
-  border: 1px solid #ddd;
-  background-color: white;
-}
-
-.selection-box {
-  stroke-width: 1;
-}
-
-.selected-row {
-  background-color: cyan !important;
-}
-
-.unselected-row {
-  background-color: white !important;
-}
-</style>

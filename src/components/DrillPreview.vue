@@ -68,6 +68,9 @@ let svg, zoomGroup, originMarker, selectionBox;
 let isSelecting = false, selectionStart, selectionEnd;
 let transform = d3.zoomIdentity;
 
+let zoomBehavior; // ✅ Declare globally before using it
+
+
 // **Update Origin Marker**
 const updateOriginMarker = () => {
   if (!originMarker) return;
@@ -80,31 +83,31 @@ onMounted(() => {
   updateDrillPoints();
 });
 
-// **Initialize D3 Canvas**
 const initD3 = () => {
   svg = d3.select(svgContainer.value)
     .append("svg")
     .attr("width", 800)
     .attr("height", 500)
-    .on("contextmenu", (event) => event.preventDefault()) // Prevent right-click menu
-    .call(
-      d3.zoom()
-        .scaleExtent([0.5, 5])
-        .filter((event) => event.type === "wheel" || event.button === 2)
-        .on("zoom", (event) => {
-          transform = event.transform;
-          zoomGroup.attr("transform", transform);
-        })
-    )
-    .on("mousedown", startSelection)
-    .on("mousemove", updateSelection)
-    .on("mouseup", endSelection)
-    .on("click", deselectAllIfClickedOutside) // Deselect all when clicking in empty space
-    .append("g");
+    .on("contextmenu", (event) => event.preventDefault());
 
   zoomGroup = svg.append("g");
 
-  // Draw Print Bed (Bottom-left at 0,0)
+  // ✅ Fix: Ensure zoomBehavior allows both zooming & panning
+  zoomBehavior = d3.zoom()
+    .scaleExtent([0.5, 5])
+    .filter((event) => event.type === "wheel" || event.button === 2) // ✅ Right-click pan, wheel zoom
+    .on("zoom", (event) => {
+      transform = event.transform;
+      zoomGroup.attr("transform", transform);
+    });
+
+  svg.call(zoomBehavior) // Attach zoom behavior
+     .on("mousedown", startSelection)
+     .on("mousemove", updateSelection)
+     .on("mouseup", endSelection)
+     .on("click", deselectAllIfClickedOutside); // ✅ Restore click-to-deselect
+
+  // Draw Print Bed
   zoomGroup.append("rect")
     .attr("x", 0)
     .attr("y", -printBedSize)
@@ -122,25 +125,34 @@ const initD3 = () => {
     .call(d3.drag().on("drag", draggedOrigin));
 
   updateOriginMarker();
-  // ✅ **Ensure camera starts centered on print bed**
-  setTimeout(centerOnPrintBed, 100);
+
+  // ✅ Ensure centering happens AFTER D3 initialization without disabling interactions
+  setTimeout(() => centerOnPrintBed(), 100);
 };
 
-// **Center the camera on the print bed**
+
+
+
+// **Center the camera on the print bed properly**
 const centerOnPrintBed = () => {
-  console.log("Centering on print bed...");
+  if (!zoomBehavior) return; // Prevent errors if zoomBehavior is not ready
+
   const svgWidth = 800;
   const svgHeight = 500;
   const scale = 1; // Initial zoom scale
 
-  // Calculate the center offset to keep the print bed centered
-  const centerX = 200;
-  const centerY = 50;
+  // ✅ Center the print bed properly in the viewport
+  const centerX = (svgWidth - printBedSize * scale) / 2;
+  const centerY = (svgHeight - printBedSize * scale) * 1.4;
 
-  // Apply the transformation correctly after zoom is initialized
+  // ✅ Apply transform without disabling zoom & selection
   const initialTransform = d3.zoomIdentity.translate(centerX, centerY).scale(scale);
-  svg.transition().duration(500).call(d3.zoom().transform, initialTransform);
+
+  // ✅ Use transition for smooth centering and preserve zoomBehavior
+  svg.transition().duration(500).call(zoomBehavior.transform, initialTransform);
 };
+
+
 
 
 

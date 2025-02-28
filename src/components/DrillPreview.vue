@@ -24,9 +24,9 @@
     ></canvas>
 
     <div class="mb-3">
-  <label class="form-label">Origin Offset X:</label>
+  <label class="form-label">PCB Offset X:</label>
   <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
-  <label class="form-label ms-3">Origin Offset Y:</label>
+  <label class="form-label ms-3">PCB Offset Y:</label>
   <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
 </div>
 
@@ -253,11 +253,12 @@ const drillY = -drill.y + drillStore.originOffsetY;
 
 
 
+
       if (
-        drillX >= Math.min(selectionStart.x, selectionEnd.x) &&
-        drillX <= Math.max(selectionStart.x, selectionEnd.x) &&
-        drillY >= Math.min(selectionStart.y, selectionEnd.y) &&
-        drillY <= Math.max(selectionStart.y, selectionEnd.y)
+        drillX + drillStore.originOffsetX >= Math.min(selectionStart.x, selectionEnd.x) &&
+        drillX + drillStore.originOffsetX <= Math.max(selectionStart.x, selectionEnd.x) &&
+        drillY - drillStore.originOffsetY >= Math.min(selectionStart.y, selectionEnd.y) &&
+        drillY - drillStore.originOffsetY <= Math.max(selectionStart.y, selectionEnd.y)
       ) {
         drill.selected = true;
         selectedDrills++;

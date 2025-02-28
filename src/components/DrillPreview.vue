@@ -112,7 +112,8 @@ const updateCanvas = () => {
 
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = drill.selected ? "cyan" : drill.solder ? "red" : "gray";
+    ctx.fillStyle = drill.solder ? "red" : "gray";
+    ctx.strokeStyle = drill.selected ? "cyan" : "black";
     ctx.fill();
     ctx.stroke();
   });

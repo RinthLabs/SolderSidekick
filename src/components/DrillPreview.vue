@@ -87,23 +87,24 @@
         <input type="checkbox" v-model="drill.solder" @change="updateCanvas" @click.stop />
       </td>
       <td>
-        <input 
-          type="number" 
-          min="0" step="0.05"
-          class="form-control d-inline w-auto" 
-          v-model.number="drill.solderFeed"
-          @input="updateCanvas"
-          @click.stop
-        />
-      </td>
+  <input 
+    type="number" 
+    min="0" step="0.05"
+    class="form-control d-inline w-auto" 
+    :value="drill.solderFeed"
+    @input="updateSolderFeed($event, index)"
+    @click.stop
+  />
+</td>
+
       <td>
-        <span @click.stop>
-          {{ drill.tool }} 
-          <span v-if="drillStore.toolSizes[drill.tool]">
-            ({{ drillStore.toolSizes[drill.tool] }}")
-          </span>
+      <span @click.stop>
+        {{ drill.tool }} 
+        <span v-if="drillStore.toolSizes[drill.tool]">
+          ({{ drillStore.toolSizes[drill.tool] }}")
         </span>
-      </td>
+      </span>
+    </td>
       <td><span @click.stop>{{ drill.x }}</span></td>
       <td><span @click.stop>{{ drill.y }}</span></td>
     </tr>
@@ -418,6 +419,20 @@ const toggleDrillSelection = (index) => {
   drillStore.drillData[index].selected = !drillStore.drillData[index].selected;
   
   // Update the canvas to reflect changes
+  updateCanvas();
+};
+
+const updateSolderFeed = (event, index) => {
+  const newValue = parseFloat(event.target.value);
+  if (isNaN(newValue)) return;
+
+  // Update all selected drill holes with the new value
+  drillStore.drillData.forEach((drill) => {
+    if (drill.selected) {
+      drill.solderFeed = newValue;
+    }
+  });
+
   updateCanvas();
 };
 

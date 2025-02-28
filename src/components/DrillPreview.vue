@@ -64,6 +64,7 @@ const canvas = ref(null);
 let ctx, scale = 1, offsetX = 0, offsetY = 0;
 let isPanning = false, startX, startY;
 let isSelecting = false, selectionStart, selectionEnd;
+let clickedDrill = null;
 
 // ** Initialize Canvas Rendering **
 onMounted(() => {
@@ -137,11 +138,21 @@ const startInteraction = (event) => {
   const x = (event.clientX - rect.left - offsetX) / scale;
   const y = (event.clientY - rect.top - offsetY) / scale;
 
+  clickedDrill = drillStore.drillData.find(
+    (drill) => Math.hypot(drill.x - x, drill.y - y) < 5 // Click within 5px
+  );
+
   if (event.button === 2) {
     isPanning = true;
     startX = event.clientX;
     startY = event.clientY;
+  } else if (clickedDrill) {
+    // ** If clicking on a drill, only select that one **
+    drillStore.drillData.forEach((d) => (d.selected = false));
+    clickedDrill.selected = true;
+    updateCanvas();
   } else {
+    // ** Clicking empty space starts selection **
     isSelecting = true;
     selectionStart = { x, y };
     selectionEnd = { x, y };
@@ -167,6 +178,7 @@ const handleMouseMove = (event) => {
 
 const endInteraction = () => {
   if (isSelecting) {
+    let selectedDrills = 0;
     drillStore.drillData.forEach((drill) => {
       const drillX = drill.x;
       const drillY = drill.y;
@@ -178,9 +190,16 @@ const endInteraction = () => {
         drillY <= Math.max(selectionStart.y, selectionEnd.y)
       ) {
         drill.selected = true;
+        selectedDrills++;
       }
     });
+
+    // ** If no drills were selected, deselect everything **
+    if (selectedDrills === 0) {
+      drillStore.drillData.forEach((d) => (d.selected = false));
+    }
   }
+  
   isPanning = false;
   isSelecting = false;
   updateCanvas();

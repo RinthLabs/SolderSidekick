@@ -5,33 +5,47 @@ export const useDrillStore = defineStore("drill", {
     drillFile: null,
     drillFilename: null,
     drillData: [],  // Stores parsed drill holes
-    processedData: {},
-    selectedHoles: {}, // Track which holes should be soldered
   }),
   actions: {
     setDrillFile(fileContent, filename) {
       this.drillFile = fileContent;
       this.drillFilename = filename;
-      this.selectedHoles = {}; // Reset selections
     },
     setDrillData(data) {
-      this.drillData = data;
-      // Initialize all holes as selected for soldering
-      this.selectedHoles = data.reduce((acc, hole, index) => {
-        acc[index] = true; // Default: solder all holes
-        return acc;
-      }, {});
+      this.drillData = data.map((hole) => ({
+        ...hole,
+        solder: true, // Default: solder all holes
+        selected: false, // Default: not selected
+      }));
     },
-    toggleHole(index) {
-      this.selectedHoles[index] = !this.selectedHoles[index];
+    toggleSolder(index) {
+      if (this.drillData[index]) {
+        this.drillData[index].solder = !this.drillData[index].solder;
+      }
+    },
+    toggleSelection(index) {
+      if (this.drillData[index]) {
+        this.drillData[index].selected = !this.drillData[index].selected;
+      }
+    },
+    selectAll() {
+      this.drillData.forEach((hole) => (hole.selected = true));
+    },
+    deselectAll() {
+      this.drillData.forEach((hole) => (hole.selected = false));
+    },
+    setSelectedSolder(state) {
+      this.drillData.forEach((hole) => {
+        if (hole.selected) {
+          hole.solder = state;
+        }
+      });
     },
     clearDrillFile() {
       this.drillFile = null;
       this.drillFilename = null;
       this.drillData = [];
-      this.processedData = {};
-      this.selectedHoles = {};
-    }
+    },
   },
   persist: true, // Enable persistence
 });

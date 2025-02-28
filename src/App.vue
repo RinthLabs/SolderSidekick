@@ -2,6 +2,7 @@
 import { RouterLink, RouterView } from 'vue-router'
 import Drill from './components/Drill.vue'
 import DrillPreview from './components/DrillPreview.vue'
+import GcodeOutput from "./components/GcodeOutput.vue"; // Import new component
 </script>
 
 <template>
@@ -16,6 +17,7 @@ import DrillPreview from './components/DrillPreview.vue'
 
   <Drill />
   <DrillPreview />
+  <GcodeOutput /> <!-- New Component Added -->
 </template>
 
 <style scoped>

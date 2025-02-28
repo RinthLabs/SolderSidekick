@@ -2,21 +2,8 @@
   <div class="container mt-4">
     <h2 class="text-primary">Drill Hole Preview (Canvas)</h2>
 
+
     
-
-    <!-- Canvas -->
-    <canvas 
-      ref="canvas" 
-      class="drill-canvas" 
-      width="800" 
-      height="500"
-      @mousedown="startInteraction"
-      @mousemove="handleMouseMove"
-      @mouseup="endInteraction"
-      @wheel="handleZoom"
-      @contextmenu.prevent
-    ></canvas>
-
    <!-- PCB Offset & Solder Feed Multiplier Inputs -->
 <div class="mb-3">
   <label class="form-label">
@@ -55,71 +42,89 @@
 </div>
 
 
-   
+    
+    <div class="row">
+  <!-- Canvas on left (large screens) or full-width (small screens) -->
+  <div class="col-12 col-lg-9 d-flex justify-content-center align-items-center">
+    <canvas 
+      ref="canvas" 
+      class="drill-canvas"
+      @mousedown="startInteraction"
+      @mousemove="handleMouseMove"
+      @mouseup="endInteraction"
+      @wheel="handleZoom"
+      @contextmenu.prevent
+    ></canvas>
+  </div>
 
 
-    <!-- Table for drill points -->
-<table v-if="drillStore.drillData.length" class="table table-striped mt-3">
-  <thead class="table-dark">
-    <tr>
-      <th>
-        <i class="fas fa-check-circle"></i> Solder
-      </th>
-      <th>
-        <i class="fas fa-tint"></i> Solder Feed (mm)
-      </th>
-      <th>
-        <i class="fas fa-tools"></i> Tool
-      </th>
-      <th>
-        <i class="fas fa-arrows-alt-h"></i> X (mm)
-      </th>
-      <th>
-        <i class="fas fa-arrows-alt-v"></i> Y (mm)
-      </th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr
-      v-for="(drill, index) in drillStore.drillData"
-      :key="index"
-      :class="{ 'selected-row': drill.selected, 'unselected-row': !drill.selected }"
-      @click="toggleDrillSelection(index)"
-    >
-    <td>
-  <input 
-    type="checkbox" 
-    :checked="drill.solder" 
-    @change="updateSolderCheckbox($event, index)"
-    @click.stop
-  />
-</td>
+  <!-- Drill Positions Table on the right (large screens) or below (small screens) -->
+  <div class="col-12 col-lg-3 mt-3 mt-lg-0">
+    <table v-if="drillStore.drillData.length" class="table table-striped">
+      <thead class="table-dark">
+  <tr>
+    <th>
+      <i class="fa-solid fa-list-check" data-bs-toggle="tooltip" title="Solder Through Hole"></i>
+    </th>
+    <th>
+      <i class="fa-solid fa-tape" data-bs-toggle="tooltip" title="Solder Feed (mm)"></i>
+    </th>
+    <th>
+      <i class="fas fa-tools" data-bs-toggle="tooltip" title="Drill Hole Diameter (mm)"></i>
+    </th>
+    <th>
+      <i class="fas fa-arrows-alt-h" data-bs-toggle="tooltip" title="X (mm)"></i>
+    </th>
+    <th>
+      <i class="fas fa-arrows-alt-v" data-bs-toggle="tooltip" title="Y (mm)"></i>
+    </th>
+  </tr>
+</thead>
 
-      <td>
+      <tbody>
+        <tr
+          v-for="(drill, index) in drillStore.drillData"
+          :key="index"
+          :class="{ 'selected-row': drill.selected, 'unselected-row': !drill.selected }"
+          @click="toggleDrillSelection(index)"
+        >
+          <td>
+            <input 
+              type="checkbox" 
+              :checked="drill.solder" 
+              @change="updateSolderCheckbox($event, index)"
+              @click.stop
+            />
+          </td>
+          <td class="solder-feed-cell">
   <input 
     type="number" 
     min="0" step="0.05"
-    class="form-control d-inline w-auto" 
+    class="form-control solder-feed-input" 
     :value="drill.solderFeed"
     @input="updateSolderFeed($event, index)"
     @click.stop
   />
 </td>
 
-      <td>
-      <span @click.stop>
-        {{ drill.tool }} 
-        <span v-if="drillStore.toolSizes[drill.tool]">
-          ({{ drillStore.toolSizes[drill.tool] }}")
-        </span>
-      </span>
-    </td>
-      <td><span @click.stop>{{ drill.x }}</span></td>
-      <td><span @click.stop>{{ drill.y }}</span></td>
-    </tr>
-  </tbody>
-</table>
 
+          <td class="tool-size-cell">
+            <span @click.stop>
+              {{ drill.tool }} 
+              <span v-if="drillStore.toolSizes[drill.tool]">
+                ({{ drillStore.toolSizes[drill.tool] }})
+              </span>
+            </span>
+          </td>
+          <td class="x-pos-size-cell"><span @click.stop>{{ drill.x }}</span></td>
+          <td class="y-pos-size-cell"><span @click.stop>{{ drill.y }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+  
 
     
   </div>
@@ -127,6 +132,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
+import * as bootstrap from "bootstrap"; // Import Bootstrap JS
 import { useDrillStore } from "@/stores/drillStore";
 
 const drillStore = useDrillStore();
@@ -143,10 +149,31 @@ let animationFrameId = null;
 
 // ** Initialize Canvas Rendering **
 onMounted(() => {
-  ctx = canvas.value.getContext("2d");
+
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el)); // Initialize Bootstrap tooltips
+
+  const canvasEl = canvas.value;
+  ctx = canvasEl.getContext("2d");
+
+  // Get available width for canvas
+  const dpr = window.devicePixelRatio || 1;
+  const parentWidth = canvasEl.parentElement.clientWidth;
+  const parentHeight = window.innerHeight * 0.5; // 70% of viewport height
+
+  // Adjust canvas resolution dynamically
+  canvasEl.width = parentWidth * dpr;
+  canvasEl.height = parentHeight * dpr;
+  canvasEl.style.width = parentWidth + "px";
+  canvasEl.style.height = parentHeight + "px";
+
+  ctx.scale(dpr, dpr); // Scale for high resolution
+
   resetView();
   updateCanvas();
 });
+
+
 
 const snapToGrid = (value) => Math.round(value * 2) / 2;
 
@@ -488,6 +515,13 @@ watch(
   border: 1px solid #ddd;
   background-color: white;
   cursor: crosshair;
+  width: 100%;
+  height: auto;
+}
+
+.table-container {
+  max-height: 80vh; /* Keep table within view */
+  overflow-y: auto;
 }
 
 .table tbody tr {
@@ -497,7 +531,51 @@ watch(
 .selected-row {
   background-color: cyan !important;
 }
+
 .unselected-row {
   background-color: white !important;
 }
+
+/* Reduce table cell width */
+th, td {
+  padding: 4px !important; /* Less padding for compact layout */
+  text-align: center;
+  white-space: nowrap; /* Prevents text from wrapping */
+}
+
+/* Shrink the input field for Solder Feed */
+.solder-feed-cell {
+  padding: 1px !important; 
+  width: 45px; /* Minimal width */
+}
+
+.tool-size-cell{
+  padding: 4px !important; 
+  width: 45px; /* Minimal width */
+}
+
+/* .x-pos-size-cell{
+  padding: 1px !important; 
+  width: 30px;
+}
+
+.y-pos-size-cell{
+  padding: 1px !important; 
+  width: 30px;
+} */
+
+.solder-feed-input {
+  max-width: 45px; /* Shrink input field */
+  text-align: center;
+  padding: 0; 
+  font-size: 0.85rem; /* Make text slightly smaller */
+  height: 22px; /* Adjust input height */
+}
+
+/* Reduce icon spacing */
+th i {
+  font-size: 1rem; /* Smaller icons */
+}
 </style>
+
+

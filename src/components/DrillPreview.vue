@@ -4,23 +4,7 @@
 
 
     
-   <!-- PCB Offset & Solder Feed Multiplier Inputs -->
-<div class="mb-3">
-  <label class="form-label">
-    <i class="fas fa-arrows-alt-h"></i> PCB Offset X:
-  </label>
-  <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
 
-  <label class="form-label ms-3">
-    <i class="fas fa-arrows-alt-v"></i> PCB Offset Y:
-  </label>
-  <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
-
-  <label class="form-label ms-3">
-    <i class="fas fa-tint"></i> Solder Feed Multiplier:
-  </label>
-  <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.solderFeedMultiplier" min="0" step="0.01">
-</div>
 
 <!-- Toolbar with Icons -->
 <div class="mb-3">
@@ -35,9 +19,6 @@
   </button>
   <button class="btn btn-secondary ms-2" @click="setSelectedSolder(false)">
     <i class="fas fa-ban"></i> Not Soldered
-  </button>
-  <button class="btn btn-success ms-2" @click="saveGcode">
-    <i class="fa-solid fa-floppy-disk"></i> Save Gcode
   </button>
 </div>
 
@@ -122,6 +103,24 @@
       </tbody>
     </table>
   </div>
+</div>
+
+   <!-- PCB Offset & Solder Feed Multiplier Inputs -->
+   <div class="mb-3">
+  <label class="form-label">
+    <i class="fas fa-arrows-alt-h"></i> PCB Offset X:
+  </label>
+  <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
+
+  <label class="form-label ms-3">
+    <i class="fas fa-arrows-alt-v"></i> PCB Offset Y:
+  </label>
+  <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
+
+  <label class="form-label ms-3">
+    <i class="fas fa-tint"></i> Solder Feed Multiplier:
+  </label>
+  <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.solderFeedMultiplier" min="0" step="0.01">
 </div>
 
   

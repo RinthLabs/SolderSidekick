@@ -1,9 +1,56 @@
 <script setup>
 import { ref } from "vue";
 
-const startGcode = ref(`; Start G-code\nG21 ; Set units to millimeters\nG90 ; Absolute positioning`);
-const perPointGcode = ref(`G0 X{X} Y{Y} ; Move to position\nG1 Z-1 ; Lower drill\nG1 Z0 ; Raise drill`);
-const endGcode = ref(`; End G-code\nG0 X0 Y0 ; Return to home\nM30 ; End of program`);
+const useCustomGcode = ref(false);
+
+const startGcode = ref(`; Start G-code
+
+M104 S0 ; Turn off hotend heater
+M140 S0 ; Turn off heated bed
+M106 S0 ; Ensure fan is off (if not used)
+
+G21 ; Use millimeters
+G91 ; **Set relative positioning (for initial Z movement)**
+G1 Z10 F600 ; **Move up 10mm to avoid crashing into the bed**
+G90 ; **Switch back to absolute positioning**
+M83 ; **Set extruder (E) to relative mode**
+G28 X Y             ; Home X and Y axes
+G28 Z               ; Home Z separately
+
+M221 S105 ; Extruder multiplier set to 105%
+
+G1 Z10 F600 ; **Move up 10mm to avoid crashing into the bed**
+G1 X100 Y100 F3000 ; Move to (100,100) at a safe travel speed
+G1 X200 Y200 F7200 ; Move to (200,200) at a faster speed
+G1 X200 Y200 F9000 ; Move to (200,200) at a faster speed
+G1 X200 Y200 F12000 ; Move to (200,200) at a faster speed
+G1 X200 Y200 F36000 ; Move to (200,200) at a faster speed
+G1 E500 F500 ; extrude 500mm of solder
+
+M117 Ready to Solder! ; Display message on the printer screen
+`);
+
+const perPointGcode = ref(`; Solder Point G-code
+G0 X{X} Y{Y} ; Move to position
+G1 Z-1 ; Lower soldering iron
+G1 Z0 ; Raise soldering iron`);
+
+const endGcode = ref(`; End G-code
+G91 ; Set to relative positioning
+G1 Z10 F300 ; Raise Z by 10mm to move away from the workpiece
+
+G90 ; Set to absolute positioning
+G1 Y235 F3000 ; Move the bed all the way forward (Ender 3 default max Y = 235mm)
+
+M104 S0 ; Turn off hotend heater
+M140 S0 ; Turn off bed heater
+M107 ; Turn off fan
+
+G92 E0 ; Reset the extruder position (optional)
+M84 ; Disable steppers
+M300 S440 P200 ; Beep to signal job completion
+M117 Job Complete! ; Display message on the printer screen
+`);
 
 const saveGcode = () => {
   const finalGcode = `${startGcode.value}\n\n; Drill Points\n${perPointGcode.value}\n\n${endGcode.value}`;

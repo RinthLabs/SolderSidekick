@@ -102,6 +102,14 @@
         </tr>
       </tbody>
     </table>
+
+    <div class="mb-3">
+      <label class="form-label"><i class="fas fa-fire"></i> Solder Method</label>
+      <select class="form-select" v-model="solderMethod">
+        <option value="Individual">Individual</option>
+        <option value="Drag Solder">Drag Solder</option>
+      </select>
+    </div>
   </div>
 </div>
 
@@ -118,9 +126,10 @@
   <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
 
   <label class="form-label ms-3">
-    <i class="fas fa-tint"></i> Solder Feed Multiplier:
+    <i class="fa-solid fa-rotate-right"></i> PCB Rotation:
   </label>
-  <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.solderFeedMultiplier" min="0" step="0.01">
+  <input type="number" class="form-control d-inline w-auto">
+
 </div>
 
   
@@ -184,8 +193,10 @@ const resetView = () => {
   const canvasWidth = canvas.value.width;
   const canvasHeight = canvas.value.height;
   
-  offsetX = (canvasWidth - 235) / 2; // Center horizontally
-  offsetY = (canvasHeight + 235) / 2; // Bottom-left position
+  offsetX = canvasWidth/ 4; // Center horizontally
+  // offsetX = (canvasWidth - 235) / 2; // Center horizontally
+  offsetY = canvasHeight * 0.45; // Bottom-left position
+  // offsetY = (canvasHeight + 235) / 2; // Bottom-left position
 };
 
 // ** Draw Everything on the Canvas **
@@ -237,7 +248,7 @@ drillStore.drillData.forEach((drill, index) => {
   const y = -drill.y; // Drill Y position (inverted)
 
   // ** Debugging Log: Check computed positions before rendering **
-  console.log(`Drill #${index}: X=${x}, Y=${y}, OriginOffsetX=${drillStore.originOffsetX}, OriginOffsetY=${drillStore.originOffsetY}`);
+  //console.log(`Drill #${index}: X=${x}, Y=${y}, OriginOffsetX=${drillStore.originOffsetX}, OriginOffsetY=${drillStore.originOffsetY}`);
 
   ctx.beginPath();
   ctx.arc(x, y, 4, 0, Math.PI * 2);

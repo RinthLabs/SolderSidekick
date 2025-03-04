@@ -27,3 +27,11 @@ npm run dev
 ```sh
 npm run build
 ```
+
+Names:
+Melty McSolderface
+MeltyBot
+
+
+SolderSidekick
+Tinny

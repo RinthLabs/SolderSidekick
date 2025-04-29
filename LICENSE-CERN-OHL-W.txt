@@ -1,0 +1,20 @@
+CERN Open Hardware Licence Version 2 - Weakly Reciprocal (CERN-OHL-W-2.0)
+
+Copyright © 2025 BenRinthLabs
+
+This documentation describes Open Hardware and is licensed under the CERN-OHL-W v2.
+
+You may redistribute and modify this documentation under the terms of the CERN-OHL-W v2 (https://ohwr.org/project/cernohl).
+
+This documentation is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE. Please see the CERN-OHL-W v2 for applicable conditions.
+
+Source location: https://github.com/BenRinthLabs/solder-sidekick
+
+You should have received a copy of the CERN-OHL-W v2 along with this documentation. If not, you can obtain one at https://ohwr.org/project/cernohl.
+
+The license requires that if you modify or distribute this documentation, or manufacture products using it, you must:
+- keep it open (use the same license),
+- document your changes,
+- and share your modified source files.
+
+This ensures freedom for others while allowing commercial use and ongoing development.

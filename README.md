@@ -14,6 +14,8 @@ Solder Sidekick is an **open-source project** that converts a standard **Ender-3
 
 It uses a **simple web interface** where you upload your **drill files** (from your Gerber PCB files), configure your component settings, and generate the **G-code** needed to precisely solder each pin.
 
+[👉 Launch the Solder Sidekick Web App](https://rinthlabs.com/products/solder-sidekick-notification-sign-up)
+
 - 🔥 Automates tedious manual soldering
 - 🔥 Reduces human error
 - 🔥 Great for small-run production and prototypes
@@ -53,7 +55,7 @@ While Solder Sidekick is open-source, sourcing the parts and machining the custo
 
 This project is **community-driven** and **open-source**!
 
-- 🌟 [Sponsor Solder Sidekick on GitHub](https://github.com/sponsors/your-github-username) to help fund development
+- 🌟 [Sponsor Solder Sidekick on GitHub](https://github.com/BenRinthLabs) to help fund development
 - 🔧 Contribute code, documentation, or testing
 - 📣 Spread the word!
 

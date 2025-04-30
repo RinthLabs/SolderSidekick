@@ -41,6 +41,7 @@
 
   <!-- Drill Positions Table on the right (large screens) or below (small screens) -->
   <div class="col-12 col-lg-3 mt-3 mt-lg-0">
+    <div class="scrolling-table flex-grow-1">
     <table v-if="drillStore.drillData.length" class="table table-striped">
       <thead class="table-dark">
   <tr>
@@ -102,6 +103,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <div class="mb-3">
       <label class="form-label"><i class="fas fa-fire"></i> Solder Method</label>
@@ -152,6 +154,7 @@ let clickedDrill = null;
 let isDraggingDrillOrigin = false;
 
 let animationFrameId = null;
+const baseDrillRadius = 2; // Easily adjustable drill size
 
 
 
@@ -251,9 +254,10 @@ drillStore.drillData.forEach((drill, index) => {
   //console.log(`Drill #${index}: X=${x}, Y=${y}, OriginOffsetX=${drillStore.originOffsetX}, OriginOffsetY=${drillStore.originOffsetY}`);
 
   ctx.beginPath();
-  ctx.arc(x, y, 4, 0, Math.PI * 2);
+  ctx.arc(x, y, baseDrillRadius / scale, 0, Math.PI * 2);
   ctx.fillStyle = drill.solder ? "red" : "gray";
   ctx.strokeStyle = drill.selected ? "cyan" : "black";
+  ctx.lineWidth = 1 / scale; // ✅ Thin stroke that scales properly
   ctx.fill();
   ctx.stroke();
 });
@@ -436,7 +440,7 @@ const handleZoom = (event) => {
   event.preventDefault();
   const zoomAmount = event.deltaY * -0.001;
   scale += zoomAmount;
-  scale = Math.max(0.5, Math.min(5, scale));
+  scale = Math.max(0.1, Math.min(5, scale));
   updateCanvas();
 };
 
@@ -586,6 +590,13 @@ th, td {
 th i {
   font-size: 1rem; /* Smaller icons */
 }
+
+.scrolling-table {
+  overflow-y: auto;
+  height: calc(50vh - 2rem); /* Match the canvas height */
+  border: 1px solid #ddd;
+}
+
 </style>
 
 

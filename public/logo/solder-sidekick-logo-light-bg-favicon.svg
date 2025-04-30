@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="Layer_1"
+   data-name="Layer 1"
+   viewBox="0 0 77.362001 77.362001"
+   version="1.1"
+   sodipodi:docname="solder-sidekick-logo-light-bg-favicon.svg"
+   width="77.362"
+   height="77.362"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview14"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="9.314237"
+     inkscape:cx="60.069333"
+     inkscape:cy="62.431308"
+     inkscape:window-width="3840"
+     inkscape:window-height="2054"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Layer_1" />
+  <defs
+     id="defs1">
+    <style
+       id="style1">
+      .cls-1 {
+        fill: #66c6d0;
+      }
+    </style>
+  </defs>
+  <g
+     id="g14"
+     transform="translate(23.320879)">
+    <path
+       d="m 8.96,12.012464 v 9.43 c 0,0.39 1.09,2.22 1.39,2.6 2.11,2.68 6.97,3.76 10.1,4.93 6.17,2.31 10.75,4.96 10.23,12.44 -0.31,4.52 -3.59,8.45 -7.73,10.03 l 0.18,-2.65 c 0.04,-1.84 0.19,-4.03 -1.9,-4.75 0,-1.55 0.1,-2.84 -0.52,-4.3 -0.55,-1.3 -1.54,-2.34 -2.86,-2.87 -4.59,-1.86 -10.51,-2.2 -14.32,-5.67 -2.86,-2.6 -3.63,-5.6 -3.33,-9.42 0.38,-4.89 4.17,-8.59 8.77,-9.78 z"
+       id="path4" />
+    <path
+       class="cls-1"
+       d="m 16.15,74.882464 -0.04,-4.08 1.81,-1.76 0.13,-15.42 c 0.11,-1.18 1.69,-1.09 2.59,-1.41 0.73,-0.26 0.93,-0.47 1.01,-1.25 0.11,-1.07 0.19,-3.02 0.1,-4.08 -0.1,-1.21 -0.7,-1.71 -1.92,-1.52 v -3.95 c 0,-0.08 -0.35,-0.99 -0.42,-1.14 -0.73,-1.64 -1.67,-1.95 -3.25,-2.48 -1.91,-0.64 -3.88,-1.11 -5.8,-1.71 v 9.3 c -0.78,-0.15 -1.69,0.08 -1.87,0.95 -0.18,0.87 -0.09,4.03 0.06,4.99 0.23,1.48 3.28,0.68 3.53,2.2 0.13,0.76 0.09,2.33 0.11,3.19 0.09,3.8 0,12.12 0.05,12.37 l 1.78,1.64 c 0.03,1.15 0,4.13 0,4.13 l 1.09,2.51 1.06,-2.48 z"
+       id="path6" />
+    <path
+       class="cls-1"
+       d="m 16.35,6.8824643 h 1.26 l 2.22,4.3899997 v 15.86 c -1.55,-0.48 -3.12,-0.98 -4.63,-1.59 -2.25,-0.89 -4.02,-1.84 -4.81,-4.32 l -0.02,-10.02 2.06,-4.1899997 c 0.25,-0.26 0.95,-0.07 1.31,-0.13 v -5.69 c 0,-0.23999999 0.46,-0.99999999 0.72,-1.10999999 0.23,-0.09 0.97,-0.12 1.19,-0.02 0.19,0.09 0.7,0.75 0.7,0.94999999 v 5.86 z"
+       id="path8" />
+    <path
+       d="m 30.17,23.302464 h -8.95 v -11.29 c 5.12,1.46 8.96,5.83 8.95,11.29 z"
+       id="path13" />
+    <path
+       d="m 8.96,40.152464 v 3.91 c -0.71,0.13 -1.34,0.72 -1.63,1.37 -0.45,1.01 -0.33,3.57 -0.29,4.76 0,0.15 0.23,0.81 -0.04,0.73 -0.43,-0.13 -1.74,-1.01 -2.16,-1.32 -3.05,-2.23 -4.77,-5.66 -4.84,-9.45 h 8.95 z"
+       id="path14" />
+  </g>
+</svg>

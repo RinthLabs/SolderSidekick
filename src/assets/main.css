@@ -1,69 +1,150 @@
 :root {
-    --bs-primary: #B87333; /* Copper */
-    --bs-secondary: #FF6600; /* Fiery Orange */
-    --bs-dark: #222222; /* Matte Black */
-    --bs-light: #FFFFFF; /* White */
-    --bs-body-bg: #F8F9FA; /* Light gray background instead of dark */
-    --bs-body-color: #222222; /* Dark text for readability */
-    --bs-border-color: #DDDDDD; /* Softer borders */
-  }
-  
-  .navbar {
-    background-color: var(--bs-dark) !important; /* Matte black navbar */
-  }
-  
-  .navbar-brand {
-    color: var(--bs-primary) !important; /* Copper branding */
-  }
-  
-  .navbar-nav .nav-link {
-    color: var(--bs-light) !important; /* White links */
-  }
-  
-  .btn-primary {
-    background-color: var(--bs-primary);
-    border-color: var(--bs-primary);
-  }
-  
-  .btn-primary:hover {
-    background-color: darken(var(--bs-primary), 10%);
-  }
-  
-  .btn-outline-light {
-    border-color: var(--bs-secondary);
-    color: var(--bs-secondary);
-  }
-  
-  .btn-outline-light:hover {
-    background-color: var(--bs-secondary);
-    color: var(--bs-light);
-  }
-  
-  .table-dark {
-    background-color: var(--bs-dark);
-  }
-  
-  .table thead {
-    background-color: var(--bs-primary);
-    color: var(--bs-light);
-  }
-  
-  body {
-    background-color: var(--bs-body-bg);
-    color: var(--bs-body-color);
-  }
-  
+  --bs-primary: #66c6d0;         /* Teal-Cyan */
+  --bs-secondary: #434343;       /* Dark gray */
+  --bs-dark: #222222;            /* Matte Black */
+  --bs-light: #FFFFFF;           /* White */
+  --bs-body-bg: #F8F9FA;         /* Light gray background */
+  --bs-body-color: #222222;      /* Dark text */
+  --bs-border-color: #DDDDDD;    /* Soft borders */
 
-  .table-dark thead {
-    background-color: var(--bs-primary);
-    color: var(--bs-light);
-  }
-  
-  .table-striped tbody tr:nth-of-type(odd) {
-    background-color: var(--bs-body-bg);
-  }
-  
-  .form-control {
-    border-color: var(--bs-border-color);
-  }
-  
+  /* Hover darkened colors (manually adjusted) */
+  --bs-primary-hover: #4fb4c0;
+  --bs-secondary-hover: #2c2c2c ;
+
+  --bs-primary-active: #3ba9b4; /* Slightly darker teal for button press */
+  --bs-secondary-active: #2a2a2a; /* Slightly darker than hover */
+
+}
+
+body {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+
+/* Navbar */
+.navbar {
+  background-color: var(--bs-dark) !important;
+}
+
+.navbar-brand {
+  color: var(--bs-primary) !important;
+}
+
+.navbar-nav .nav-link {
+  color: var(--bs-light) !important;
+}
+
+.navbar-nav .nav-link:hover {
+  color: var(--bs-light) !important;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: var(--bs-light);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--bs-primary-hover);
+  border-color: var(--bs-primary-hover);
+  color: var(--bs-light);
+}
+
+.btn-primary:active {
+  background-color: var(--bs-primary-active) !important;
+  border-color: var(--bs-primary-active) !important;
+  color: var(--bs-light) !important;
+}
+
+
+.btn-secondary {
+  background-color: var(--bs-secondary);
+  border-color: var(--bs-secondary);
+  color: var(--bs-light);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+  background-color: var(--bs-secondary-hover);
+  border-color: var(--bs-secondary-hover);
+  color: var(--bs-light);
+}
+
+.btn-secondary:active {
+  background-color: var(--bs-secondary-active) !important;
+  border-color: var(--bs-secondary-active) !important;
+  color: var(--bs-light) !important;
+}
+
+
+/* .btn-outline-light base state */
+.btn-outline-light {
+  border-color: var(--bs-secondary);
+  color: var(--bs-light);
+  background-color: transparent;
+}
+
+/* .btn-outline-light hover state */
+.btn-outline-light:hover,
+.btn-outline-light:focus {
+  background-color: var(--bs-secondary);
+  border-color: var(--bs-secondary);
+  color: var(--bs-light);
+}
+
+
+/* Tables */
+.table-dark {
+  background-color: var(--bs-dark);
+}
+
+.table thead {
+  background-color: var(--bs-primary);
+  color: var(--bs-light);
+}
+
+.table-dark thead {
+  background-color: var(--bs-primary);
+  color: var(--bs-light);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bs-body-bg);
+}
+
+/* Forms */
+.form-control {
+  border-color: var(--bs-border-color);
+}
+
+/* Links */
+a {
+  color: var(--bs-primary);
+  text-decoration: underline;
+}
+
+a:hover,
+a:focus {
+  color: var(--bs-primary); /* Use something visible like teal */
+  text-decoration: none;
+}
+
+
+/* Text utilities (optional override if needed) */
+.text-primary {
+  color: var(--bs-primary) !important;
+}
+
+.text-secondary {
+  color: var(--bs-secondary) !important;
+}
+
+.bg-primary {
+  background-color: var(--bs-primary) !important;
+}
+
+.bg-secondary {
+  background-color: var(--bs-secondary) !important;
+}

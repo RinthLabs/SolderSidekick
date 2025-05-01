@@ -260,7 +260,7 @@ const handleMouseDown = (e) => {
 
   const pt = getMousePosition(e);
   const clicked = drillStore.drillData.find(
-    d => Math.hypot(d.x - pt.x, d.y - pt.y) < 5
+    d => Math.hypot(d.x - pt.x, d.y - pt.y) < 1
   );
   if (clicked) {
   if (e.ctrlKey) {
@@ -278,10 +278,11 @@ const handleMouseDown = (e) => {
 
 if (!clicked && e.button === 0) {
   isSelecting = true;
-  const pt = getMousePosition(e);
+  const pt = getMousePosition(e, false); // ⬅️ don't apply offset for selection box
   selectionStart = pt;
   selectionEnd = pt;
 }
+
 
 updateCanvas();
 
@@ -296,9 +297,10 @@ const handleMouseMove = (e) => {
     updateCanvas();
   }
   if (isSelecting) {
-    selectionEnd = getMousePosition(e);
+    selectionEnd = getMousePosition(e, false); // ⬅️ match startInteraction logic
     updateCanvas();
   }
+
 
 };
 
@@ -309,8 +311,8 @@ const handleMouseUp = () => {
   const [y1, y2] = [selectionStart.y, selectionEnd.y].sort((a, b) => a - b);
 
   drillStore.drillData.forEach(d => {
-    const x = d.x;
-    const y = d.y;
+    const x = d.x + drillStore.originOffsetX;
+    const y = d.y + drillStore.originOffsetY;
     d.selected = x >= x1 && x <= x2 && y >= y1 && y <= y2;
   });
 }

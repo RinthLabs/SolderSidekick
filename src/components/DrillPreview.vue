@@ -326,12 +326,19 @@ const handleZoom = (e) => {
   updateCanvas();
 };
 
-const getMousePosition = (e) => {
+const getMousePosition = (e, applyOffset = true) => {
   const rect = canvas.value.getBoundingClientRect();
-  const x = (e.clientX - rect.left - offsetX) / scale - drillStore.originOffsetX;
-  const y = -(e.clientY - rect.top - offsetY) / scale + drillStore.originOffsetY;
+  let x = (e.clientX - rect.left - offsetX) / scale;
+  let y = -(e.clientY - rect.top - offsetY) / scale;
+
+  if (applyOffset) {
+    x -= drillStore.originOffsetX;
+    y += drillStore.originOffsetY;
+  }
+
   return { x, y };
 };
+
 
 const toggleSelect = (id) => {
   drillStore.toggleSelection(id);

@@ -70,8 +70,8 @@ const parseDrillFile = (event) => {
         parsedDrills.push({
           tool: currentTool || "Unknown",  // Assign the last used tool
           size: toolSizes[currentTool] ? `${toolSizes[currentTool]} mm` : "Unknown", // Lookup size with mm suffix
-          x: x.toFixed(2),
-          y: y.toFixed(2),
+          x,
+          y,
         });
       }
     }

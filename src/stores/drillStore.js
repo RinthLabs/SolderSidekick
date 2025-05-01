@@ -2,69 +2,133 @@ import { defineStore } from "pinia";
 
 export const useDrillStore = defineStore("drill", {
   state: () => ({
-    drillFile: null,
-    drillFilename: null,
-    drillData: [], // Stores parsed drill holes
-    originOffsetX: 0, // X offset for drill origin
-    originOffsetY: 0, // Y offset for drill origin
-    solderFeedMultiplier: 1, // Solder Feed Multiplier
-    isDraggingOrigin: false, // Track dragging state
-    toolSizes: {}, // NEW: Store drill tool diameters
+    drillData: [],
+    path: [],
+    originOffsetX: 0,
+    originOffsetY: 0,
+    toolSizes: {},
+    undoStack: []
   }),
+  getters: {
+    selectedPoints: (state) => state.drillData.filter(d => d.selected),
+  },
   actions: {
     setDrillFile(fileContent, filename) {
       this.drillFile = fileContent;
       this.drillFilename = filename;
     },
-    setDrillData(data, toolSizes) {
-      this.drillData = data.map((hole) => ({
-        ...hole,
-        solder: true, // Default: solder all holes
-        selected: false, // Default: not selected
-        solderFeed: 3, // Default: 3mm solder feed per hole
+    setDrillData(data, toolSizes = {}) {
+      this.drillData = data.map((d, i) => ({
+        ...d,
+        id: i,
+        solder: true,
+        selected: false,
+        pathIndex: null,
       }));
-      this.toolSizes = toolSizes; // Store tool sizes
+      this.path = [];
+      this.toolSizes = toolSizes;
     },
-    toggleSolder(index) {
-      if (this.drillData[index]) {
-        this.drillData[index].solder = !this.drillData[index].solder;
+    toggleSelection(id) {
+      const drill = this.drillData.find(d => d.id === id);
+      if (drill) drill.selected = !drill.selected;
+    },
+    addToPath(id) {
+      if (!this.path.includes(id)) {
+        this.undoStack.push([...this.path]);
+        this.path.push(id);
+        this.updatePathIndices();
       }
     },
-    toggleSelection(index) {
-      if (this.drillData[index]) {
-        this.drillData[index].selected = !this.drillData[index].selected;
+    removeFromPath(id) {
+      if (this.path.includes(id)) {
+        this.undoStack.push([...this.path]);
+        this.path = this.path.filter(p => p !== id);
+        this.updatePathIndices();
       }
     },
-    selectAll() {
-      this.drillData.forEach((hole) => (hole.selected = true));
+    clearPath() {
+      this.undoStack.push([...this.path]);
+      this.path = [];
+      this.updatePathIndices();
     },
-    deselectAll() {
-      this.drillData.forEach((hole) => (hole.selected = false));
+    undoLast() {
+      if (this.undoStack.length > 0) {
+        this.path = this.undoStack.pop();
+        this.updatePathIndices();
+      }
     },
-    setSelectedSolder(state) {
-      this.drillData.forEach((hole) => {
-        if (hole.selected) {
-          hole.solder = state;
-        }
+    updatePathIndices() {
+      this.drillData.forEach(d => d.pathIndex = null);
+      this.path.forEach((id, i) => {
+        const d = this.drillData.find(drill => drill.id === id);
+        if (d) d.pathIndex = i;
       });
     },
-    setOriginOffset(x, y) {
-      this.originOffsetX = x;
-      this.originOffsetY = y;
+    autoOptimizePath() {
+      const unsorted = this.drillData.filter(d => d.solder);
+      const path = [];
+      const visited = new Set();
+      let current = unsorted[0];
+      path.push(current.id);
+      visited.add(current.id);
+
+      while (path.length < unsorted.length) {
+        const next = unsorted
+          .filter(d => !visited.has(d.id))
+          .sort((a, b) => {
+            const distA = Math.hypot(current.x - a.x, current.y - a.y);
+            const distB = Math.hypot(current.x - b.x, current.y - b.y);
+            return distA - distB;
+          })[0];
+
+        if (next) {
+          path.push(next.id);
+          visited.add(next.id);
+          current = next;
+        } else {
+          break;
+        }
+      }
+
+      this.undoStack.push([...this.path]);
+      this.path = path;
+      this.updatePathIndices();
     },
-    setSolderFeedMultiplier(value) {
-      this.solderFeedMultiplier = value;
-    },
-    clearDrillFile() {
-      this.drillFile = null;
-      this.drillFilename = null;
-      this.drillData = [];
-      this.originOffsetX = 0;
-      this.originOffsetY = 0;
-      this.solderFeedMultiplier = 1;
-      this.isDraggingOrigin = false;
-      this.toolSizes = {};
-    },
-  },
-  persist: true, // Enable persistence
+    optimizeSelection() {
+      const selected = this.drillData.filter(d => d.selected);
+      if (selected.length < 2) return;
+
+      const newOrder = [];
+      const visited = new Set();
+      let current = selected[0];
+      newOrder.push(current.id);
+      visited.add(current.id);
+
+      while (newOrder.length < selected.length) {
+        const next = selected
+          .filter(d => !visited.has(d.id))
+          .sort((a, b) => {
+            const distA = Math.hypot(current.x - a.x, current.y - a.y);
+            const distB = Math.hypot(current.x - b.x, current.y - b.y);
+            return distA - distB;
+          })[0];
+
+        if (next) {
+          newOrder.push(next.id);
+          visited.add(next.id);
+          current = next;
+        } else {
+          break;
+        }
+      }
+
+      // Replace selected path segments only
+      this.undoStack.push([...this.path]);
+      const idsToReplace = new Set(selected.map(d => d.id));
+      this.path = this.path.filter(id => !idsToReplace.has(id));
+      const insertIndex = this.path.length;
+      this.path.splice(insertIndex, 0, ...newOrder);
+      this.updatePathIndices();
+    }
+  }
 });

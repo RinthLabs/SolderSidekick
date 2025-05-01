@@ -1,14 +1,11 @@
 <script setup>
-import { ref } from "vue";
+
 import Drill from "@/components/Drill.vue";
 import DrillPreview from "@/components/DrillPreview.vue";
 import MachineSettings from "@/components/MachineSettings.vue";
 import GcodeOutput from "@/components/GcodeOutput.vue";
 
-// Define links for GitHub, Shop, and Donate
-const githubRepo = ref("https://github.com/RinthLabs/SolderSidekick");
-const shopLink = ref("https://rinthlabs.com/products/solder-sidekick-notification-sign-up");
-const donateLink = ref("https://www.paypal.com/donate/?hosted_button_id=CF4B9M4MD2HY2");
+
 </script>
 
 <template>

@@ -51,6 +51,13 @@
 
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
+import { ref } from "vue";
+
+// Define links for GitHub, Shop, and Donate
+const githubRepo = ref("https://github.com/RinthLabs/SolderSidekick");
+const shopLink = ref("https://rinthlabs.com/products/solder-sidekick-notification-sign-up");
+const donateLink = ref("https://www.paypal.com/donate/?hosted_button_id=CF4B9M4MD2HY2");
+
 </script>
 
 

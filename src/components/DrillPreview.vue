@@ -1,28 +1,49 @@
 <template>
-  <div class="toolpath-editor">
+  <div class="toolpath-editor container">
     <h2 class="text-primary mb-3">Solder Toolpath Editor</h2>
 
+        <!-- PCB Offset and Rotation Controls -->
+
+<div class="mb-3 d-flex align-items-center pcb-controls">
+      <label class="form-label">PCB Offset (mm) <i class="fas fa-arrows-alt-h pcb-icon"></i></label>
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
+      <label class="form-label"><i class="fas fa-arrows-alt-v pcb-icon"></i></label>
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
+
+      <label class="form-label mw-5 pcb-section">Rotation</label>
+      <button class="btn btn-outline-secondary" @click="rotatePCB(-5)"><i class="fa-solid fa-rotate-left"></i></button>
+      <input
+        type="number"
+        class="form-control d-inline w-auto pcb-input"
+        v-model.number="rotation"
+        @input="updateCanvas"
+      >
+      <button class="btn btn-outline-secondary" @click="rotatePCB(5)"><i class="fa-solid fa-rotate-right"></i></button>
+
+      <label class="form-label mw-5 pcb-section">Mirror</label>
+      <button class="btn btn-outline-secondary" @click="mirrorHorizontal"><i class="fa-solid fa-right-left"></i></button>
+      <button class="btn btn-outline-secondary" @click="mirrorVertical"><i class="fa-solid fa-right-left r90"></i></button>
+    </div>
+
     <!-- Toolbar -->
-    <div class="toolbar mb-3">
-      <button class="btn btn-primary" @click="autoOptimizePath">Auto Optimize Path</button>
-      <button class="btn btn-secondary ms-2" @click="optimizeSelected">Optimize Selection</button>
-      <button class="btn btn-outline-danger ms-2" @click="clearPath">Clear Path</button>
-      <button class="btn btn-outline-success ms-2" @click="setSelectedSolder(true)">Set Solder</button>
-      <button class="btn btn-outline-secondary ms-2" @click="setSelectedSolder(false)">Clear Solder</button>
+    <div class="toolbar d-flex align-items-center mb-3">
+      <button class="btn btn-primary" @click="autoOptimizePath"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto Optimize Path</button>
+      <button class="btn btn-secondary" @click="optimizeSelected"><i class="fa-solid fa-border-all"></i> Optimize Selection</button>
+      
+      <label class="form-label">Solder</label>
+      <button class="btn btn-success" @click="setSelectedSolder(true)"><i class="fa-solid fa-check"></i></button>
+      <button class="btn btn-secondary" @click="setSelectedSolder(false)"><i class="fa-solid fa-xmark"></i></button>
 
-      <button class="btn btn-outline-dark ms-2" @click="undo">Undo</button>
+      <button class="btn btn-outline-dark" @click="undo"><i class="fa-solid fa-rotate-left"></i> Undo</button>
+
+      <button class="btn btn-outline-danger" @click="clearPath"><i class="fa-solid fa-trash"></i> Clear Path</button>
     </div>
 
-    <!-- PCB Offset Controls -->
-    <div class="mb-3">
-      <label class="form-label"><i class="fas fa-arrows-alt-h"></i> PCB Offset X:</label>
-      <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
-      <label class="form-label ms-3"><i class="fas fa-arrows-alt-v"></i> PCB Offset Y:</label>
-      <input type="number" class="form-control d-inline w-auto" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
-    </div>
+
+
 
     <div class="row">
-      <div class="col-lg-8">
+      <div class="col-lg-8 position-relative canvas-wrapper">
         <canvas
           ref="canvas"
           class="toolpath-canvas"
@@ -32,6 +53,11 @@
           @wheel.prevent="handleZoom"
           @contextmenu.prevent
         ></canvas>
+        <div class="editor-instructions">
+          <div class="editor-label">Right click + drag to pan. Scroll to zoom.</div>
+          <div class="editor-label">Left click each point to manually define tool path.</div>
+          <div class="editor-label">Ctrl + left click to select points. Left click drag to box select</div>
+        </div>
 
       </div>
 
@@ -77,7 +103,9 @@ const drillStore = useDrillStore();
 const canvas = ref(null);
 
 let ctx, scale = 1, offsetX = 0, offsetY = 0;
-const radius = 3;
+const rotation = ref(0); // degrees
+
+const radius = 4;
 
 let isPanning = false;
 let startX = 0;
@@ -131,6 +159,20 @@ const setSelectedSolder = (state) => {
 };
 
 
+const rotatePCB = (angleDelta) => {
+  rotation.value = (rotation.value + angleDelta) % 360;
+  updateCanvas();
+};
+
+const mirrorHorizontal = () => {
+  drillStore.drillData.forEach(d => d.x *= -1);
+  updateCanvas();
+};
+
+const mirrorVertical = () => {
+  drillStore.drillData.forEach(d => d.y *= -1);
+  updateCanvas();
+};
 
 
 
@@ -158,6 +200,35 @@ const drawArrow = (ctx, from, to, color) => {
   ctx.fill();
 };
 
+const drawClippedGrid = (ctx, width, height, spacing = 16, color = "#aaaaaa") => {
+  ctx.save(); // Save before clipping
+  ctx.beginPath();
+  ctx.rect(0, -height, width, height);
+  ctx.clip();
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 0.5 / scale;
+
+  // Vertical lines
+  for (let x = 0; x <= width; x += spacing) {
+    ctx.beginPath();
+    ctx.moveTo(x, -height);
+    ctx.lineTo(x, 0);
+    ctx.stroke();
+  }
+
+  // Horizontal lines
+  for (let y = 0; y <= height; y += spacing) {
+    ctx.beginPath();
+    ctx.moveTo(0, -y);
+    ctx.lineTo(width, -y);
+    ctx.stroke();
+  }
+
+  ctx.restore(); // Restore to remove clipping
+};
+
+
 
 const updateCanvas = () => {
   if (!ctx) return;
@@ -167,8 +238,11 @@ const updateCanvas = () => {
   ctx.scale(scale, scale);
 
   // Draw build plate (235mm x 235mm)
-  ctx.fillStyle = "#e0e0e0";
+  ctx.fillStyle = "#c9c9c9";
   ctx.fillRect(0, -235, 235, 235);
+
+  // Draw 16mm grid lines clipped to print bed
+  drawClippedGrid(ctx, 235, 235, 16);
 
   // Draw origin cross (blue)
   ctx.strokeStyle = "blue";
@@ -186,12 +260,13 @@ const updateCanvas = () => {
 
   // 💡 Apply offset only to drill data
   ctx.translate(drillStore.originOffsetX, -drillStore.originOffsetY);
+  ctx.rotate((rotation.value * Math.PI) / 180);
 
 
   // draw path lines
   const path = drillStore.path;
   ctx.strokeStyle = "#999";
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 8 / scale;
   ctx.beginPath();
   path.forEach((id, idx) => {
     const pt = drillStore.drillData.find(d => d.id === id);
@@ -216,30 +291,38 @@ const updateCanvas = () => {
     ctx.arc(x, y, radius / scale, 0, 2 * Math.PI);
     ctx.fillStyle = d.solder ? "red" : "gray";
     ctx.strokeStyle = d.selected ? "cyan" : "black";
-    ctx.lineWidth = 1 / scale;
+    ctx.lineWidth = 2 / scale;
     ctx.fill();
     ctx.stroke();
 
     // draw index number if in path
     if (d.pathIndex !== null) {
       ctx.fillStyle = "black";
-      ctx.font = `${10 / scale}px sans-serif`;
+      ctx.font = `${12 / scale}px sans-serif`;
       ctx.fillText((d.pathIndex + 1).toString(), x + 4 / scale, y - 4 / scale);
     }
   });
 
-  if (isSelecting && selectionStart && selectionEnd) {
+  ctx.restore();
+
+if (isSelecting && selectionStart && selectionEnd) {
+  // Draw the selection box in screen space (no transform)
+  ctx.save();
+  ctx.translate(offsetX, offsetY);
+  ctx.scale(scale, scale);
+
   const x = selectionStart.x;
   const y = -selectionStart.y;
   const w = selectionEnd.x - selectionStart.x;
   const h = -(selectionEnd.y - selectionStart.y);
-  ctx.strokeStyle = "blue";
+
+  ctx.strokeStyle = "cyan";
   ctx.lineWidth = 1 / scale;
   ctx.strokeRect(x, y, w, h);
-}
-
 
   ctx.restore();
+}
+
 };
 
 const sortedDrillData = computed(() => {
@@ -323,8 +406,8 @@ updateCanvas();
 };
 
 const handleZoom = (e) => {
-  const delta = e.deltaY * -0.001;
-  scale = Math.max(0.5, Math.min(5, scale + delta));
+  const delta = e.deltaY * -0.005;
+  scale = Math.max(0.5, Math.min(30, scale + delta));
   updateCanvas();
 };
 
@@ -376,7 +459,7 @@ const undo = () => {
 
 <style scoped>
 .toolpath-canvas {
-  border: 1px solid #ccc;
+  border: 1px solid #eeeeee;
   width: 100%;
   aspect-ratio: 1.5;
 }
@@ -390,4 +473,85 @@ const undo = () => {
 .table-primary {
   background-color: rgba(0, 123, 255, 0.2);
 }
+
+.toolpath-canvas {
+  border: 1px solid #ccc;
+  background-color: #e8e8e8; /* light gray */
+  width: 100%;
+  aspect-ratio: 1.5;
+}
+
+.r90{
+  -webkit-transform: rotate(90deg); /* Safari and Chrome */
+    -moz-transform: rotate(90deg);   /* Firefox */
+    -ms-transform: rotate(90deg);   /* IE 9 */
+    -o-transform: rotate(90deg);   /* Opera */
+    transform: rotate(90deg);
+    display: inline-block; /* 👈 Needed to allow transform to work */
+}
+
+.pcb-input {
+  width: 5rem !important;
+}
+
+.pcb-controls{
+  gap:0.5rem;
+}
+
+.pcb-controls .form-label {
+  margin: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.pcb-controls .pcb-icon {
+  margin: 0 !important;
+  margin-top: 4px !important;
+  margin-left: 4px !important;
+}
+
+.pcb-section{
+  margin-left: 0.75rem !important;
+}
+
+.canvas-wrapper {
+  position: relative;
+}
+
+.editor-instructions {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 1rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  pointer-events: none; /* 👈 This makes it ignore all mouse interaction */
+}
+
+
+.editor-label {
+  margin-bottom: 0.25rem;
+}
+
+.editor-label:last-child {
+  margin-bottom: 0;
+}
+
+.toolbar{
+  gap:0.5rem !important;
+}
+
+.toolbar .form-label {
+  margin: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  margin-left: 1rem !important;
+}
+
+.form-label{
+  font-weight: 700 !important;
+}
+
 </style>

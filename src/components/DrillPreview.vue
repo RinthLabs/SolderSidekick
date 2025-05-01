@@ -1,6 +1,6 @@
 <template>
   <div class="toolpath-editor container">
-    <h2 class="text-primary mb-3">Solder Toolpath Editor</h2>
+    <h2 class="text-primary mb-3"><i class="fa-solid fa-fire"></i> Solder Toolpath Editor</h2>
 
         <!-- PCB Offset and Rotation Controls -->
 
@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useDrillStore } from "@/stores/drillStore";
 
 const drillStore = useDrillStore();
@@ -115,7 +115,15 @@ let isSelecting = false;
 let selectionStart = null;
 let selectionEnd = null;
 
-
+watch(
+  () => drillStore.canvasShouldUpdate,
+  (val) => {
+    if (val) {
+      updateCanvas();
+      drillStore.acknowledgeCanvasUpdate(); // ✅ reset the flag
+    }
+  }
+);
 
 onMounted(() => {
   const canvasEl = canvas.value;
@@ -467,6 +475,7 @@ const undo = () => {
   overflow-y: auto;
   max-height: 50vh;  /* Matches the canvas height (50% of viewport) */
   border: 1px solid #ddd;
+  background-color: #ddd;
 }
 
 

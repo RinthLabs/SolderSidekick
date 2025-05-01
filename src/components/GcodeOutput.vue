@@ -61,7 +61,7 @@ const saveGcode = () => {
 
 <template>
   <div class="container mt-4">
-    <h2 class="text-primary">G-code Output</h2>
+    <h2 class="text-primary"><i class="fa-solid fa-list"></i> G-code Output</h2>
 
     <div class="mb-3">
       <label class="form-label"><i class="fa-solid fa-play"></i> Start G-code</label>

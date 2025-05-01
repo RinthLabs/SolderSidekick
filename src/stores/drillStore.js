@@ -7,7 +7,8 @@ export const useDrillStore = defineStore("drill", {
     originOffsetX: 0,
     originOffsetY: 0,
     toolSizes: {},
-    undoStack: []
+    undoStack: [],
+    canvasShouldUpdate: false
   }),
   getters: {
     selectedPoints: (state) => state.drillData.filter(d => d.selected),
@@ -17,6 +18,22 @@ export const useDrillStore = defineStore("drill", {
       this.drillFile = fileContent;
       this.drillFilename = filename;
     },
+    clearDrillFile() {
+      this.drillFile = null;
+      this.drillFilename = null;
+      this.drillData = [];
+      this.path = [];
+      this.toolSizes = {};
+      this.undoStack = [];
+    },
+
+    triggerCanvasUpdate() {
+      this.canvasShouldUpdate = true;
+    },
+    acknowledgeCanvasUpdate() {
+      this.canvasShouldUpdate = false;
+    },
+    
     setDrillData(data, toolSizes = {}) {
       this.drillData = data.map((d, i) => ({
         ...d,

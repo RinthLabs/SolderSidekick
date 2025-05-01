@@ -38,12 +38,5 @@ import GcodeOutput from "@/components/GcodeOutput.vue";
   align-items: center;
 }
 
-/* Fix vertical alignment of the Donate button */
-.donate-button {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding: 5px 12px;
-  white-space: nowrap;
-}
+
 </style>

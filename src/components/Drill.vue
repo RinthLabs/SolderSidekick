@@ -1,16 +1,36 @@
 <template>
-  <div class="container mt-4">
-    <h2 class="text-primary">Upload KiCad Drill File</h2>
-    
-    <div class="mb-3">
-      <input type="file" class="form-control" @change="parseDrillFile" ref="fileInput" accept=".drl, .txt" />
-      <p v-if="drillStore.drillFilename" class="mt-2">
-        <strong>Selected File:</strong> {{ drillStore.drillFilename }}
-        <button class="btn btn-sm btn-danger ms-2" @click="clearFile">Clear</button>
-      </p>
+  <div class="container mt-4 mb-5">
+    <div class="d-flex align-items-center gap-3">
+      <!-- Label + Icon -->
+      <h2 class="text-primary mb-0 d-flex align-items-center" style="white-space: nowrap;">
+        <i class="fa-solid fa-file-arrow-up me-2"></i>Gerber Drill File
+      </h2>
+
+      <!-- File Input with overlayed filename and clear button -->
+      <div class="position-relative flex-grow-1">
+        <input
+          type="file"
+          class="form-control"
+          @change="parseDrillFile"
+          ref="fileInput"
+          accept=".drl, .txt"
+          style="z-index: 2"
+        />
+
+        <button
+          v-if="drillStore.drillFilename"
+          class="btn btn-sm btn-danger position-absolute end-0 top-50 translate-middle-y me-2"
+          @click="clearFile"
+          style="z-index: 3"
+        >
+          Clear
+        </button>
+      </div>
     </div>
   </div>
 </template>
+
+
 
 <script setup>
 import { ref } from "vue";
@@ -78,6 +98,8 @@ const parseDrillFile = (event) => {
 
     // Store drill data & tool sizes in the Pinia store
     drillStore.setDrillData(parsedDrills, toolSizes);
+    drillStore.triggerCanvasUpdate(); // 🔁 let the preview know it needs to redraw
+
   };
 
   reader.readAsText(file);
@@ -86,6 +108,7 @@ const parseDrillFile = (event) => {
 // Function to clear the stored file & reset input
 const clearFile = () => {
   drillStore.clearDrillFile();
+  drillStore.triggerCanvasUpdate(); // 🔁 let the preview know it needs to redraw
   if (fileInput.value) {
     fileInput.value.value = ""; // Reset file input field
   }
@@ -102,4 +125,5 @@ th, td {
   padding: 8px;
   text-align: center;
 }
+
 </style>

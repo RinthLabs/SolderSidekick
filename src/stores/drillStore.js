@@ -4,8 +4,8 @@ export const useDrillStore = defineStore("drill", {
   state: () => ({
     drillData: [],
     path: [],
-    originOffsetX: 0,
-    originOffsetY: 0,
+    originOffsetX: 16,
+    originOffsetY: 16,
     toolSizes: {},
     undoStack: [],
     canvasShouldUpdate: false
@@ -25,6 +25,8 @@ export const useDrillStore = defineStore("drill", {
       this.path = [];
       this.toolSizes = {};
       this.undoStack = [];
+      this.originOffsetX = 16;
+      this.originOffsetY = 16;
     },
 
     triggerCanvasUpdate() {

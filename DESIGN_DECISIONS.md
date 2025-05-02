@@ -1,13 +1,13 @@
-# 🔥 Solder Sidekick Design Decisions
+# 🔥 Solder Sidekick™ Design Decisions
 
-This page highlights key design decisions behind **Solder Sidekick** — a project to convert an Ender-3 3D printer into a reliable through-hole soldering robot.
+This page highlights key design decisions behind **Solder Sidekick™** — a project to convert an Ender-3 3D printer into a reliable through-hole soldering robot.
 Our goal was to create a machine that is **affordable**, **simple to assemble**, **open-source**, and **effective** for small production runs and prototypes.
 
 ---
 
 ## 🧠 Overview
 
-Solder Sidekick is a semi-assembled hardware kit and web interface that turns a common Ender-3 3D printer into an automated through-hole soldering machine.
+Solder Sidekick™ is a semi-assembled hardware kit and web interface that turns a common Ender-3 3D printer into an automated through-hole soldering machine.
 
 The system includes:
 - A web-based G-code generator that takes **drill files** from Gerber PCB exports
@@ -72,7 +72,7 @@ This reduces the learning curve dramatically and enables faster job preparation.
 
 # 🎯 Design Philosophy
 
-The design philosophy behind Solder Sidekick is:
+The design philosophy behind Solder Sidekick™ is:
 
 | Goal                 | How we achieve it                                     |
 |----------------------|--------------------------------------------------------|

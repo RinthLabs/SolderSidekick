@@ -1,4 +1,4 @@
-# 📦 Solder Sidekick
+# 📦 Solder Sidekick™
 
 Turn your Ender-3 3D printer into a **robotic soldering machine** for through-hole PCBs — powered by open-source software and hardware.
 
@@ -8,13 +8,13 @@ Turn your Ender-3 3D printer into a **robotic soldering machine** for through-ho
 
 ---
 
-## ⚡ What is Solder Sidekick?
+## ⚡ What is Solder Sidekick™?
 
-Solder Sidekick is an **open-source project** that converts a standard **Ender-3 3D printer** into an **automated through-hole soldering robot**.
+Solder Sidekick™ is an **open-source project** that converts a standard **Ender-3 3D printer** into an **automated through-hole soldering robot**.
 
 It uses a **simple web interface** where you upload your **drill files** (from your Gerber PCB files), configure your component settings, and generate the **G-code** needed to precisely solder each pin.
 
-[👉 Launch the Solder Sidekick Web App](https://rinthlabs.com/products/solder-sidekick-notification-sign-up)
+[👉 Launch the Solder Sidekick™ Web App](https://rinthlabs.com/products/solder-sidekick-notification-sign-up)
 
 - 🔥 Automates tedious manual soldering
 - 🔥 Reduces human error
@@ -23,14 +23,14 @@ It uses a **simple web interface** where you upload your **drill files** (from y
 
 ---
 
-## 🛠 Why is Solder Sidekick valuable?
+## 🛠 Why is Solder Sidekick™ valuable?
 
 Soldering lots of **through-hole parts** by hand is time-consuming, tiring, and error-prone — especially for **small businesses**, **makers**, and **prototype builders**.  
 Until now, solutions were either:
 - Very expensive (industrial selective soldering machines) 💸
 - Very DIY and unreliable 🛠️
 
-**Solder Sidekick** solves this by offering:
+**Solder Sidekick™** solves this by offering:
 - An easy-to-assemble hardware kit
 - An intuitive browser-based software tool
 - Low-cost conversion based on an Ender-3 (a widely available 3D printer)
@@ -39,7 +39,7 @@ Until now, solutions were either:
 
 ## 🏪 Get a Kit (Save Time and Hassle!)
 
-While Solder Sidekick is open-source, sourcing the parts and machining the custom soldering iron tips can be difficult.
+While Solder Sidekick™ is open-source, sourcing the parts and machining the custom soldering iron tips can be difficult.
 
 **Buying a full kit from our Shopify store** makes your life much easier:
 - ✅ All hardware parts included (except Ender-3)
@@ -55,7 +55,7 @@ While Solder Sidekick is open-source, sourcing the parts and machining the custo
 
 This project is **community-driven** and **open-source**!
 
-- 🌟 [Sponsor Solder Sidekick on GitHub](https://github.com/BenRinthLabs) to help fund development
+- 🌟 [Sponsor Solder Sidekick™ on GitHub](https://github.com/BenRinthLabs) to help fund development
 - 🔧 Contribute code, documentation, or testing
 - 📣 Spread the word!
 

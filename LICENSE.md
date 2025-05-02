@@ -1,6 +1,6 @@
 # 📄 License Overview
 
-Solder Sidekick is an **open-source project** with both **hardware and software components**, each licensed appropriately to ensure freedom, flexibility, and fairness.
+Solder Sidekick™ is an **open-source project** with both **hardware and software components**, each licensed appropriately to ensure freedom, flexibility, and fairness.
 
 ---
 
@@ -37,6 +37,18 @@ You can use, modify, and integrate the software in your own projects — commerc
 
 ---
 
+## 🚫 Trademark & Branding Usage
+
+The name **Solder Sidekick™**, the Solder Sidekick™ logo, and related branding are **trademarks of Rinth Labs™**.
+
+You may use the hardware and software under the licenses above, but **you may not use the name "Solder Sidekick™", the logo, or similar branding** in any derivative or redistributed products, documentation, or marketing, **without prior written permission**.
+
+This helps us protect the identity and reputation of the project while keeping the designs open and remixable.
+
+If you want to reference or share your fork or derivative publicly, please clearly indicate that it is an unofficial or modified version.
+
+---
+
 ## 🙌 Summary
 
 | Component  | License           | Notes |
@@ -44,6 +56,6 @@ You can use, modify, and integrate the software in your own projects — commerc
 | Hardware   | CERN-OHL-W v2     | Must remain open if redistributed or sold |
 | Software   | MIT               | Free to use, even in closed projects       |
 
-We believe in building tools that empower makers, and we ask that if you improve Solder Sidekick, you give back by sharing your enhancements.
+We believe in building tools that empower makers, and we ask that if you improve Solder Sidekick™, you give back by sharing your enhancements.
 
 Thanks for supporting open hardware!

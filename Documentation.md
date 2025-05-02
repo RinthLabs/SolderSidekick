@@ -1,7 +1,7 @@
 
 ## 📌 KiCAD Drill File Export Settings
 
-To ensure proper alignment in the **Solder Sidekick Toolpath Editor**, your drill file must be exported from KiCAD with specific settings. These settings ensure that solder points and drill locations are positioned correctly in the toolpath canvas.
+To ensure proper alignment in the **Solder Sidekick™ Toolpath Editor**, your drill file must be exported from KiCAD with specific settings. These settings ensure that solder points and drill locations are positioned correctly in the toolpath canvas.
 
 Please configure KiCAD to match the following screenshots before exporting your drill file:
 

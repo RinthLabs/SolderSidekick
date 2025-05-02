@@ -1,7 +1,7 @@
 <script setup>
 
-import Drill from "@/components/Drill.vue";
-import DrillPreview from "@/components/DrillPreview.vue";
+import UploadDrillFile from "@/components/UploadDrillFile.vue";
+import ToolpathEditor from "@/components/ToolpathEditor.vue";
 import MachineSettings from "@/components/MachineSettings.vue";
 import GcodeOutput from "@/components/GcodeOutput.vue";
 
@@ -12,11 +12,14 @@ import GcodeOutput from "@/components/GcodeOutput.vue";
   
 
   <div class="container mt-4">
-    <Drill />
-    <DrillPreview />
+    <UploadDrillFile />
+  </div>
+    <ToolpathEditor />
+  <div class="container">
     <MachineSettings />
     <GcodeOutput />
   </div>
+
 </template>
 
 <style scoped>

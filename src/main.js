@@ -16,10 +16,15 @@ import piniaPersist from "pinia-plugin-persistedstate"; // ✅ Ensure correct im
 import App from './App.vue';
 import router from './router';
 
+import CookieAcceptDecline from 'vue-cookie-accept-decline'
+
+
+
 const pinia = createPinia();
 pinia.use(piniaPersist); // ✅ Enable persistence
 
 const app = createApp(App);
 app.use(pinia);
 app.use(router);
+app.component('CookieAcceptDecline', CookieAcceptDecline)
 app.mount('#app');

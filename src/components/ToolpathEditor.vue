@@ -1,4 +1,5 @@
 <template>
+  <div class="container">
   <div class="toolpath-editor container">
     <h2 class="text-primary mb-3"><i class="fa-solid fa-fire"></i> Solder Toolpath Editor</h2>
 
@@ -10,7 +11,7 @@
       <label class="form-label"><i class="fas fa-arrows-alt-v pcb-icon"></i></label>
       <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
 
-      <label class="form-label mw-5 pcb-section">Rotation</label>
+      <!-- <label class="form-label mw-5 pcb-section">Rotate</label>
       <button class="btn btn-outline-secondary" @click="rotatePCB(-5)"><i class="fa-solid fa-rotate-left"></i></button>
       <input
         type="number"
@@ -18,9 +19,9 @@
         v-model.number="rotation"
         @input="updateCanvas"
       >
-      <button class="btn btn-outline-secondary" @click="rotatePCB(5)"><i class="fa-solid fa-rotate-right"></i></button>
+      <button class="btn btn-outline-secondary" @click="rotatePCB(5)"><i class="fa-solid fa-rotate-right"></i></button> -->
 
-      <label class="form-label mw-5 pcb-section">Mirror</label>
+      <label class="form-label mw-5 pcb-section">Flip</label>
       <button class="btn btn-outline-secondary" @click="mirrorHorizontal"><i class="fa-solid fa-right-left"></i></button>
       <button class="btn btn-outline-secondary" @click="mirrorVertical"><i class="fa-solid fa-right-left r90"></i></button>
     </div>
@@ -34,15 +35,21 @@
       <button class="btn btn-success" @click="setSelectedSolder(true)"><i class="fa-solid fa-check"></i></button>
       <button class="btn btn-secondary" @click="setSelectedSolder(false)"><i class="fa-solid fa-xmark"></i></button>
 
-      <button class="btn btn-outline-dark" @click="undo"><i class="fa-solid fa-rotate-left"></i> Undo</button>
+      
 
       <button class="btn btn-outline-danger" @click="clearPath"><i class="fa-solid fa-trash"></i> Clear Path</button>
+      <button class="btn btn-outline-dark" @click="undo"><i class="fa-solid fa-rotate-left"></i> Undo</button>
     </div>
 
+  </div>
+
+</div>
 
 
 
-    <div class="row">
+
+    <div class="row toolpath-layout gx-3">
+
       <div class="col-lg-8 position-relative canvas-wrapper">
         <canvas
           ref="canvas"
@@ -92,11 +99,11 @@
         </table>
       </div>
     </div>
-  </div>
+
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
 import { useDrillStore } from "@/stores/drillStore";
 
 const drillStore = useDrillStore();
@@ -115,6 +122,50 @@ let isSelecting = false;
 let selectionStart = null;
 let selectionEnd = null;
 
+const fitCanvasToBuildPlate = () => {
+  const canvasEl = canvas.value;
+  if (!canvasEl) return;
+
+  const screenWidth = canvasEl.width / (window.devicePixelRatio || 1);
+  const screenHeight = canvasEl.height / (window.devicePixelRatio || 1);
+
+  // 10% padding around the build plate
+  const padding = 0.1;
+
+  const scaleX = screenWidth / (235 * (1 + padding));
+  const scaleY = screenHeight / (235 * (1 + padding));
+  scale = Math.min(scaleX, scaleY);
+
+  // Center the build plate in the view
+  offsetX = screenWidth / 2 - (235 * scale) / 2;
+  offsetY = screenHeight / 2 + (235 * scale) / 2;
+
+  updateCanvas();
+};
+
+
+const resizeCanvas = () => {
+  const canvasEl = canvas.value;
+  if (!canvasEl) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const width = canvasEl.parentElement.clientWidth;
+  const height = window.innerHeight * 0.6;
+
+  canvasEl.width = width * dpr;
+  canvasEl.height = height * dpr;
+  canvasEl.style.width = width + "px";
+  canvasEl.style.height = height + "px";
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
+  ctx.scale(dpr, dpr);
+
+  offsetX = width / 3;
+  offsetY = height * 0.75;
+
+  updateCanvas();
+};
+
 watch(
   () => drillStore.canvasShouldUpdate,
   (val) => {
@@ -125,24 +176,24 @@ watch(
   }
 );
 
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", resizeCanvas);
+});
+
 onMounted(() => {
+
   const canvasEl = canvas.value;
   ctx = canvasEl.getContext("2d");
+  // resizeCanvas(); // initialize
+  // window.addEventListener("resize", resizeCanvas); // ⬅️ Listen for resize
 
-  const dpr = window.devicePixelRatio || 1;
-  const width = canvasEl.parentElement.clientWidth;
-  const height = window.innerHeight * 0.5;
+  resizeCanvas();          // sets canvas size and devicePixelRatio
+  fitCanvasToBuildPlate(); // zooms and centers based on build plate
+  window.addEventListener("resize", () => {
+    resizeCanvas();
+    fitCanvasToBuildPlate(); // re-fit on resize too
+  });
 
-  canvasEl.width = width * dpr;
-  canvasEl.height = height * dpr;
-  canvasEl.style.width = width + "px";
-  canvasEl.style.height = height + "px";
-
-  ctx.scale(dpr, dpr);
-  offsetX = width / 3;
-  offsetY = height * 0.75;
-
-  updateCanvas();
 });
 
 const onSolderToggle = (hole) => {
@@ -214,10 +265,10 @@ const drawClippedGrid = (ctx, width, height, spacing = 16, color = "#aaaaaa") =>
   ctx.rect(0, -height, width, height);
   ctx.clip();
 
+  // === Draw Grid Lines ===
   ctx.strokeStyle = color;
   ctx.lineWidth = 0.5 / scale;
 
-  // Vertical lines
   for (let x = 0; x <= width; x += spacing) {
     ctx.beginPath();
     ctx.moveTo(x, -height);
@@ -225,7 +276,6 @@ const drawClippedGrid = (ctx, width, height, spacing = 16, color = "#aaaaaa") =>
     ctx.stroke();
   }
 
-  // Horizontal lines
   for (let y = 0; y <= height; y += spacing) {
     ctx.beginPath();
     ctx.moveTo(0, -y);
@@ -233,8 +283,25 @@ const drawClippedGrid = (ctx, width, height, spacing = 16, color = "#aaaaaa") =>
     ctx.stroke();
   }
 
-  ctx.restore(); // Restore to remove clipping
+  // === Draw Circle Grid ===
+  const circleSpacing = 8;
+  const circleRadius = 2.5; // diameter = 5mm
+  const offsetX = 4;
+  const offsetY = 4;
+
+  ctx.fillStyle = "#d0d0d0";
+
+  for (let x = offsetX; x <= width; x += circleSpacing) {
+    for (let y = offsetY; y <= height; y += circleSpacing) {
+      ctx.beginPath();
+      ctx.arc(x, -y, circleRadius, 0, 2 * Math.PI); // flip y
+      ctx.fill();
+    }
+  }
+
+  ctx.restore();
 };
+
 
 
 
@@ -270,6 +337,17 @@ const updateCanvas = () => {
   ctx.translate(drillStore.originOffsetX, -drillStore.originOffsetY);
   ctx.rotate((rotation.value * Math.PI) / 180);
 
+  // Draw + at drill file origin (0,0) after offset and rotation
+  ctx.strokeStyle = "magenta";
+  ctx.lineWidth = 1 / scale;
+  ctx.beginPath();
+  ctx.moveTo(-4 / scale, 0);
+  ctx.lineTo(4 / scale, 0);
+  ctx.moveTo(0, -4 / scale);
+  ctx.lineTo(0, 4 / scale);
+  ctx.stroke();
+
+
 
   // draw path lines
   const path = drillStore.path;
@@ -281,6 +359,7 @@ const updateCanvas = () => {
     if (pt) {
       const x = pt.x;
       const y = -pt.y;
+
       if (idx === 0) {
         ctx.moveTo(x, y);
       } else {
@@ -426,8 +505,9 @@ const getMousePosition = (e, applyOffset = true) => {
 
   if (applyOffset) {
     x -= drillStore.originOffsetX;
-    y += drillStore.originOffsetY;
+    y -= drillStore.originOffsetY;
   }
+
 
   return { x, y };
 };
@@ -471,12 +551,12 @@ const undo = () => {
   width: 100%;
   aspect-ratio: 1.5;
 }
-.scrolling-table {
+/* .scrolling-table {
   overflow-y: auto;
-  max-height: 50vh;  /* Matches the canvas height (50% of viewport) */
+  max-height: 50vh;
   border: 1px solid #ddd;
   background-color: #ddd;
-}
+} */
 
 
 .table-primary {
@@ -524,9 +604,9 @@ const undo = () => {
   margin-left: 0.75rem !important;
 }
 
-.canvas-wrapper {
+/* .canvas-wrapper {
   position: relative;
-}
+} */
 
 .editor-instructions {
   position: absolute;
@@ -562,5 +642,28 @@ const undo = () => {
 .form-label{
   font-weight: 700 !important;
 }
+
+.toolpath-layout {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.toolpath-layout .canvas-wrapper {
+  flex: 1;
+  min-width: 0;
+  --bs-gutter-x: 0;
+}
+
+.toolpath-layout .scrolling-table {
+  width: 400px;
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  background-color: #ddd;
+  --bs-gutter-x: 0;
+}
+
 
 </style>

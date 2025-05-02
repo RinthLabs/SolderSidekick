@@ -13,7 +13,7 @@ export const useDrillStore = defineStore("drill", {
   getters: {
     selectedPoints: (state) => state.drillData.filter(d => d.selected),
   },
-  actions: {
+  actions: {   
     setDrillFile(fileContent, filename) {
       this.drillFile = fileContent;
       this.drillFilename = filename;

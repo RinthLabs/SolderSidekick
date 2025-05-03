@@ -3,7 +3,10 @@
   <div class="toolpath-editor container">
     <h2 class="text-primary mb-3"><i class="fa-solid fa-fire"></i> Solder Toolpath Editor</h2>
 
-        <!-- PCB Offset and Rotation Controls -->
+    <!-- Machine Config button/modal goes here -->
+
+
+    <!-- PCB Offset and Rotation Controls -->
 
     <div class="mb-3 d-flex align-items-center pcb-controls">
       <label class="form-label">PCB Thickness (mm) <i class="fas fa-layer-group pcb-icon mw-5"></i></label>
@@ -67,7 +70,8 @@
 
       </div>
 
-      <div class="col-lg-4 scrolling-table">
+      <div class="col-lg-4 position-relative right-panel">
+      <div class="scrolling-table">
         <table class="table table-sm table-striped">
           <thead class="table-dark">
             <tr>
@@ -111,6 +115,16 @@
           </tbody>
         </table>
       </div>
+
+       <!-- Save G-code Button -->
+  <button class="save-button btn btn-success" @click="saveGcode">
+    <i class="fa-solid fa-save me-1"></i> Save G-code
+  </button>
+
+</div>
+
+
+
     </div>
 
 </template>
@@ -134,6 +148,11 @@ let startY = 0;
 let isSelecting = false;
 let selectionStart = null;
 let selectionEnd = null;
+
+const saveGcode = () => {
+  console.log("G-code saved!");
+};
+
 
 const fitCanvasToBuildPlate = () => {
   const canvasEl = canvas.value;
@@ -674,14 +693,44 @@ const undo = () => {
   --bs-gutter-x: 0;
 }
 
-.toolpath-layout .scrolling-table {
+.right-panel {
   width: 400px;
-  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 0;
+}
+
+.scrolling-table {
+  flex: 1;
+  max-height: calc(60vh - 2rem); /* Adjust height as needed */
   overflow-y: auto;
   border: 1px solid #ddd;
   background-color: #ddd;
-  --bs-gutter-x: 0;
+  padding-bottom: 3rem;
+  /* padding-right: 0.5rem;
+  padding-left: 0.5rem; */
+  /* margin-bottom: 3.5rem; */
 }
+
+.save-button {
+  position: absolute;
+  bottom: 0.25rem;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;      /* vertical centering */
+  justify-content: center;  /* horizontal centering */
+  width: 100%;
+  height: 4rem;
+  padding: 0.5rem 1rem;
+  gap: 0.5rem;               /* spacing between icon and text */
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+
+
 
 .checkbox-cell {
   max-width: fit-content;

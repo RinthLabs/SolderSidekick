@@ -1,5 +1,7 @@
 <script setup>
 import { ref } from "vue";
+import { useDrillStore } from "@/stores/drillStore"; // ✅ Add this line
+const drillStore = useDrillStore(); // ✅ And this line
 
 // General Machine Settings
 const solderFeedMultiplier = ref(105);
@@ -44,18 +46,12 @@ const isCollapsed = ref(true);
       @click="isCollapsed = !isCollapsed"
     >
       <i class="fas" :class="isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
-      <span class="ms-2">Machine Settings</span>
+      <span class="ms-2">Advanced Machine Settings</span>
     </button>
 
     <!-- Collapsible Settings Panel -->
     <div v-show="!isCollapsed" class="mt-3 p-3 border rounded bg-light">
       <h4 class="text-dark"><i class="fas fa-cogs"></i> General Settings</h4>
-
-      <div class="mb-3">
-        <label class="form-label"><i class="fas fa-tint"></i> Solder Feed Multiplier</label>
-        <small class="text-muted d-block">(Default: 105 for 1mm solder)</small>
-        <input type="number" class="form-control" v-model="solderFeedMultiplier" min="0" step="0.01" />
-      </div>
 
       <div class="mb-3">
         <label class="form-label"><i class="fas fa-ruler-combined"></i> Printer Bed Size (X, Y)</label>
@@ -72,6 +68,26 @@ const isCollapsed = ref(true);
 
       <hr />
 
+      <h4 class="text-dark"><i class="fa-solid fa-syringe"></i> Extrusion Settings</h4>
+
+      <div class="mb-3">
+        <label class="form-label"><i class="fas fa-tint"></i> Solder Feed Multiplier</label>
+        <small class="text-muted d-block">(Default: 105 for 1mm solder)</small>
+        <input type="number" class="form-control" v-model="solderFeedMultiplier" min="0" step="0.01" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Prime Amount Before Each Point (mm)</label>
+        <input type="number" class="form-control" v-model="drillStore.feedPrime" min="0" step="0.1" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Retract Amount After Each Point (mm)</label>
+        <input type="number" class="form-control" v-model="drillStore.feedRetract" min="0" step="0.1" />
+      </div>
+
+      <hr />
+
       <h4 class="text-dark"><i class="fa-solid fa-play"></i> Start G-code Settings</h4>
 
       <div class="mb-3">
@@ -79,28 +95,9 @@ const isCollapsed = ref(true);
         <input type="number" class="form-control" v-model="initialLiftHeight" min="0" />
       </div>
 
-      <div class="mb-3">
-        <label class="form-label"><i class="fas fa-percent"></i> Extruder Multiplier (%)</label>
-        <input type="number" class="form-control" v-model="extruderMultiplier" min="0" step="0.1" />
-      </div>
-
       <div class="form-check mb-3">
         <input class="form-check-input" type="checkbox" v-model="homeXYFirst" />
         <label class="form-check-label">Home XY before Z</label>
-      </div>
-
-      <hr />
-
-      <h4 class="text-dark"><i class="fa-solid fa-crosshairs"></i> Per-Point G-code Settings</h4>
-
-      <div class="mb-3">
-        <label class="form-label"><i class="fas fa-arrow-down"></i> Solder Z Depth</label>
-        <input type="number" class="form-control" v-model="solderZDepth" min="-10" step="0.1" />
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label"><i class="fas fa-arrow-up"></i> Retract Height After Solder</label>
-        <input type="number" class="form-control" v-model="retractHeight" min="0" step="0.1" />
       </div>
 
       <hr />

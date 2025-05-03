@@ -5,25 +5,29 @@
 
         <!-- PCB Offset and Rotation Controls -->
 
+    <div class="mb-3 d-flex align-items-center pcb-controls">
+      <label class="form-label">PCB Thickness (mm) <i class="fas fa-layer-group pcb-icon mw-5"></i></label>
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.pcbThickness">
+
+      <label class="form-label pcb-section">Mount Height (mm) <i class="fas fa-ruler-vertical pcb-icon mw-5"></i></label>
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.mountHeight">
+    </div>
+
 <div class="mb-3 d-flex align-items-center pcb-controls">
       <label class="form-label">PCB Offset (mm) <i class="fas fa-arrows-alt-h pcb-icon"></i></label>
       <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
       <label class="form-label"><i class="fas fa-arrows-alt-v pcb-icon"></i></label>
       <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
 
-      <!-- <label class="form-label mw-5 pcb-section">Rotate</label>
-      <button class="btn btn-outline-secondary" @click="rotatePCB(-5)"><i class="fa-solid fa-rotate-left"></i></button>
-      <input
-        type="number"
-        class="form-control d-inline w-auto pcb-input"
-        v-model.number="rotation"
-        @input="updateCanvas"
-      >
-      <button class="btn btn-outline-secondary" @click="rotatePCB(5)"><i class="fa-solid fa-rotate-right"></i></button> -->
-
       <label class="form-label mw-5 pcb-section">Flip</label>
       <button class="btn btn-outline-secondary" @click="mirrorHorizontal"><i class="fa-solid fa-right-left"></i></button>
       <button class="btn btn-outline-secondary" @click="mirrorVertical"><i class="fa-solid fa-right-left r90"></i></button>
+
+      <!-- <label class="form-label pcb-section">PCB Thickness (mm) <i class="fas fa-layer-group pcb-icon mw-5"></i></label>
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.pcbThickness">
+
+      <label class="form-label pcb-section">Mount Height (mm) <i class="fas fa-ruler-vertical pcb-icon mw-5"></i></label>
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.mountHeight"> -->
     </div>
 
     <!-- Toolbar -->
@@ -77,6 +81,7 @@
               <th>Y</th>
               <th>Tool</th>
               <th>Solder</th>
+              <th>Feed (mm)</th>
             </tr>
           </thead>
           <tbody>
@@ -90,9 +95,13 @@
               <td>{{ hole.x.toFixed(1) }}</td>
               <td>{{ hole.y.toFixed(1) }}</td>
               <td>{{ hole.tool }}</td>
-              <td>
+              <td class="checkbox-cell">
                 <input type="checkbox" v-model="hole.solder" @change="onSolderToggle(hole)" />
               </td>
+              <td>
+                <input type="number" class="form-control form-control-sm" v-model.number="hole.feed" min="0" step="0.1" style="max-width: 70px;" />
+              </td>
+
 
             </tr>
           </tbody>
@@ -663,6 +672,10 @@ const undo = () => {
   border: 1px solid #ddd;
   background-color: #ddd;
   --bs-gutter-x: 0;
+}
+
+.checkbox-cell{
+  max-width: fit-content;
 }
 
 

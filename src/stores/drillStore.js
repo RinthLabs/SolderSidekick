@@ -8,7 +8,11 @@ export const useDrillStore = defineStore("drill", {
     originOffsetY: 16,
     toolSizes: {},
     undoStack: [],
-    canvasShouldUpdate: false
+    canvasShouldUpdate: false,
+    pcbThickness: 1.6,
+    mountHeight: 28.8,
+    feedPrime: 1.0,
+    feedRetract: 0.5,
   }),
   getters: {
     selectedPoints: (state) => state.drillData.filter(d => d.selected),
@@ -36,6 +40,17 @@ export const useDrillStore = defineStore("drill", {
       this.canvasShouldUpdate = false;
     },
     
+    // setDrillData(data, toolSizes = {}) {
+    //   this.drillData = data.map((d, i) => ({
+    //     ...d,
+    //     id: i,
+    //     solder: true,
+    //     selected: false,
+    //     pathIndex: null,
+    //   }));
+    //   this.path = [];
+    //   this.toolSizes = toolSizes;
+    // },
     setDrillData(data, toolSizes = {}) {
       this.drillData = data.map((d, i) => ({
         ...d,
@@ -43,10 +58,12 @@ export const useDrillStore = defineStore("drill", {
         solder: true,
         selected: false,
         pathIndex: null,
+        feed: 3.0, // ⬅️ Default 3mm solder feed per point
       }));
       this.path = [];
       this.toolSizes = toolSizes;
     },
+    
     toggleSelection(id) {
       const drill = this.drillData.find(d => d.id === id);
       if (drill) drill.selected = !drill.selected;

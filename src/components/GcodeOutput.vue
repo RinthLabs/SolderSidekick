@@ -33,6 +33,9 @@ M117 Ready to Solder! ; Display message on the printer screen
 const perPointGcode = ref(`; Solder Point G-code
 G0 X{X} Y{Y} ; Move to position
 G1 Z-1 ; Lower soldering iron
+G1 E{PRIME} F600 ; Prime solder
+G1 E{FEED} ; Extrude solder
+G1 E-{RETRACT} F600  ; Retract slightly
 G1 Z0 ; Raise soldering iron`);
 
 const endGcode = ref(`; End G-code

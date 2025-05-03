@@ -39,18 +39,6 @@ export const useDrillStore = defineStore("drill", {
     acknowledgeCanvasUpdate() {
       this.canvasShouldUpdate = false;
     },
-    
-    // setDrillData(data, toolSizes = {}) {
-    //   this.drillData = data.map((d, i) => ({
-    //     ...d,
-    //     id: i,
-    //     solder: true,
-    //     selected: false,
-    //     pathIndex: null,
-    //   }));
-    //   this.path = [];
-    //   this.toolSizes = toolSizes;
-    // },
     setDrillData(data, toolSizes = {}) {
       this.drillData = data.map((d, i) => ({
         ...d,
@@ -58,7 +46,9 @@ export const useDrillStore = defineStore("drill", {
         solder: true,
         selected: false,
         pathIndex: null,
-        feed: 3.0, // ⬅️ Default 3mm solder feed per point
+        feed: 3.0,
+        dwell: 1.5,
+        solderOffset: 0.8
       }));
       this.path = [];
       this.toolSizes = toolSizes;

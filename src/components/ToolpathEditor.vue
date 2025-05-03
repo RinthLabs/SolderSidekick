@@ -23,11 +23,6 @@
       <button class="btn btn-outline-secondary" @click="mirrorHorizontal"><i class="fa-solid fa-right-left"></i></button>
       <button class="btn btn-outline-secondary" @click="mirrorVertical"><i class="fa-solid fa-right-left r90"></i></button>
 
-      <!-- <label class="form-label pcb-section">PCB Thickness (mm) <i class="fas fa-layer-group pcb-icon mw-5"></i></label>
-      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.pcbThickness">
-
-      <label class="form-label pcb-section">Mount Height (mm) <i class="fas fa-ruler-vertical pcb-icon mw-5"></i></label>
-      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.mountHeight"> -->
     </div>
 
     <!-- Toolbar -->
@@ -76,12 +71,14 @@
         <table class="table table-sm table-striped">
           <thead class="table-dark">
             <tr>
-              <th>#</th>
-              <th>X</th>
-              <th>Y</th>
-              <th>Tool</th>
-              <th>Solder</th>
-              <th>Feed (mm)</th>
+              <th title="Should the point be soldered?"><i class="fa-solid fa-fire"></i></th>
+              <th title="The order in which the point will be soldered">#</th>
+              <th title="X position in mm">X</th>
+              <th title="Y position in mm">Y</th>
+              <th title="Drill tool used, can be useful for feed/dwell time"><i class="fas fa-tools"></i></th>
+              <th title="Amount of solder to extrude (mm)">Feed</th>
+              <th title="Seconds spent soldering the point">Time</th>
+              <th title="Approach distance from the right side (mm)"><i class="fas fa-dot-circle"></i> <i class="fas fa-long-arrow-alt-left"></i></th>
             </tr>
           </thead>
           <tbody>
@@ -91,15 +88,22 @@
               :class="{ 'table-primary': hole.selected }"
               @click="toggleSelect(hole.id)"
             >
-              <td>{{ hole.pathIndex !== null ? hole.pathIndex + 1 : '-' }}</td>
-              <td>{{ hole.x.toFixed(1) }}</td>
-              <td>{{ hole.y.toFixed(1) }}</td>
-              <td>{{ hole.tool }}</td>
               <td class="checkbox-cell">
                 <input type="checkbox" v-model="hole.solder" @change="onSolderToggle(hole)" />
               </td>
+              <td><b>{{ hole.pathIndex !== null ? hole.pathIndex + 1 : '-' }}</b></td>
+              <td>{{ hole.x.toFixed(1) }}</td>
+              <td>{{ hole.y.toFixed(1) }}</td>
+              <td>{{ hole.tool }}</td>
+              
               <td>
-                <input type="number" class="form-control form-control-sm" v-model.number="hole.feed" min="0" step="0.1" style="max-width: 70px;" />
+                <input type="number" class="form-control form-control-sm" v-model.number="hole.feed" min="0" step="0.1" style="max-width: 50px;" />
+              </td>
+              <td>
+                <input type="number" class="form-control form-control-sm" v-model.number="hole.dwell" min="0" step="0.1" style="max-width: 50px;" />
+              </td>
+              <td>
+                <input type="number" class="form-control form-control-sm" v-model.number="hole.solderOffset" min="0" step="0.1" style="max-width: 50px;" />
               </td>
 
 
@@ -560,16 +564,12 @@ const undo = () => {
   width: 100%;
   aspect-ratio: 1.5;
 }
-/* .scrolling-table {
-  overflow-y: auto;
-  max-height: 50vh;
-  border: 1px solid #ddd;
-  background-color: #ddd;
-} */
 
 
 .table-primary {
-  background-color: rgba(0, 123, 255, 0.2);
+  background-color: rgba(0, 255, 242, 0.2) !important;
+  --bs-table-striped-bg: rgba(0, 255, 242, 0.2) !important;
+  --bs-table-bg: #008bab47 !important
 }
 
 .toolpath-canvas {
@@ -585,6 +585,15 @@ const undo = () => {
     -ms-transform: rotate(90deg);   /* IE 9 */
     -o-transform: rotate(90deg);   /* Opera */
     transform: rotate(90deg);
+    display: inline-block; /* 👈 Needed to allow transform to work */
+}
+
+.r180{
+  -webkit-transform: rotate(180deg); /* Safari and Chrome */
+    -moz-transform: rotate(180deg);   /* Firefox */
+    -ms-transform: rotate(180deg);   /* IE 9 */
+    -o-transform: rotate(180deg);   /* Opera */
+    transform: rotate(180deg);
     display: inline-block; /* 👈 Needed to allow transform to work */
 }
 
@@ -674,8 +683,13 @@ const undo = () => {
   --bs-gutter-x: 0;
 }
 
-.checkbox-cell{
+.checkbox-cell {
   max-width: fit-content;
+  padding-left: 0.75rem; /* Add this line */
+}
+
+th:first-child {
+  padding-left: 0.75rem; /* Match checkbox cell padding */
 }
 
 

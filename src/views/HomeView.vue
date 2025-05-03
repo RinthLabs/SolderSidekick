@@ -2,9 +2,7 @@
 
 import UploadDrillFile from "@/components/UploadDrillFile.vue";
 import ToolpathEditor from "@/components/ToolpathEditor.vue";
-import MachineSettings from "@/components/MachineSettings.vue";
-import GcodeOutput from "@/components/GcodeOutput.vue";
-
+import MachineConfig from "@/components/MachineConfig.vue";
 
 </script>
 
@@ -16,9 +14,13 @@ import GcodeOutput from "@/components/GcodeOutput.vue";
   </div>
     <ToolpathEditor />
   <div class="container">
-    <MachineSettings />
-    <GcodeOutput />
+    <MachineConfig />
   </div>
+
+  <footer class="footer py-4 text-center text-muted">
+    Open source · MIT Licensed · Built by <a href="https://rinthlabs.com" target="_blank">Rinth Labs</a>
+</footer>
+
 
 </template>
 
@@ -39,6 +41,12 @@ import GcodeOutput from "@/components/GcodeOutput.vue";
 .navbar-nav .nav-item {
   display: flex;
   align-items: center;
+}
+
+.footer {
+  border-top: 1px solid #ddd;
+  font-size: 0.9rem;
+  margin-top: 20rem;
 }
 
 

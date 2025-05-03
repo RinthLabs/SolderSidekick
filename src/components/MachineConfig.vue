@@ -64,8 +64,21 @@ watch([feedPrime, feedRetract, defaultSolderFeed], () => {
 });
 </script>
 
+<!-- MachineConfig.vue -->
 <template>
-  <div class="container mt-4">
+  <div class="modal fade" id="machineConfigModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-ish">
+
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fa-solid fa-gears"></i> Machine Configuration</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          
+
+
+            <div class="container mt-4">
     <ul class="nav nav-tabs">
       <li class="nav-item">
         <a class="nav-link" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">Machine Settings</a>
@@ -123,13 +136,20 @@ watch([feedPrime, feedRetract, defaultSolderFeed], () => {
 
     <div v-if="activeTab === 'gcode'" class="mt-3">
       <label class="form-label"><i class="fa-solid fa-play"></i> Start G-code</label>
-      <textarea class="form-control" rows="5" v-model="startGcode"></textarea>
+      <textarea class="form-control gcode-textarea" v-model="startGcode"></textarea>
 
       <label class="form-label mt-3"><i class="fa-solid fa-crosshairs"></i> Per-Point G-code</label>
-      <textarea class="form-control" rows="5" v-model="perPointGcode"></textarea>
+      <textarea class="form-control gcode-textarea" v-model="perPointGcode"></textarea>
 
       <label class="form-label mt-3"><i class="fa-solid fa-stop"></i> End G-code</label>
-      <textarea class="form-control" rows="5" v-model="endGcode"></textarea>
+      <textarea class="form-control gcode-textarea" v-model="endGcode"></textarea>
+    </div>
+  </div>
+
+
+
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -138,4 +158,29 @@ watch([feedPrime, feedRetract, defaultSolderFeed], () => {
 textarea {
   font-family: monospace;
 }
+
+.modal-fullscreen-ish {
+  max-width: 95vw;
+  max-height: 95vh;
+  margin: 2.5vh auto;
+}
+
+.modal-fullscreen-ish .modal-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-fullscreen-ish .modal-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.gcode-textarea {
+  min-height: 18vh;
+  resize: vertical; /* Optional: allows manual resizing */
+  font-family: monospace;
+}
+
+
 </style>

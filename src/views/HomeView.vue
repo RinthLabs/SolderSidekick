@@ -13,9 +13,7 @@ import MachineConfig from "@/components/MachineConfig.vue";
     <UploadDrillFile />
   </div>
     <ToolpathEditor />
-  <div class="container">
     <MachineConfig />
-  </div>
 
   <footer class="footer py-4 text-center text-muted">
     Open source · MIT Licensed · Built by <a href="https://rinthlabs.com" target="_blank">Rinth Labs</a>

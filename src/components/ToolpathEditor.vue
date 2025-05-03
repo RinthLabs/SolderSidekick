@@ -3,7 +3,10 @@
   <div class="toolpath-editor container">
     <h2 class="text-primary mb-3"><i class="fa-solid fa-fire"></i> Solder Toolpath Editor</h2>
 
-    <!-- Machine Config button/modal goes here -->
+    <!-- Open Machine Config Modal -->
+    <button class="btn btn-outline-secondary mb-3" data-bs-toggle="modal" data-bs-target="#machineConfigModal">
+      <i class="fa-solid fa-gears me-1"></i> Machine Settings
+    </button>
 
 
     <!-- PCB Offset and Rotation Controls -->
@@ -182,7 +185,7 @@ const resizeCanvas = () => {
 
   const dpr = window.devicePixelRatio || 1;
   const width = canvasEl.parentElement.clientWidth;
-  const height = window.innerHeight * 0.6;
+  const height = window.innerHeight * 0.75;
 
   canvasEl.width = width * dpr;
   canvasEl.height = height * dpr;
@@ -703,7 +706,7 @@ const undo = () => {
 
 .scrolling-table {
   flex: 1;
-  max-height: calc(60vh - 2rem); /* Adjust height as needed */
+  max-height: calc(75vh - 2rem); /* Adjust height as needed */
   overflow-y: auto;
   border: 1px solid #ddd;
   background-color: #ddd;

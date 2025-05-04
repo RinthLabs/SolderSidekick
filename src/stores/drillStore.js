@@ -8,6 +8,7 @@ export const useDrillStore = defineStore("drill", {
     originOffsetY: 16,
     toolSizes: {},
     undoStack: [],
+    redoStack: [],
     canvasShouldUpdate: false,
     pcbThickness: 1.6,
     mountHeight: 28.8,
@@ -61,29 +62,74 @@ export const useDrillStore = defineStore("drill", {
     },
     addToPath(id) {
       if (!this.path.includes(id)) {
-        this.undoStack.push([...this.path]);
+        this.undoStack.push({
+          path: [...this.path],
+          solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
+        });
+        
+        this.redoStack = [];
         this.path.push(id);
         this.updatePathIndices();
       }
     },
+    
     removeFromPath(id) {
       if (this.path.includes(id)) {
-        this.undoStack.push([...this.path]);
+        this.undoStack.push({
+          path: [...this.path],
+          solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
+        });
+        
         this.path = this.path.filter(p => p !== id);
         this.updatePathIndices();
       }
     },
     clearPath() {
-      this.undoStack.push([...this.path]);
+      this.undoStack.push({
+        path: [...this.path],
+        solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
+      });
+      
       this.path = [];
       this.updatePathIndices();
     },
     undoLast() {
       if (this.undoStack.length > 0) {
-        this.path = this.undoStack.pop();
+        const current = {
+          path: [...this.path],
+          solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
+        };
+        this.redoStack.push(current);
+    
+        const previous = this.undoStack.pop();
+        this.path = previous.path;
+        previous.solderStates.forEach(({ id, solder }) => {
+          const d = this.drillData.find(p => p.id === id);
+          if (d) d.solder = solder;
+        });
         this.updatePathIndices();
       }
     },
+    
+    redoLast() {
+      if (this.redoStack.length > 0) {
+        const current = {
+          path: [...this.path],
+          solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
+        };
+        this.undoStack.push(current);
+    
+        const next = this.redoStack.pop();
+        this.path = next.path;
+        next.solderStates.forEach(({ id, solder }) => {
+          const d = this.drillData.find(p => p.id === id);
+          if (d) d.solder = solder;
+        });
+        this.updatePathIndices();
+      }
+    },
+    
+    
     updatePathIndices() {
       this.drillData.forEach(d => d.pathIndex = null);
       this.path.forEach((id, i) => {
@@ -117,7 +163,11 @@ export const useDrillStore = defineStore("drill", {
         }
       }
 
-      this.undoStack.push([...this.path]);
+      this.undoStack.push({
+        path: [...this.path],
+        solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
+      });
+      
       this.path = path;
       this.updatePathIndices();
     },
@@ -150,7 +200,11 @@ export const useDrillStore = defineStore("drill", {
       }
 
       // Replace selected path segments only
-      this.undoStack.push([...this.path]);
+      this.undoStack.push({
+        path: [...this.path],
+        solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
+      });
+      
       const idsToReplace = new Set(selected.map(d => d.id));
       this.path = this.path.filter(id => !idsToReplace.has(id));
       const insertIndex = this.path.length;

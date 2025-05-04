@@ -86,6 +86,7 @@
 .video-wrapper {
   flex: 1;
   width: 100%;
+  max-width: 100%;
   position: relative;
   border-radius: 6px;
   overflow: hidden;

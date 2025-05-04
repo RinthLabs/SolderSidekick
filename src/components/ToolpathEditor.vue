@@ -41,6 +41,8 @@
 
       <button class="btn btn-outline-danger" @click="clearPath"><i class="fa-solid fa-trash"></i> Clear Path</button>
       <button class="btn btn-outline-dark" @click="undo"><i class="fa-solid fa-rotate-left"></i> Undo</button>
+      <button class="btn btn-outline-dark" @click="redo"><i class="fa-solid fa-rotate-right"></i> Redo</button>
+
     </div>
   </div>
 </div>
@@ -125,7 +127,8 @@ import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick  } from "vue
 import GettingStarted from "@/components/GettingStarted.vue";
 import { useDrillStore } from "@/stores/drillStore";
 import { useFileHandlers } from "@/composables/useFileHandlers";
-const { parseDrillFile, parseProjectFile } = useFileHandlers();
+const { parseDrillFile, parseProjectFile, saveProject } = useFileHandlers();
+
 
 const drillStore = useDrillStore();
 const canvas = ref(null);
@@ -149,6 +152,23 @@ let dragOriginStart = null;
 
 const saveGcode = () => {
   console.log("G-code saved!");
+};
+
+const openFileDialog = () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".drl,.txt,.json";
+  input.onchange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === "json") {
+      parseProjectFile(file);
+    } else {
+      parseDrillFile(file);
+    }
+  };
+  input.click();
 };
 
 
@@ -228,9 +248,43 @@ onMounted(async () => {
     fitCanvasToBuildPlate(); // re-fit on resize too
   });
 
+  const handleKeyDown = (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key.toLowerCase()) {
+        case 'z':
+          e.preventDefault();
+          undo();
+          break;
+        case 'y':
+          e.preventDefault();
+          redo();
+          break;
+        case 's':
+          e.preventDefault();
+          saveProject();
+          break;
+        case 'o':
+          e.preventDefault();
+          openFileDialog();
+          break;
+      }
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyDown);
+  onBeforeUnmount(() => {
+    window.removeEventListener("keydown", handleKeyDown);
+  });
+
 });
 
 const onSolderToggle = (hole) => {
+  drillStore.undoStack.push({
+    path: [...drillStore.path],
+    solderStates: drillStore.drillData.map(d => ({ id: d.id, solder: d.solder }))
+  });
+  drillStore.redoStack = [];
+
   if (!hole.solder) {
     drillStore.removeFromPath(hole.id);
   } else {
@@ -239,17 +293,25 @@ const onSolderToggle = (hole) => {
   updateCanvas();
 };
 
+
 const setSelectedSolder = (state) => {
+  drillStore.undoStack.push({
+    path: [...drillStore.path],
+    solderStates: drillStore.drillData.map(d => ({ id: d.id, solder: d.solder }))
+  });
+  drillStore.redoStack = [];
+
   drillStore.drillData.forEach(d => {
     if (d.selected) {
       d.solder = state;
       if (!state) {
-        drillStore.removeFromPath(d.id); // ⬅️ Only remove from path when clearing solder
+        drillStore.removeFromPath(d.id);
       }
     }
   });
   updateCanvas();
 };
+
 
 
 const rotatePCB = (angleDelta) => {
@@ -665,6 +727,12 @@ const undo = () => {
   drillStore.undoLast();
   updateCanvas();
 };
+
+const redo = () => {
+  drillStore.redoLast();
+  updateCanvas();
+};
+
 
 const clearFile = () => {
   drillStore.clearDrillFile();

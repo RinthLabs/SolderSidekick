@@ -304,7 +304,7 @@ onMounted(() => {
 }
 
 .mobile-text {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   max-width: 500px;
   line-height: 1.6;
   margin-bottom: 1rem;

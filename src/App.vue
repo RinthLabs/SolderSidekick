@@ -1,6 +1,16 @@
 
 <template>
   <div class="app-root">
+
+    <div v-if="isMobile" class="mobile-message">
+      <img src="/logo/solder-sidekick-logo-dark-bg.svg" alt="Solder Sidekick Logo" class="mobile-logo" />
+      <p class="mobile-text">
+        We're sorry, Solder Sidekick isn't available on mobile devices just yet.<br />
+        Please use a desktop or laptop for the best experience.
+      </p>
+    </div>
+
+    <div v-else> 
    
     <RouterView />
 
@@ -30,13 +40,15 @@
   </div>
 
 
-
+</div>
 
 </template>
 
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
 import { ref, onMounted } from "vue";
+
+const isMobile = ref(false)
 
 // Define links for GitHub, Shop, and Donate
 const githubRepo = ref("https://github.com/RinthLabs/SolderSidekick");
@@ -95,6 +107,8 @@ function loadFacebookPixel() {
 }
 
 onMounted(() => {
+  isMobile.value = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
   const consent = localStorage.getItem("cookieConsent");
   if (consent === "accepted") {
     loadGoogleAnalytics();
@@ -205,6 +219,33 @@ onMounted(() => {
 .cookie__floating__buttons__button--decline:hover {
   background-color: var(--bs-secondary-hover);
 }
+
+.mobile-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  padding-bottom: 15vh;
+  text-align: center;
+  background-color: var(--bs-dark);
+  color: var(--bs-light);
+}
+
+.mobile-logo {
+  width: 180px;
+  max-width: 60vw;
+  margin-bottom: 1.5rem;
+}
+
+.mobile-text {
+  font-size: 1.25rem;
+  max-width: 500px;
+  line-height: 1.6;
+  color: var(--bs-light);
+}
+
 
 </style>
 

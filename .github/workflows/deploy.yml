@@ -3,7 +3,7 @@ name: Deploy Vue App to GitHub Pages
 on:
   push:
     branches:
-      - main  # or master, depending on your branch name
+      - main
 
 jobs:
   build-deploy:
@@ -16,7 +16,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: 20  # or your Node version
+        node-version: 20
 
     - name: Install dependencies
       run: npm install
@@ -29,3 +29,4 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./dist
+        cname: www.soldersidekick.com

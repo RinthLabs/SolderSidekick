@@ -1,25 +1,26 @@
 <template>
   <div class="container">
   <div class="toolpath-editor container">
-    <h2 class="text-primary mb-3"><i class="fa-solid fa-fire"></i> Solder Toolpath Editor</h2>
-
-    <!-- Open Machine Config Modal -->
-    <button class="btn btn-outline-secondary mb-3" data-bs-toggle="modal" data-bs-target="#machineConfigModal">
-      <i class="fa-solid fa-gears me-1"></i> Machine Settings
-    </button>
 
 
-    <!-- PCB Offset and Rotation Controls -->
 
-    <div class="mb-3 d-flex align-items-center pcb-controls">
-      <label class="form-label">PCB Thickness (mm) <i class="fas fa-layer-group pcb-icon mw-5"></i></label>
-      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.pcbThickness">
+  </div>
 
-      <label class="form-label pcb-section">Mount Height (mm) <i class="fas fa-ruler-vertical pcb-icon mw-5"></i></label>
-      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.mountHeight">
-    </div>
+</div>
 
-<div class="mb-3 d-flex align-items-center pcb-controls">
+
+
+    <div class="row toolpath-layout gx-3">
+
+      <div class="col-lg-8 position-relative canvas-wrapper"
+        @dragover.prevent
+        @drop.prevent="handleCanvasDrop"
+      >
+
+<div class="container topbar-overlay d-flex">
+  <div class="row">
+
+  <div class="mb-3 d-flex align-items-center pcb-controls">
       <label class="form-label">PCB Offset (mm) <i class="fas fa-arrows-alt-h pcb-icon"></i></label>
       <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
       <label class="form-label"><i class="fas fa-arrows-alt-v pcb-icon"></i></label>
@@ -28,6 +29,12 @@
       <label class="form-label mw-5 pcb-section">Flip</label>
       <button class="btn btn-outline-secondary" @click="mirrorHorizontal"><i class="fa-solid fa-right-left"></i></button>
       <button class="btn btn-outline-secondary" @click="mirrorVertical"><i class="fa-solid fa-right-left r90"></i></button>
+
+      <label class="form-label pcb-section">PCB Thickness (mm) <i class="fas fa-layer-group pcb-icon mw-5"></i></label>
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.pcbThickness">
+
+      <label class="form-label pcb-section">Mount Height (mm) <i class="fas fa-ruler-vertical pcb-icon mw-5"></i></label>
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.mountHeight">
 
     </div>
 
@@ -48,14 +55,12 @@
 
   </div>
 
+
+
 </div>
 
 
 
-
-    <div class="row toolpath-layout gx-3">
-
-      <div class="col-lg-8 position-relative canvas-wrapper">
         <canvas
           ref="canvas"
           class="toolpath-canvas"
@@ -67,8 +72,8 @@
         ></canvas>
         <div class="editor-instructions">
           <div class="editor-label">Right click + drag to pan. Scroll to zoom.</div>
-          <div class="editor-label">Left click each point to manually define tool path.</div>
-          <div class="editor-label">Ctrl + left click to select points. Left click drag to box select</div>
+          <div class="editor-label">Left click point to add to tool path.</div>
+          <div class="editor-label">Ctrl + left click to remove points from path. Left click drag to box select.</div>
         </div>
 
       </div>
@@ -185,7 +190,7 @@ const resizeCanvas = () => {
 
   const dpr = window.devicePixelRatio || 1;
   const width = canvasEl.parentElement.clientWidth;
-  const height = window.innerHeight * 0.75;
+  const height = window.innerHeight * 0.85;
 
   canvasEl.width = width * dpr;
   canvasEl.height = height * dpr;
@@ -268,32 +273,6 @@ const mirrorVertical = () => {
   updateCanvas();
 };
 
-
-
-const drawArrow = (ctx, from, to, color) => {
-  const headLength = 6;
-  const angle = Math.atan2(to.y - from.y, to.x - from.x);
-
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.lineWidth = 2;
-
-  const lineEndX = to.x - headLength * Math.cos(angle) * 0.5;
-  const lineEndY = to.y - headLength * Math.sin(angle) * 0.5;
-
-  ctx.beginPath();
-  ctx.moveTo(from.x, from.y);
-  ctx.lineTo(lineEndX, lineEndY);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(to.x, to.y);
-  ctx.lineTo(to.x - headLength * Math.cos(angle - Math.PI / 6), to.y - headLength * Math.sin(angle - Math.PI / 6));
-  ctx.lineTo(to.x - headLength * Math.cos(angle + Math.PI / 6), to.y - headLength * Math.sin(angle + Math.PI / 6));
-  ctx.closePath();
-  ctx.fill();
-};
-
 const drawClippedGrid = (ctx, width, height, spacing = 16, color = "#aaaaaa") => {
   ctx.save(); // Save before clipping
   ctx.beginPath();
@@ -354,32 +333,19 @@ const updateCanvas = () => {
   // Draw 16mm grid lines clipped to print bed
   drawClippedGrid(ctx, 235, 235, 16);
 
-  // Draw origin cross (blue)
-  ctx.strokeStyle = "blue";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(-5, 0);
-  ctx.lineTo(5, 0);
-  ctx.moveTo(0, -5);
-  ctx.lineTo(0, 5);
-  ctx.stroke();
-
-  // Draw axes
-  drawArrow(ctx, { x: 0, y: 0 }, { x: 40, y: 0 }, "red");   // X-axis
-  drawArrow(ctx, { x: 0, y: 0 }, { x: 0, y: -40 }, "green"); // Y-axis
-
   // 💡 Apply offset only to drill data
   ctx.translate(drillStore.originOffsetX, -drillStore.originOffsetY);
   ctx.rotate((rotation.value * Math.PI) / 180);
 
   // Draw + at drill file origin (0,0) after offset and rotation
   ctx.strokeStyle = "magenta";
-  ctx.lineWidth = 1 / scale;
+  ctx.lineWidth = 2 / scale;
+  const originLength = 8;
   ctx.beginPath();
-  ctx.moveTo(-4 / scale, 0);
-  ctx.lineTo(4 / scale, 0);
-  ctx.moveTo(0, -4 / scale);
-  ctx.lineTo(0, 4 / scale);
+  ctx.moveTo(-originLength / scale, 0);
+  ctx.lineTo(originLength / scale, 0);
+  ctx.moveTo(0, -originLength / scale);
+  ctx.lineTo(0, originLength / scale);
   ctx.stroke();
 
 
@@ -427,6 +393,34 @@ const updateCanvas = () => {
 
   ctx.restore();
 
+
+  // === Draw fixed-size origin arrows and cross in screen space ===
+ctx.save();
+
+// Convert origin to screen coordinates
+// const originX = offsetX + scale * drillStore.originOffsetX;
+// const originY = offsetY - scale * drillStore.originOffsetY;
+
+const originX = offsetX;
+const originY = offsetY;
+
+// Draw blue origin cross
+ctx.strokeStyle = "blue";
+ctx.lineWidth = 6;
+ctx.beginPath();
+ctx.moveTo(originX - 16, originY);
+ctx.lineTo(originX + 16, originY);
+ctx.moveTo(originX, originY - 16);
+ctx.lineTo(originX, originY + 16);
+ctx.stroke();
+
+// Draw fixed-size arrows (e.g., 40px length)
+drawFixedArrow(ctx, originX, originY, 60, 0, "red");    // X-axis
+drawFixedArrow(ctx, originX, originY, 0, -60, "green"); // Y-axis
+
+ctx.restore();
+
+
 if (isSelecting && selectionStart && selectionEnd) {
   // Draw the selection box in screen space (no transform)
   ctx.save();
@@ -446,6 +440,47 @@ if (isSelecting && selectionStart && selectionEnd) {
 }
 
 };
+
+
+const drawFixedArrow = (ctx, x, y, dx, dy, color) => {
+  const headLength = 16; // tip size
+  const angle = Math.atan2(dy, dx);
+
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 6;
+
+  const endX = x + dx;
+  const endY = y + dy;
+
+  // Move shaft endpoint *back* a bit so it doesn't draw under the arrowhead
+  const shaftEndX = endX - Math.cos(angle) * headLength * 0.9;
+  const shaftEndY = endY - Math.sin(angle) * headLength * 0.9;
+
+  // Draw shaft
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(shaftEndX, shaftEndY);
+  ctx.stroke();
+
+  // Draw arrowhead
+  ctx.beginPath();
+  ctx.moveTo(endX, endY);
+  ctx.lineTo(
+    endX - headLength * Math.cos(angle - Math.PI / 6),
+    endY - headLength * Math.sin(angle - Math.PI / 6)
+  );
+  ctx.lineTo(
+    endX - headLength * Math.cos(angle + Math.PI / 6),
+    endY - headLength * Math.sin(angle + Math.PI / 6)
+  );
+  ctx.closePath();
+  ctx.fill();
+};
+
+
+
+
 
 const sortedDrillData = computed(() => {
   return [...drillStore.drillData].sort((a, b) => {
@@ -578,6 +613,76 @@ const undo = () => {
   drillStore.undoLast();
   updateCanvas();
 };
+
+const clearFile = () => {
+  drillStore.clearDrillFile();
+  drillStore.triggerCanvasUpdate();
+};
+
+
+
+const inchesToMm = (inches) => Math.round(inches * 25.4 * 100) / 100;
+
+const handleCanvasDrop = (event) => {
+  const file = Array.from(event.dataTransfer.files).find(f =>
+    f.name.endsWith(".drl") || f.name.endsWith(".txt")
+  );
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+
+    // ✅ Always clear first to allow reloading same file
+    drillStore.clearDrillFile();
+
+    drillStore.setDrillFile(text, file.name);
+
+    let parsedDrills = [];
+    let toolSizes = {};
+    let currentTool = null;
+
+    const lines = text.split("\n");
+    for (let line of lines) {
+      line = line.trim();
+      if (line.startsWith(";") || line.startsWith("M48") || line.startsWith("M30")) continue;
+
+      const toolMatch = line.match(/^T(\d+)C([\d.]+)/);
+      if (toolMatch) {
+        const toolId = `T${toolMatch[1]}`;
+        toolSizes[toolId] = inchesToMm(parseFloat(toolMatch[2]));
+        continue;
+      }
+
+      const toolChangeMatch = line.match(/^T(\d+)$/);
+      if (toolChangeMatch) {
+        currentTool = `T${toolChangeMatch[1]}`;
+        continue;
+      }
+
+      const coordMatch = line.match(/X([-+]?\d*\.?\d+)Y([-+]?\d*\.?\d+)/);
+      if (coordMatch) {
+        const x = inchesToMm(parseFloat(coordMatch[1]));
+        const y = inchesToMm(parseFloat(coordMatch[2]));
+        parsedDrills.push({
+          tool: currentTool || "Unknown",
+          size: toolSizes[currentTool] ? `${toolSizes[currentTool]} mm` : "Unknown",
+          x,
+          y,
+        });
+      }
+    }
+
+    drillStore.setDrillData(parsedDrills, toolSizes);
+    drillStore.triggerCanvasUpdate();
+  };
+
+  reader.readAsText(file);
+};
+
+
+
+
 </script>
 
 <style scoped>
@@ -625,6 +730,7 @@ const undo = () => {
 
 .pcb-controls{
   gap:0.5rem;
+  margin-top: 0.5rem;
 }
 
 .pcb-controls .form-label {
@@ -706,9 +812,9 @@ const undo = () => {
 
 .scrolling-table {
   flex: 1;
-  max-height: calc(75vh - 2rem); /* Adjust height as needed */
+  max-height: calc(85vh - 2rem); /* Adjust height as needed */
   overflow-y: auto;
-  border: 1px solid #ddd;
+  border: 0px solid #ddd;
   background-color: #ddd;
   padding-bottom: 3rem;
   /* padding-right: 0.5rem;
@@ -743,6 +849,57 @@ const undo = () => {
 th:first-child {
   padding-left: 0.75rem; /* Match checkbox cell padding */
 }
+
+.canvas-wrapper.drag-hover {
+  outline: 3px dashed #00aaff;
+  background-color: #eefbff;
+}
+
+.topbar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* background: rgba(0, 0, 0, 0.6); */
+  color: #000;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+
+.table-dark{
+  background-color: var(--bs-secondary) !important;
+}
+
+table th {
+  background-color: var(--bs-secondary) !important;
+}
+
+.btn-outline-secondary, .btn-outline-danger, .btn-outline-dark{
+  background-color: #fff !important;
+  
+}
+
+.btn-outline-danger:hover{
+  background-color: #dc3545 !important;
+  color: #FFF !important;
+}
+
+.btn-outline-secondary:hover{
+  background-color: #6c757d !important;
+  color: #FFF !important;
+}
+
+.btn-outline-dark:hover{
+  background-color: #212529 !important;
+  color: #FFF !important;
+}
+
 
 
 </style>

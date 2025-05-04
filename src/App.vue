@@ -3,12 +3,54 @@
   <div class="app-root">
 
     <div v-if="isMobile" class="mobile-message">
-      <img src="/logo/solder-sidekick-logo-dark-bg.svg" alt="Solder Sidekick Logo" class="mobile-logo" />
-      <p class="mobile-text">
-        We're sorry, Solder Sidekick isn't available on mobile devices just yet.<br />
-        Please use a desktop or laptop for the best experience.
-      </p>
+  <div class="mobile-content">
+    <img src="/logo/solder-sidekick-logo-dark-bg.svg" alt="Solder Sidekick Logo" class="mobile-logo" />
+
+    <p class="mobile-text">
+      Turn your Ender 3 into a hands-free soldering machine with the Solder Sidekick open hardware kit.
+    </p>
+
+    <div class="video-wrapper">
+      <iframe
+        width="100%"
+        height="315"
+        src="https://www.youtube.com/embed/MGpWirqkfZk"
+        title="Getting Started with Solder Sidekick"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
     </div>
+
+    <p class="mobile-note">
+      This app is desktop-only for now. Here's a quick video to show what it does — check it out on your computer when you're ready to dive in.
+    </p>
+  </div>
+
+<!-- Bottom section -->
+<div class="mobile-actions">
+  <button class="btn btn-outline-light share-btn" @click="handleShare">
+    <i class="fas fa-share-alt me-2"></i> Share or Send to Yourself
+  </button>
+
+  <div class="mobile-links">
+    <a href="https://github.com/RinthLabs/SolderSidekick" target="_blank" class="btn btn-outline-light">
+      <i class="fab fa-github me-2"></i> GitHub
+    </a>
+    <a href="https://rinthlabs.com/products/solder-sidekick-notification-sign-up" target="_blank" class="btn btn-outline-light">
+      <i class="fas fa-shopping-cart me-2"></i> Shop
+    </a>
+    <a href="https://www.paypal.com/donate/?hosted_button_id=CF4B9M4MD2HY2" target="_blank" class="btn btn-outline-light">
+      <i class="fas fa-donate me-2"></i> Donate
+    </a>
+  </div>
+</div>
+
+</div>
+
+
+
+
 
     <div v-else> 
    
@@ -105,6 +147,23 @@ function loadFacebookPixel() {
   fbq('init', '510286129836083'); // Replace with your pixel ID
   fbq('track', 'PageView');
 }
+
+const handleShare = async () => {
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Solder Sidekick',
+        text: 'Check out this open-source kit that turns your Ender 3 into a soldering robot!',
+        url: window.location.href
+      });
+    } catch (err) {
+      console.log('Share cancelled or failed:', err);
+    }
+  } else {
+    alert('Sharing not supported on this device.');
+  }
+};
+
 
 onMounted(() => {
   isMobile.value = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -223,28 +282,96 @@ onMounted(() => {
 .mobile-message {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
   min-height: 100vh;
-  padding: 2rem;
-  padding-bottom: 15vh;
+  padding: 4vh 1rem 2rem;
   text-align: center;
   background-color: var(--bs-dark);
   color: var(--bs-light);
 }
 
+.mobile-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
 .mobile-logo {
-  width: 180px;
+  width: 120px;
   max-width: 60vw;
-  margin-bottom: 1.5rem;
 }
 
 .mobile-text {
   font-size: 1.25rem;
   max-width: 500px;
   line-height: 1.6;
-  color: var(--bs-light);
+  margin-bottom: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
+
+.video-wrapper {
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #555;
+}
+
+.video-wrapper iframe {
+  width: 100%;
+  height: 100%;
+}
+.mobile-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem; /* space *between* buttons */
+  justify-content: center;
+  width: 100%;
+}
+
+.mobile-links .btn {
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  flex-shrink: 0; /* prevents squishing on small screens */
+}
+
+
+.mobile-note {
+  font-size: 1rem;
+  color: #ccc;
+  max-width: 500px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.mobile-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: auto;
+  gap: 0.75rem;
+  width: 100%;
+  padding-top: 1rem;
+}
+
+.share-btn {
+  max-width: calc(3 * 130px + 2 * 0.75rem); /* Approx. match 3 buttons + 2 gaps */
+  min-width: 240px;
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  flex-shrink: 0; /* prevents squishing on small screens */
+}
+
+
+
+
 
 .app-root {
   display: flex;

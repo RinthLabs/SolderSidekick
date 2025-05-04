@@ -7,7 +7,7 @@
     <img src="/logo/solder-sidekick-logo-dark-bg.svg" alt="Solder Sidekick Logo" class="mobile-logo" />
 
     <p class="mobile-text">
-      Turn your Ender 3 into a hands-free soldering machine with the Solder Sidekick open hardware kit.
+      Turn your Ender 3 into a hands-free soldering machine with this open hardware kit.
     </p>
 
     <div class="video-wrapper">
@@ -23,7 +23,7 @@
     </div>
 
     <p class="mobile-note">
-      This app is desktop-only for now. Here's a quick video to show what it does — check it out on your computer when you're ready to dive in.
+      This app runs on desktop. Here's a quick video — check it out on your computer later.
     </p>
   </div>
 
@@ -285,7 +285,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   min-height: 100vh;
-  padding: 4vh 1rem 2rem;
+  padding: 1vh 0rem 1rem;
   text-align: center;
   background-color: var(--bs-dark);
   color: var(--bs-light);
@@ -304,12 +304,12 @@ onMounted(() => {
 }
 
 .mobile-text {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   max-width: 500px;
   line-height: 1.6;
   margin-bottom: 1rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 .video-wrapper {

@@ -1,14 +1,4 @@
 <template>
-  <div class="container">
-  <div class="toolpath-editor container">
-
-
-
-  </div>
-
-</div>
-
-
 
     <div class="row toolpath-layout gx-3">
 
@@ -52,15 +42,8 @@
       <button class="btn btn-outline-danger" @click="clearPath"><i class="fa-solid fa-trash"></i> Clear Path</button>
       <button class="btn btn-outline-dark" @click="undo"><i class="fa-solid fa-rotate-left"></i> Undo</button>
     </div>
-
   </div>
-
-
-
 </div>
-
-
-
         <canvas
           ref="canvas"
           class="toolpath-canvas"
@@ -71,9 +54,11 @@
           @contextmenu.prevent
         ></canvas>
         <div class="editor-instructions">
+          
           <div class="editor-label">Right click + drag to pan. Scroll to zoom.</div>
           <div class="editor-label">Left click point to add to tool path.</div>
           <div class="editor-label">Ctrl + left click to remove points from path. Left click drag to box select.</div>
+          <button class="btn btn-outline-dark" @click="$refs.introModal.show()"><i class="fas fa-question-circle"></i> Getting Started</button>
         </div>
 
       </div>
@@ -130,15 +115,14 @@
   </button>
 
 </div>
-
-
-
     </div>
 
+<GettingStarted ref="introModal" />
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick  } from "vue";
+import GettingStarted from "@/components/GettingStarted.vue";
 import { useDrillStore } from "@/stores/drillStore";
 import { useFileHandlers } from "@/composables/useFileHandlers";
 const { parseDrillFile, parseProjectFile } = useFileHandlers();
@@ -226,15 +210,18 @@ onBeforeUnmount(() => {
   window.removeEventListener("resize", resizeCanvas);
 });
 
-onMounted(() => {
-
+onMounted(async () => {
   const canvasEl = canvas.value;
   ctx = canvasEl.getContext("2d");
-  // resizeCanvas(); // initialize
-  // window.addEventListener("resize", resizeCanvas); // ⬅️ Listen for resize
 
   resizeCanvas();          // sets canvas size and devicePixelRatio
   fitCanvasToBuildPlate(); // zooms and centers based on build plate
+
+  // Ensure layout is settled before final fit
+  await nextTick();
+  resizeCanvas();
+  fitCanvasToBuildPlate();
+
   window.addEventListener("resize", () => {
     resizeCanvas();
     fitCanvasToBuildPlate(); // re-fit on resize too
@@ -279,13 +266,15 @@ const mirrorVertical = () => {
   updateCanvas();
 };
 
+
 const drawClippedGrid = (ctx, width, height, spacing = 16, color = "#aaaaaa") => {
-  ctx.save(); // Save before clipping
+  ctx.save();
+
+  // === Draw Clipped Grid Lines ===
   ctx.beginPath();
   ctx.rect(0, -height, width, height);
   ctx.clip();
 
-  // === Draw Grid Lines ===
   ctx.strokeStyle = color;
   ctx.lineWidth = 0.5 / scale;
 
@@ -303,24 +292,49 @@ const drawClippedGrid = (ctx, width, height, spacing = 16, color = "#aaaaaa") =>
     ctx.stroke();
   }
 
-  // === Draw Circle Grid ===
+  // Optional: Dotted circle grid
   const circleSpacing = 8;
-  const circleRadius = 2.5; // diameter = 5mm
+  const circleRadius = 2.5;
   const offsetX = 4;
   const offsetY = 4;
-
   ctx.fillStyle = "#d0d0d0";
 
   for (let x = offsetX; x <= width; x += circleSpacing) {
     for (let y = offsetY; y <= height; y += circleSpacing) {
       ctx.beginPath();
-      ctx.arc(x, -y, circleRadius, 0, 2 * Math.PI); // flip y
+      ctx.arc(x, -y, circleRadius, 0, 2 * Math.PI);
       ctx.fill();
     }
   }
 
-  ctx.restore();
+  ctx.restore(); // ✨ Exit clipping before drawing labels
+
+  // === Axis Labels ===
+ctx.save();
+ctx.font = `${10 / scale}px sans-serif`;
+ctx.fillStyle = "#000";
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+
+// X-axis labels (skip 0)
+for (let x = 0; x <= width; x += spacing) {
+  if (x !== 0) {
+    ctx.fillText(`${x}`, x, 6 / scale);
+  }
+}
+
+// Y-axis labels (skip 0)
+ctx.textAlign = "right";
+for (let y = 0; y <= height; y += spacing) {
+  if (y !== 0) {
+    ctx.fillText(`${y}`, -6 / scale, -y);
+  }
+}
+
+ctx.restore();
+
 };
+
 
 
 
@@ -806,6 +820,7 @@ const handleCanvasDrop = (event) => {
   position: relative;
 } */
 
+
 .editor-instructions {
   position: absolute;
   bottom: 0.75rem;
@@ -814,6 +829,11 @@ const handleCanvasDrop = (event) => {
   font-size: 0.85rem;
   line-height: 1.3;
   pointer-events: none; /* 👈 This makes it ignore all mouse interaction */
+}
+
+.editor-instructions button {
+  margin-top: 1rem;
+  pointer-events: auto; /* 👈 This makes the button clickable */
 }
 
 

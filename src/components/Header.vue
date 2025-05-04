@@ -34,7 +34,7 @@
         </button>
   
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-          <ul class="navbar-nav"> 
+          <ul class="navbar-nav">
             <li class="nav-item">
               <a class="btn btn-outline-light btn-sm d-flex align-items-center nav-link" :href="githubRepo" target="_blank">
                 <i class="fab fa-github me-2"></i> GitHub

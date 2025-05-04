@@ -61,8 +61,9 @@
   import { RouterLink, RouterView } from 'vue-router'
   import { ref } from "vue";
   import { useDrillStore } from "@/stores/drillStore";
-
   import UploadDrillFile from "@/components/UploadDrillFile2.vue";
+  import { useFileHandlers } from "@/composables/useFileHandlers";
+  const { saveProject } = useFileHandlers();
 
   
 
@@ -73,36 +74,6 @@ const drillStore = useDrillStore();
   const shopLink = ref("https://rinthlabs.com/products/solder-sidekick-notification-sign-up");
   const donateLink = ref("https://www.paypal.com/donate/?hosted_button_id=CF4B9M4MD2HY2");
   
-
-  const saveProject = () => {
-  const project = {
-    drillFilename: drillStore.drillFilename,
-    drillData: drillStore.drillData,
-    path: drillStore.path,
-    originOffsetX: drillStore.originOffsetX,
-    originOffsetY: drillStore.originOffsetY,
-    toolSizes: drillStore.toolSizes,
-    pcbThickness: drillStore.pcbThickness,
-    mountHeight: drillStore.mountHeight,
-    feedPrime: drillStore.feedPrime,
-    feedRetract: drillStore.feedRetract,
-  };
-
-  const blob = new Blob([JSON.stringify(project, null, 2)], {
-    type: "application/json",
-  });
-
-  const baseName = drillStore.drillFilename
-    ? drillStore.drillFilename.replace(/\.[^/.]+$/, "") // remove .drl or .txt extension
-    : "solder-project";
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${baseName}.soldersidekick.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-};
 
   </script>
   

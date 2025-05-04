@@ -140,6 +140,8 @@
 <script setup>
 import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
 import { useDrillStore } from "@/stores/drillStore";
+import { useFileHandlers } from "@/composables/useFileHandlers";
+const { parseDrillFile, parseProjectFile } = useFileHandlers();
 
 const drillStore = useDrillStore();
 const canvas = ref(null);
@@ -619,66 +621,78 @@ const clearFile = () => {
   drillStore.triggerCanvasUpdate();
 };
 
-
-
-const inchesToMm = (inches) => Math.round(inches * 25.4 * 100) / 100;
-
 const handleCanvasDrop = (event) => {
   const file = Array.from(event.dataTransfer.files).find(f =>
-    f.name.endsWith(".drl") || f.name.endsWith(".txt")
+    f.name.endsWith(".drl") || f.name.endsWith(".txt") || f.name.endsWith(".json")
   );
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const text = e.target.result;
-
-    // ✅ Always clear first to allow reloading same file
-    drillStore.clearDrillFile();
-
-    drillStore.setDrillFile(text, file.name);
-
-    let parsedDrills = [];
-    let toolSizes = {};
-    let currentTool = null;
-
-    const lines = text.split("\n");
-    for (let line of lines) {
-      line = line.trim();
-      if (line.startsWith(";") || line.startsWith("M48") || line.startsWith("M30")) continue;
-
-      const toolMatch = line.match(/^T(\d+)C([\d.]+)/);
-      if (toolMatch) {
-        const toolId = `T${toolMatch[1]}`;
-        toolSizes[toolId] = inchesToMm(parseFloat(toolMatch[2]));
-        continue;
-      }
-
-      const toolChangeMatch = line.match(/^T(\d+)$/);
-      if (toolChangeMatch) {
-        currentTool = `T${toolChangeMatch[1]}`;
-        continue;
-      }
-
-      const coordMatch = line.match(/X([-+]?\d*\.?\d+)Y([-+]?\d*\.?\d+)/);
-      if (coordMatch) {
-        const x = inchesToMm(parseFloat(coordMatch[1]));
-        const y = inchesToMm(parseFloat(coordMatch[2]));
-        parsedDrills.push({
-          tool: currentTool || "Unknown",
-          size: toolSizes[currentTool] ? `${toolSizes[currentTool]} mm` : "Unknown",
-          x,
-          y,
-        });
-      }
-    }
-
-    drillStore.setDrillData(parsedDrills, toolSizes);
-    drillStore.triggerCanvasUpdate();
-  };
-
-  reader.readAsText(file);
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === "json") {
+    parseProjectFile(file);
+  } else {
+    parseDrillFile(file);
+  }
 };
+
+// const inchesToMm = (inches) => Math.round(inches * 25.4 * 100) / 100;
+
+// const handleCanvasDrop = (event) => {
+//   const file = Array.from(event.dataTransfer.files).find(f =>
+//     f.name.endsWith(".drl") || f.name.endsWith(".txt")
+//   );
+//   if (!file) return;
+
+//   const reader = new FileReader();
+//   reader.onload = (e) => {
+//     const text = e.target.result;
+
+//     // ✅ Always clear first to allow reloading same file
+//     drillStore.clearDrillFile();
+
+//     drillStore.setDrillFile(text, file.name);
+
+//     let parsedDrills = [];
+//     let toolSizes = {};
+//     let currentTool = null;
+
+//     const lines = text.split("\n");
+//     for (let line of lines) {
+//       line = line.trim();
+//       if (line.startsWith(";") || line.startsWith("M48") || line.startsWith("M30")) continue;
+
+//       const toolMatch = line.match(/^T(\d+)C([\d.]+)/);
+//       if (toolMatch) {
+//         const toolId = `T${toolMatch[1]}`;
+//         toolSizes[toolId] = inchesToMm(parseFloat(toolMatch[2]));
+//         continue;
+//       }
+
+//       const toolChangeMatch = line.match(/^T(\d+)$/);
+//       if (toolChangeMatch) {
+//         currentTool = `T${toolChangeMatch[1]}`;
+//         continue;
+//       }
+
+//       const coordMatch = line.match(/X([-+]?\d*\.?\d+)Y([-+]?\d*\.?\d+)/);
+//       if (coordMatch) {
+//         const x = inchesToMm(parseFloat(coordMatch[1]));
+//         const y = inchesToMm(parseFloat(coordMatch[2]));
+//         parsedDrills.push({
+//           tool: currentTool || "Unknown",
+//           size: toolSizes[currentTool] ? `${toolSizes[currentTool]} mm` : "Unknown",
+//           x,
+//           y,
+//         });
+//       }
+//     }
+
+//     drillStore.setDrillData(parsedDrills, toolSizes);
+//     drillStore.triggerCanvasUpdate();
+//   };
+
+//   reader.readAsText(file);
+// };
 
 
 

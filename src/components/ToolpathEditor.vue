@@ -180,7 +180,8 @@ const resizeCanvas = () => {
 
   const dpr = window.devicePixelRatio || 1;
   const width = canvasEl.parentElement.clientWidth;
-  const height = window.innerHeight * 0.85;
+  const height = window.innerHeight * 1.0;
+  // const height = window.innerHeight * 1.0;
 
   canvasEl.width = width * dpr;
   canvasEl.height = height * dpr;
@@ -417,9 +418,6 @@ const updateCanvas = () => {
   // === Draw fixed-size origin arrows and cross in screen space ===
 ctx.save();
 
-// Convert origin to screen coordinates
-// const originX = offsetX + scale * drillStore.originOffsetX;
-// const originY = offsetY - scale * drillStore.originOffsetY;
 
 const originX = offsetX;
 const originY = offsetY;
@@ -687,68 +685,6 @@ const handleCanvasDrop = (event) => {
   }
 };
 
-// const inchesToMm = (inches) => Math.round(inches * 25.4 * 100) / 100;
-
-// const handleCanvasDrop = (event) => {
-//   const file = Array.from(event.dataTransfer.files).find(f =>
-//     f.name.endsWith(".drl") || f.name.endsWith(".txt")
-//   );
-//   if (!file) return;
-
-//   const reader = new FileReader();
-//   reader.onload = (e) => {
-//     const text = e.target.result;
-
-//     // ✅ Always clear first to allow reloading same file
-//     drillStore.clearDrillFile();
-
-//     drillStore.setDrillFile(text, file.name);
-
-//     let parsedDrills = [];
-//     let toolSizes = {};
-//     let currentTool = null;
-
-//     const lines = text.split("\n");
-//     for (let line of lines) {
-//       line = line.trim();
-//       if (line.startsWith(";") || line.startsWith("M48") || line.startsWith("M30")) continue;
-
-//       const toolMatch = line.match(/^T(\d+)C([\d.]+)/);
-//       if (toolMatch) {
-//         const toolId = `T${toolMatch[1]}`;
-//         toolSizes[toolId] = inchesToMm(parseFloat(toolMatch[2]));
-//         continue;
-//       }
-
-//       const toolChangeMatch = line.match(/^T(\d+)$/);
-//       if (toolChangeMatch) {
-//         currentTool = `T${toolChangeMatch[1]}`;
-//         continue;
-//       }
-
-//       const coordMatch = line.match(/X([-+]?\d*\.?\d+)Y([-+]?\d*\.?\d+)/);
-//       if (coordMatch) {
-//         const x = inchesToMm(parseFloat(coordMatch[1]));
-//         const y = inchesToMm(parseFloat(coordMatch[2]));
-//         parsedDrills.push({
-//           tool: currentTool || "Unknown",
-//           size: toolSizes[currentTool] ? `${toolSizes[currentTool]} mm` : "Unknown",
-//           x,
-//           y,
-//         });
-//       }
-//     }
-
-//     drillStore.setDrillData(parsedDrills, toolSizes);
-//     drillStore.triggerCanvasUpdate();
-//   };
-
-//   reader.readAsText(file);
-// };
-
-
-
-
 </script>
 
 <style scoped>
@@ -884,7 +820,7 @@ const handleCanvasDrop = (event) => {
 
 .scrolling-table {
   flex: 1;
-  max-height: calc(85vh - 2rem); /* Adjust height as needed */
+  max-height: calc(100vh - 64px); /* Adjust height as needed */
   overflow-y: auto;
   border: 0px solid #ddd;
   background-color: #ddd;
@@ -896,7 +832,7 @@ const handleCanvasDrop = (event) => {
 
 .save-button {
   position: absolute;
-  bottom: 0.25rem;
+  bottom: 0;
   right: 0;
   z-index: 10;
   display: flex;
@@ -971,6 +907,36 @@ table th {
   background-color: #212529 !important;
   color: #FFF !important;
 }
+
+.toolpath-layout {
+  height: calc(100vh - 105px);
+  overflow: hidden;
+}
+
+.toolpath-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.canvas-wrapper {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+
+
+/* .canvas-wrapper {
+  height: 100%;
+  overflow: hidden;
+}
+
+.toolpath-canvas {
+  height: 100% !important;
+  width: 100% !important;
+} */
+
 
 
 

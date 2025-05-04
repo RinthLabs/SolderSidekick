@@ -48,41 +48,48 @@
   
   <style scoped>
   .modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .modal-box {
-  background: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-box {
+  background: #1e1e1e;
+  color: #fff;
   padding: 1.5rem;
   width: 80vw;
   height: 80vh;
   border-radius: 8px;
   position: relative;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.0); /* cyan-tinted glow */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .modal-title {
   font-size: 2rem;
   margin-bottom: 1rem;
   text-align: center;
+  color: #FFFFFF;
+  font-weight: 600;
 }
 
 .video-wrapper {
   flex: 1;
   width: 100%;
   position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #444;
 }
 
 .video-wrapper iframe {
@@ -100,8 +107,15 @@
   background: none;
   border: none;
   font-size: 2rem;
+  color: #ccc;
   cursor: pointer;
+  transition: color 0.2s ease;
 }
+
+.close-btn:hover {
+  color: #fff;
+}
+
 
   </style>
   

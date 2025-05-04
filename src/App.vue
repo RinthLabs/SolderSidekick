@@ -246,6 +246,14 @@ onMounted(() => {
   color: var(--bs-light);
 }
 
+.app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+
 
 </style>
 

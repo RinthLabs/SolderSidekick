@@ -159,6 +159,10 @@ let isSelecting = false;
 let selectionStart = null;
 let selectionEnd = null;
 
+let isDraggingOrigin = false;
+let dragOriginStart = null;
+
+
 const saveGcode = () => {
   console.log("G-code saved!");
 };
@@ -493,6 +497,20 @@ const sortedDrillData = computed(() => {
 });
 
 const handleMouseDown = (e) => {
+
+  const mouse = getMousePosition(e, false); // don't apply offset
+
+  const dx = mouse.x - drillStore.originOffsetX;
+  const dy = mouse.y - drillStore.originOffsetY;
+  const distanceToOrigin = Math.hypot(dx, dy);
+
+  if (e.button === 0 && distanceToOrigin < 2) {
+    // Begin dragging origin if close to it
+    isDraggingOrigin = true;
+    dragOriginStart = { x: e.clientX, y: e.clientY, offsetX: drillStore.originOffsetX, offsetY: drillStore.originOffsetY };
+    return;
+  }
+
   if (e.button === 2) { // Right-click
     isPanning = true;
     startX = e.clientX;
@@ -531,6 +549,19 @@ updateCanvas();
 };
 
 const handleMouseMove = (e) => {
+  if (isDraggingOrigin && dragOriginStart) {
+    const dx = (e.clientX - dragOriginStart.x) / scale;
+    const dy = (e.clientY - dragOriginStart.y) / scale;
+
+    // Snap to nearest 8mm
+    const newOffsetX = Math.round((dragOriginStart.offsetX + dx) / 8) * 8;
+    const newOffsetY = Math.round((dragOriginStart.offsetY - dy) / 8) * 8;
+
+    drillStore.originOffsetX = newOffsetX;
+    drillStore.originOffsetY = newOffsetY;
+    updateCanvas();
+    return;
+  }
   if (isPanning) {
     offsetX += e.clientX - startX;
     offsetY += e.clientY - startY;
@@ -547,6 +578,13 @@ const handleMouseMove = (e) => {
 };
 
 const handleMouseUp = () => {
+
+  if (isDraggingOrigin) {
+    isDraggingOrigin = false;
+    dragOriginStart = null;
+    return;
+  }
+
   isPanning = false;
   if (isSelecting && selectionStart && selectionEnd) {
   const [x1, x2] = [selectionStart.x, selectionEnd.x].sort((a, b) => a - b);

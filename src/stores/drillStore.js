@@ -15,6 +15,9 @@ export const useDrillStore = defineStore("drill", {
     feedPrime: 1.0,
     feedRetract: 0.5,
     rotation: 0,
+    defaultSolderFeed: 3.0,
+    defaultDwellTime: 1.5,
+    defaultApproachDistance: 0.8,
   }),
   getters: {
     selectedPoints: (state) => state.drillData.filter(d => d.selected),
@@ -50,10 +53,11 @@ export const useDrillStore = defineStore("drill", {
         solder: true,
         selected: false,
         pathIndex: null,
-        feed: 3.0,
-        dwell: 1.5,
-        solderOffset: 0.8
+        feed: this.defaultSolderFeed,
+        dwell: this.defaultDwellTime,
+        solderOffset: this.defaultApproachDistance
       }));
+      
       this.path = [];
       this.toolSizes = toolSizes;
     },

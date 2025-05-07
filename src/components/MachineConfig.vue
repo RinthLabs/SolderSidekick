@@ -66,6 +66,13 @@ watch([feedPrime, feedRetract, defaultSolderFeed], () => {
     .replace(/\{RETRACT\}/g, feedRetract.value)
     .replace(/\{FEED\}/g, defaultSolderFeed.value);
 });
+
+watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
+  drillStore.defaultSolderFeed = defaultSolderFeed.value;
+  drillStore.defaultDwellTime = defaultDwellTime.value;
+  drillStore.defaultApproachDistance = defaultApproachDistance.value;
+});
+
 </script>
 
 <!-- MachineConfig.vue -->

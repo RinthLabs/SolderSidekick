@@ -51,6 +51,27 @@ While Solder Sidekick™ is open-source, sourcing the parts and machining the cu
 
 ---
 
+## 🧪 Example PCB Breadboard
+
+Want to test out the Solder Sidekick™ right away? We include a custom breadboard-style PCB in each kit as a sample project — great for demos and getting started.
+
+![PCB Breadboard](/example/screenshot.png)
+
+This board is:
+- Based on an open-source design by [Soldered Electronics](https://www.soldered.com/)
+- Modified to include ["locking pin"](https://web.archive.org/web/20241003224515/https://www.sparkfun.com/tutorials/114) footprints for easier soldering
+- Branded with the Solder Sidekick logo
+
+You can find the gerber and drill files for the example [**PCB Breadboard**](./example/) in this repository.
+
+📎 The breadboard PCB is licensed under the [TAPR Open Hardware License v1.0](https://tapr.org/the-tapr-open-hardware-license/), with all original and modified work credited and preserved.
+
+👉 Learn more or browse the design files:
+[PCB Breadboard](https://github.com/RinthLabs/PCB-breadboard-locking-pins-hardware-design)
+
+
+---
+
 ## 💖 Support the Project
 
 This project is **community-driven** and **open-source**!

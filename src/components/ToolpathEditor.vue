@@ -16,15 +16,24 @@
       <label class="form-label"><i class="fas fa-arrows-alt-v pcb-icon"></i></label>
       <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
 
+      <label class="form-label pcb-section">Rotate</label>
+      <button class="btn btn-outline-secondary" @click="rotateAndSave(-90)">
+        <i class="fa-solid fa-rotate-left"></i>
+      </button>
+      <button class="btn btn-outline-secondary" @click="rotateAndSave(90)">
+        <i class="fa-solid fa-rotate-right"></i>
+      </button>
+
+
       <label class="form-label mw-5 pcb-section">Flip</label>
       <button class="btn btn-outline-secondary" @click="mirrorHorizontal"><i class="fa-solid fa-right-left"></i></button>
       <button class="btn btn-outline-secondary" @click="mirrorVertical"><i class="fa-solid fa-right-left r90"></i></button>
 
-      <label class="form-label pcb-section">PCB Thickness (mm) <i class="fas fa-layer-group pcb-icon mw-5"></i></label>
+      <!-- <label class="form-label pcb-section">PCB Thickness (mm) <i class="fas fa-layer-group pcb-icon mw-5"></i></label>
       <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.pcbThickness">
 
       <label class="form-label pcb-section">Mount Height (mm) <i class="fas fa-ruler-vertical pcb-icon mw-5"></i></label>
-      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.mountHeight">
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.mountHeight"> -->
 
     </div>
 
@@ -134,7 +143,6 @@ const drillStore = useDrillStore();
 const canvas = ref(null);
 
 let ctx, scale = 1, offsetX = 0, offsetY = 0;
-const rotation = ref(0); // degrees
 
 const radius = 4;
 
@@ -278,6 +286,13 @@ onMounted(async () => {
 
 });
 
+const rotateAndSave = (angleDelta) => {
+  drillStore.saveTransformUndoState();
+  drillStore.rotation = (drillStore.rotation + angleDelta + 360) % 360;
+  updateCanvas();
+};
+
+
 const onSolderToggle = (hole) => {
   drillStore.undoStack.push({
     path: [...drillStore.path],
@@ -315,19 +330,22 @@ const setSelectedSolder = (state) => {
 
 
 const rotatePCB = (angleDelta) => {
-  rotation.value = (rotation.value + angleDelta) % 360;
+  drillStore.rotation = (drillStore.rotation + angleDelta) % 360;
   updateCanvas();
 };
 
 const mirrorHorizontal = () => {
+  drillStore.saveTransformUndoState();
   drillStore.drillData.forEach(d => d.x *= -1);
   updateCanvas();
 };
 
 const mirrorVertical = () => {
+  drillStore.saveTransformUndoState();
   drillStore.drillData.forEach(d => d.y *= -1);
   updateCanvas();
 };
+
 
 
 const drawClippedGrid = (ctx, width, height, spacing = 16, color = "#aaaaaa") => {
@@ -418,7 +436,7 @@ const updateCanvas = () => {
 
   // 💡 Apply offset only to drill data
   ctx.translate(drillStore.originOffsetX, -drillStore.originOffsetY);
-  ctx.rotate((rotation.value * Math.PI) / 180);
+  ctx.rotate((drillStore.rotation * Math.PI) / 180);
 
   // Draw + at drill file origin (0,0) after offset and rotation
   ctx.strokeStyle = "magenta";
@@ -438,19 +456,22 @@ const updateCanvas = () => {
   ctx.strokeStyle = "#999";
   ctx.lineWidth = 8 / scale;
   ctx.beginPath();
-  path.forEach((id, idx) => {
-    const pt = drillStore.drillData.find(d => d.id === id);
-    if (pt) {
-      const x = pt.x;
-      const y = -pt.y;
+  if (Array.isArray(path)) {
+    path.forEach((id, idx) => {
+      const pt = drillStore.drillData.find(d => d.id === id);
+      if (pt) {
+        const x = pt.x;
+        const y = -pt.y;
 
-      if (idx === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
+        if (idx === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
       }
-    }
-  });
+    });
+  }
+
   ctx.stroke();
 
   // draw holes
@@ -593,9 +614,20 @@ const handleMouseDown = (e) => {
   }
 
   const pt = getMousePosition(e);
-  const clicked = drillStore.drillData.find(
-    d => Math.hypot(d.x - pt.x, d.y - pt.y) < 1
-  );
+  const rad = -(drillStore.rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+
+  const clicked = drillStore.drillData.find(d => {
+    const dx = d.x;
+    const dy = d.y;
+
+    const rotatedX = dx * cos - dy * sin + drillStore.originOffsetX;
+    const rotatedY = dx * sin + dy * cos + drillStore.originOffsetY;
+
+    return Math.hypot(rotatedX - mouse.x, rotatedY - mouse.y) < 1;
+  });
+
   if (clicked) {
   if (e.ctrlKey) {
     drillStore.removeFromPath(clicked.id);
@@ -654,6 +686,7 @@ const handleMouseMove = (e) => {
 const handleMouseUp = () => {
 
   if (isDraggingOrigin) {
+    drillStore.saveTransformUndoState();
     isDraggingOrigin = false;
     dragOriginStart = null;
     return;
@@ -664,11 +697,20 @@ const handleMouseUp = () => {
   const [x1, x2] = [selectionStart.x, selectionEnd.x].sort((a, b) => a - b);
   const [y1, y2] = [selectionStart.y, selectionEnd.y].sort((a, b) => a - b);
 
+  const rad = -(drillStore.rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+
   drillStore.drillData.forEach(d => {
-    const x = d.x + drillStore.originOffsetX;
-    const y = d.y + drillStore.originOffsetY;
-    d.selected = x >= x1 && x <= x2 && y >= y1 && y <= y2;
+    // Apply offset and then rotate
+    const dx = d.x;
+    const dy = d.y;
+    const rotatedX = dx * cos - dy * sin + drillStore.originOffsetX;
+    const rotatedY = dx * sin + dy * cos + drillStore.originOffsetY;
+
+    d.selected = rotatedX >= x1 && rotatedX <= x2 && rotatedY >= y1 && rotatedY <= y2;
   });
+
 }
 isSelecting = false;
 selectionStart = selectionEnd = null;
@@ -682,6 +724,20 @@ const handleZoom = (e) => {
   updateCanvas();
 };
 
+// const getMousePosition = (e, applyOffset = true) => {
+//   const rect = canvas.value.getBoundingClientRect();
+//   let x = (e.clientX - rect.left - offsetX) / scale;
+//   let y = -(e.clientY - rect.top - offsetY) / scale;
+
+//   if (applyOffset) {
+//     x -= drillStore.originOffsetX;
+//     y -= drillStore.originOffsetY;
+//   }
+
+
+//   return { x, y };
+// };
+
 const getMousePosition = (e, applyOffset = true) => {
   const rect = canvas.value.getBoundingClientRect();
   let x = (e.clientX - rect.left - offsetX) / scale;
@@ -690,11 +746,17 @@ const getMousePosition = (e, applyOffset = true) => {
   if (applyOffset) {
     x -= drillStore.originOffsetX;
     y -= drillStore.originOffsetY;
-  }
 
+    const rad = -(drillStore.rotation * Math.PI) / 180;
+    const rotatedX = x * Math.cos(rad) - y * Math.sin(rad);
+    const rotatedY = x * Math.sin(rad) + y * Math.cos(rad);
+    x = rotatedX;
+    y = rotatedY;
+  }
 
   return { x, y };
 };
+
 
 
 const toggleSelect = (id) => {

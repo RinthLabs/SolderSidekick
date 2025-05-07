@@ -11,33 +11,41 @@ export function useFileHandlers() {
       const text = e.target.result;
       drillStore.clearDrillFile();
       drillStore.setDrillFile(text, file.name);
-
+  
       const parsedDrills = [];
       const toolSizes = {};
       let currentTool = null;
-
+      let unitMode = "inch"; // default unless detected otherwise
+  
       const lines = text.split("\n");
       for (let line of lines) {
         line = line.trim();
+        if (line.includes("METRIC")) unitMode = "mm";
+        if (line.includes("INCH")) unitMode = "inch";
         if (line.startsWith(";") || line.startsWith("M48") || line.startsWith("M30")) continue;
-
+  
         const toolMatch = line.match(/^T(\d+)C([\d.]+)/);
         if (toolMatch) {
           const toolId = `T${toolMatch[1]}`;
-          toolSizes[toolId] = inchesToMm(parseFloat(toolMatch[2]));
+          const rawSize = parseFloat(toolMatch[2]);
+          toolSizes[toolId] = unitMode === "inch" ? inchesToMm(rawSize) : rawSize;
           continue;
         }
-
+  
         const toolChangeMatch = line.match(/^T(\d+)$/);
         if (toolChangeMatch) {
           currentTool = `T${toolChangeMatch[1]}`;
           continue;
         }
-
+  
         const coordMatch = line.match(/X([-+]?\d*\.?\d+)Y([-+]?\d*\.?\d+)/);
         if (coordMatch) {
-          const x = inchesToMm(parseFloat(coordMatch[1]));
-          const y = inchesToMm(parseFloat(coordMatch[2]));
+          let x = parseFloat(coordMatch[1]);
+          let y = parseFloat(coordMatch[2]);
+          if (unitMode === "inch") {
+            x = inchesToMm(x);
+            y = inchesToMm(y);
+          }
           parsedDrills.push({
             tool: currentTool || "Unknown",
             size: toolSizes[currentTool] ? `${toolSizes[currentTool]} mm` : "Unknown",
@@ -46,12 +54,13 @@ export function useFileHandlers() {
           });
         }
       }
-
+  
       drillStore.setDrillData(parsedDrills, toolSizes);
       drillStore.triggerCanvasUpdate();
     };
     reader.readAsText(file);
   }
+  
 
   function parseProjectFile(file) {
     const reader = new FileReader();

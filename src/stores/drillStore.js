@@ -14,6 +14,7 @@ export const useDrillStore = defineStore("drill", {
     mountHeight: 28.8,
     feedPrime: 1.0,
     feedRetract: 0.5,
+    rotation: 0,
   }),
   getters: {
     selectedPoints: (state) => state.drillData.filter(d => d.selected),
@@ -33,6 +34,7 @@ export const useDrillStore = defineStore("drill", {
       this.undoStack = [];
       this.originOffsetX = 16;
       this.originOffsetY = 16;
+      this.rotation = 0;
     },
 
     triggerCanvasUpdate() {
@@ -97,16 +99,35 @@ export const useDrillStore = defineStore("drill", {
       if (this.undoStack.length > 0) {
         const current = {
           path: [...this.path],
-          solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
+          solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder })),
+          transform: {
+            originOffsetX: this.originOffsetX,
+            originOffsetY: this.originOffsetY,
+            rotation: this.rotation
+          }
         };
         this.redoStack.push(current);
     
         const previous = this.undoStack.pop();
-        this.path = previous.path;
-        previous.solderStates.forEach(({ id, solder }) => {
-          const d = this.drillData.find(p => p.id === id);
-          if (d) d.solder = solder;
-        });
+    
+        // Safely restore transform
+        if (previous.transform) {
+          this.restoreTransformState(previous);
+        }
+    
+        // Safely restore path
+        if (previous.path) {
+          this.path = previous.path;
+        }
+    
+        // Safely restore solder states
+        if (previous.solderStates) {
+          previous.solderStates.forEach(({ id, solder }) => {
+            const d = this.drillData.find(p => p.id === id);
+            if (d) d.solder = solder;
+          });
+        }
+    
         this.updatePathIndices();
       }
     },
@@ -121,13 +142,39 @@ export const useDrillStore = defineStore("drill", {
     
         const next = this.redoStack.pop();
         this.path = next.path;
-        next.solderStates.forEach(({ id, solder }) => {
-          const d = this.drillData.find(p => p.id === id);
-          if (d) d.solder = solder;
-        });
+        if (next.solderStates) {
+          next.solderStates.forEach(({ id, solder }) => {
+            const d = this.drillData.find(p => p.id === id);
+            if (d) d.solder = solder;
+          });
+        }
+        
+        if (next.transform) {
+          this.restoreTransformState(next);
+        }
         this.updatePathIndices();
       }
     },
+
+    saveTransformUndoState() {
+      this.undoStack.push({
+        transform: {
+          originOffsetX: this.originOffsetX,
+          originOffsetY: this.originOffsetY,
+          rotation: this.rotation
+        }
+      });
+      this.redoStack = [];
+    },
+    
+    restoreTransformState(state) {
+      if (state.transform) {
+        this.originOffsetX = state.transform.originOffsetX;
+        this.originOffsetY = state.transform.originOffsetY;
+        this.rotation = state.transform.rotation;
+      }
+    },
+    
     
     
     updatePathIndices() {

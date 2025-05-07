@@ -329,22 +329,75 @@ const setSelectedSolder = (state) => {
 
 
 
-const rotatePCB = (angleDelta) => {
-  drillStore.rotation = (drillStore.rotation + angleDelta) % 360;
-  updateCanvas();
-};
+// const rotatePCB = (angleDelta) => {
+//   drillStore.rotation = (drillStore.rotation + angleDelta) % 360;
+//   updateCanvas();
+// };
+
+// const mirrorHorizontal = () => {
+//   drillStore.saveTransformUndoState();
+//   drillStore.drillData.forEach(d => d.x *= -1);
+//   updateCanvas();
+// };
+
+// const mirrorVertical = () => {
+//   drillStore.saveTransformUndoState();
+//   drillStore.drillData.forEach(d => d.y *= -1);
+//   updateCanvas();
+// };
 
 const mirrorHorizontal = () => {
   drillStore.saveTransformUndoState();
-  drillStore.drillData.forEach(d => d.x *= -1);
+
+  const rad = (drillStore.rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+
+  drillStore.drillData.forEach(d => {
+    // Rotate into canvas space
+    const x = d.x;
+    const y = d.y;
+    const rotatedX = x * cos - y * sin;
+    const rotatedY = x * sin + y * cos;
+
+    // Mirror horizontally in canvas space (flip X)
+    const mirroredX = -rotatedX;
+    const mirroredY = rotatedY;
+
+    // Rotate back into PCB space
+    d.x = mirroredX * cos + mirroredY * sin;
+    d.y = -mirroredX * sin + mirroredY * cos;
+  });
+
   updateCanvas();
 };
 
 const mirrorVertical = () => {
   drillStore.saveTransformUndoState();
-  drillStore.drillData.forEach(d => d.y *= -1);
+
+  const rad = (drillStore.rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+
+  drillStore.drillData.forEach(d => {
+    // Rotate into canvas space
+    const x = d.x;
+    const y = d.y;
+    const rotatedX = x * cos - y * sin;
+    const rotatedY = x * sin + y * cos;
+
+    // Mirror vertically in canvas space (flip Y)
+    const mirroredX = rotatedX;
+    const mirroredY = -rotatedY;
+
+    // Rotate back into PCB space
+    d.x = mirroredX * cos + mirroredY * sin;
+    d.y = -mirroredX * sin + mirroredY * cos;
+  });
+
   updateCanvas();
 };
+
 
 
 

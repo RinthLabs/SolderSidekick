@@ -59,12 +59,19 @@
           @contextmenu.prevent
         ></canvas>
         <div class="editor-instructions">
-          
-          <div class="editor-label">Right click + drag to pan. Scroll to zoom.</div>
-          <div class="editor-label">Left click point to add to tool path.</div>
-          <div class="editor-label">Ctrl + left click to remove points from path. Left click drag to box select.</div>
-          <button class="btn btn-outline-dark" @click="$refs.introModal.show()"><i class="fas fa-question-circle"></i> Getting Started</button>
+          <transition name="fade" mode="out-in">
+            <div
+              class="editor-label"
+              v-html="editorLabels[currentLabelIndex].html"
+              :key="currentLabelIndex"
+            />
+          </transition>
+
+          <button class="btn btn-outline-dark fixed-help-button" @click="$refs.introModal.show()">
+            <i class="fas fa-question-circle"></i> Getting Started
+          </button>
         </div>
+
 
       </div>
 
@@ -162,6 +169,17 @@ const { parseDrillFile, parseProjectFile, saveProject } = useFileHandlers();
 
 const drillStore = useDrillStore();
 const canvas = ref(null);
+
+const editorLabels = ref([
+  { html: '<img src="/mouse-right.svg" alt="Right Click Mouse">+ <b>Drag to Pan</b>' },
+  { html: '<img src="/mouse-middle.svg" alt="Middle Mouse Scroll"> to <b>Zoom</b>' },
+  { html: '<img src="/mouse-left.svg" alt="Left Click Mouse"> point to <b>Add to Toolpath</b>' },
+  { html: '<span class="key-icon">Ctrl</span> +<img src="/mouse-left.svg" alt="Left Click Mouse"> to <b>Remove Points from Path</b>' },
+  { html: '<img src="/mouse-left.svg" alt="Left Click Mouse"> <b>Drag to Box Select</b>' },
+  { html: '<img src="/mouse-left.svg" alt="Left Click Mouse"> drag <img src="/origin-icon.svg" alt="Origin Icon"> to <b>Position PCB</b>' },
+]);
+
+const currentLabelIndex = ref(0);
 
 let ctx, scale = 1, offsetX = 0, offsetY = 0;
 
@@ -304,6 +322,10 @@ onMounted(async () => {
   onBeforeUnmount(() => {
     window.removeEventListener("keydown", handleKeyDown);
   });
+
+  setInterval(() => {
+    currentLabelIndex.value = (currentLabelIndex.value + 1) % editorLabels.value.length;
+  }, 6000); // 3 seconds per label
 
 });
 
@@ -951,7 +973,7 @@ const handleCanvasDrop = (event) => {
   position: absolute;
   bottom: 0.75rem;
   left: 1rem;
-  padding: 0.5rem 0.75rem;
+  /* padding-left: 0.5rem; */
   font-size: 0.85rem;
   line-height: 1.3;
   pointer-events: none; /* 👈 This makes it ignore all mouse interaction */
@@ -964,12 +986,9 @@ const handleCanvasDrop = (event) => {
 
 
 .editor-label {
-  margin-bottom: 0.25rem;
+  margin-bottom: 3.25rem;
 }
 
-.editor-label:last-child {
-  margin-bottom: 0;
-}
 
 .toolbar{
   gap:0.5rem !important;
@@ -1116,18 +1135,35 @@ table th {
 }
 
 
-
-/* .canvas-wrapper {
-  height: 100%;
-  overflow: hidden;
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 
-.toolpath-canvas {
-  height: 100% !important;
-  width: 100% !important;
-} */
+.fixed-help-button {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  margin-top: 1rem;
+  pointer-events: auto;
+  width: 200px;
+}
 
 
 
+</style>
 
+
+<style>
+.key-icon {
+  border: 1px solid #000;
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.2rem 0.2rem 0.2rem;
+  color: #000;
+  font-weight: 600;
+  background-color: #fff;
+  margin: 0;
+}
 </style>

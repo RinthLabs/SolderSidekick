@@ -8,8 +8,12 @@ const activeTab = ref("settings");
 // Machine Settings
 const feedPrime = ref(drillStore.feedPrime ?? 1.0);
 const feedRetract = ref(drillStore.feedRetract ?? 1.0);
+
 const defaultSolderFeed = ref(drillStore.defaultSolderFeed ?? 3.0);
-const dwellTime = ref(drillStore.dwellTime ?? 1.5);
+const defaultDwellTime = ref(drillStore.dwellTime ?? 1.5);
+const defaultApproachDistance = ref(drillStore.defaultApproachDistance ?? 2.0);
+
+
 const solderFeedMultiplier = ref(105);
 const initialLiftHeight = ref(10);
 const homeXYFirst = ref(true);
@@ -91,6 +95,19 @@ watch([feedPrime, feedRetract, defaultSolderFeed], () => {
     <div v-if="activeTab === 'settings'" class="mt-3">
       <div class="row g-4">
         <div class="col-md-6">
+          <h5 class="mt-4"><i class="fa-solid fa-sliders"></i> Defaults</h5>
+
+          <label class="form-label mt-2">Solder Feed (mm)</label>
+          <input type="number" class="form-control" v-model="defaultSolderFeed" />
+
+          <label class="form-label mt-3">Solder Time (seconds)</label>
+          <input type="number" class="form-control" v-model="defaultDwellTime" />
+
+          <label class="form-label mt-3">Approach Distance (mm)</label>
+          <input type="number" class="form-control" v-model="defaultApproachDistance" />
+        </div>
+
+        <div class="col-md-6">
           <h5><i class="fa-solid fa-syringe"></i> Solder Extrusion</h5>
           <label class="form-label">Solder Feed Multiplier</label>
           <input type="number" class="form-control" v-model="solderFeedMultiplier" />
@@ -100,9 +117,6 @@ watch([feedPrime, feedRetract, defaultSolderFeed], () => {
 
           <label class="form-label mt-3">Retract Amount (mm)</label>
           <input type="number" class="form-control" v-model="feedRetract" />
-
-          <label class="form-label mt-3">Default Feed per Point (mm)</label>
-          <input type="number" class="form-control" v-model="defaultSolderFeed" />
         </div>
 
         <div class="col-md-6">

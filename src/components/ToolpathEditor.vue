@@ -29,12 +29,6 @@
       <button class="btn btn-outline-secondary" @click="mirrorHorizontal"><i class="fa-solid fa-right-left"></i></button>
       <button class="btn btn-outline-secondary" @click="mirrorVertical"><i class="fa-solid fa-right-left r90"></i></button>
 
-      <!-- <label class="form-label pcb-section">PCB Thickness (mm) <i class="fas fa-layer-group pcb-icon mw-5"></i></label>
-      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.pcbThickness">
-
-      <label class="form-label pcb-section">Mount Height (mm) <i class="fas fa-ruler-vertical pcb-icon mw-5"></i></label>
-      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.mountHeight"> -->
-
     </div>
 
     <!-- Toolbar -->
@@ -105,13 +99,40 @@
               <td>{{ hole.tool }}</td>
               
               <td>
-                <input type="number" class="form-control form-control-sm" v-model.number="hole.feed" min="0" step="0.1" style="max-width: 50px;" />
+                <input
+                  type="number"
+                  class="form-control form-control-sm"
+                  :value="hole.feed"
+                  min="0"
+                  step="0.1"
+                  style="max-width: 50px;"
+                  @click.stop
+                  @change="updateField(hole, 'feed', $event.target.valueAsNumber)"
+                />
               </td>
               <td>
-                <input type="number" class="form-control form-control-sm" v-model.number="hole.dwell" min="0" step="0.1" style="max-width: 50px;" />
+                <input
+                  type="number"
+                  class="form-control form-control-sm"
+                  :value="hole.dwell"
+                  min="0"
+                  step="0.1"
+                  style="max-width: 50px;"
+                  @click.stop
+                  @change="updateField(hole, 'dwell', $event.target.valueAsNumber)"
+                />
               </td>
               <td>
-                <input type="number" class="form-control form-control-sm" v-model.number="hole.solderOffset" min="0" step="0.1" style="max-width: 50px;" />
+                <input
+                  type="number"
+                  class="form-control form-control-sm"
+                  :value="hole.solderOffset"
+                  min="0"
+                  step="0.1"
+                  style="max-width: 50px;"
+                  @click.stop
+                  @change="updateField(hole, 'solderOffset', $event.target.valueAsNumber)"
+                />
               </td>
 
 
@@ -286,6 +307,24 @@ onMounted(async () => {
 
 });
 
+
+const updateField = (hole, field, value) => {
+  drillStore.undoStack.push({
+    drillData: drillStore.drillData.map(d => ({ ...d }))
+  });
+  drillStore.redoStack = [];
+
+  // Update all selected rows
+  drillStore.drillData.forEach(d => {
+    if (d.selected) {
+      d[field] = value;
+    }
+  });
+
+  updateCanvas();
+};
+
+
 const rotateAndSave = (angleDelta) => {
   drillStore.saveTransformUndoState();
   drillStore.rotation = (drillStore.rotation + angleDelta + 360) % 360;
@@ -326,25 +365,6 @@ const setSelectedSolder = (state) => {
   });
   updateCanvas();
 };
-
-
-
-// const rotatePCB = (angleDelta) => {
-//   drillStore.rotation = (drillStore.rotation + angleDelta) % 360;
-//   updateCanvas();
-// };
-
-// const mirrorHorizontal = () => {
-//   drillStore.saveTransformUndoState();
-//   drillStore.drillData.forEach(d => d.x *= -1);
-//   updateCanvas();
-// };
-
-// const mirrorVertical = () => {
-//   drillStore.saveTransformUndoState();
-//   drillStore.drillData.forEach(d => d.y *= -1);
-//   updateCanvas();
-// };
 
 const mirrorHorizontal = () => {
   drillStore.saveTransformUndoState();
@@ -777,19 +797,6 @@ const handleZoom = (e) => {
   updateCanvas();
 };
 
-// const getMousePosition = (e, applyOffset = true) => {
-//   const rect = canvas.value.getBoundingClientRect();
-//   let x = (e.clientX - rect.left - offsetX) / scale;
-//   let y = -(e.clientY - rect.top - offsetY) / scale;
-
-//   if (applyOffset) {
-//     x -= drillStore.originOffsetX;
-//     y -= drillStore.originOffsetY;
-//   }
-
-
-//   return { x, y };
-// };
 
 const getMousePosition = (e, applyOffset = true) => {
   const rect = canvas.value.getBoundingClientRect();

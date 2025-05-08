@@ -12,108 +12,97 @@ export function useFileHandlers() {
       drillStore.clearDrillFile();
       drillStore.setDrillFile(text, file.name);
   
-      const lines = text.split("\n").map(line => line.trim());
-      let unitMode = "inch"; // Default unless specified
+      const lines = text.split("\n").map(line => line.trim()).filter(l => l.length);
+      let unitMode = "inch";
       let isEagle = false;
+      let isAltium = false;
+      let lastX = null;
+      let lastY = null;
   
       // Detect format
       for (const line of lines) {
         if (line.includes("METRIC")) unitMode = "mm";
         if (line.includes("INCH")) unitMode = "inch";
-        if (line.includes("M72")) isEagle = true; // M72 = Eagle-style implied decimals
+        if (line.includes("M72")) isEagle = true;
+        if (line.startsWith("METRIC,LZ")) isAltium = true;
       }
   
       const parsedDrills = [];
       const toolSizes = {};
       let currentTool = null;
   
-      // === Eagle-style parser ===
-      if (isEagle) {
-        const format = { int: 2, decimal: 4 }; // Eagle's typical 2:4 format
-  
-        for (const line of lines) {
-          if (
-            line.startsWith(";") || 
-            line.startsWith("M48") || 
-            line.startsWith("M30") || 
-            line === ""
-          ) continue;
-  
-          const toolMatch = line.match(/^T(\d+)C([\d.]+)/);
-          if (toolMatch) {
-            const toolId = `T${toolMatch[1]}`;
-            const rawSize = parseFloat(toolMatch[2]);
-            toolSizes[toolId] = unitMode === "inch" ? inchesToMm(rawSize) : rawSize;
-            continue;
-          }
-  
-          const toolChangeMatch = line.match(/^T(\d+)$/);
-          if (toolChangeMatch) {
-            currentTool = `T${toolChangeMatch[1]}`;
-            continue;
-          }
-  
-          const coordMatch = line.match(/X(\d+)Y(\d+)/);
-          if (coordMatch) {
-            let x = parseInt(coordMatch[1], 10);
-            let y = parseInt(coordMatch[2], 10);
-            const scale = Math.pow(10, format.decimal);
-            x = x / scale;
-            y = y / scale;
-            if (unitMode === "inch") {
-              x = inchesToMm(x);
-              y = inchesToMm(y);
-            }
-            parsedDrills.push({
-              tool: currentTool || "Unknown",
-              size: toolSizes[currentTool] ? `${toolSizes[currentTool]} mm` : "Unknown",
-              x,
-              y,
-            });
-          }
-        }
-  
-      // === KiCad-style parser ===
-      } else {
-        for (const line of lines) {
-          if (
-            line.startsWith(";") || 
-            line.startsWith("M48") || 
-            line.startsWith("M30") || 
-            line === ""
-          ) continue;
-  
-          const toolMatch = line.match(/^T(\d+)C([\d.]+)/);
-          if (toolMatch) {
-            const toolId = `T${toolMatch[1]}`;
-            const rawSize = parseFloat(toolMatch[2]);
-            toolSizes[toolId] = unitMode === "inch" ? inchesToMm2(rawSize) : rawSize;
-            continue;
-          }
-  
-          const toolChangeMatch = line.match(/^T(\d+)$/);
-          if (toolChangeMatch) {
-            currentTool = `T${toolChangeMatch[1]}`;
-            continue;
-          }
-  
-          const coordMatch = line.match(/X([-+]?\d*\.?\d+)Y([-+]?\d*\.?\d+)/);
-          if (coordMatch) {
-            let x = parseFloat(coordMatch[1]);
-            let y = parseFloat(coordMatch[2]);
-            if (unitMode === "inch") {
-              x = inchesToMm2(x);
-              y = inchesToMm2(y);
-            }
-            parsedDrills.push({
-              tool: currentTool || "Unknown",
-              size: toolSizes[currentTool] ? `${toolSizes[currentTool]} mm` : "Unknown",
-              x,
-              y,
-            });
-          }
+      // === Tool definitions ===
+      for (const line of lines) {
+        const toolMatch = line.match(/^T(\d+)[FS0-9]*C([\d.]+)/);
+        if (toolMatch) {
+          const toolId = `T${toolMatch[1]}`;
+          const size = parseFloat(toolMatch[2]);
+          toolSizes[toolId] = unitMode === "inch" ? inchesToMm(size) : size;
         }
       }
+  
+      // === Parse coordinate lines ===
+      for (const line of lines) {
+        if (line.startsWith("T") && !line.includes("C")) {
+          currentTool = line.trim();
+          continue;
+        }
+  
+        const matchFull = line.match(/X([-+]?\d*\.?\d+)Y([-+]?\d*\.?\d+)/);
+        const matchXOnly = line.match(/X([-+]?\d*\.?\d+)$/);
+        const matchYOnly = line.match(/Y([-+]?\d*\.?\d+)$/);
+  
+        let x = null;
+        let y = null;
+  
+        if (matchFull) {
+          x = parseFloat(matchFull[1]);
+          y = parseFloat(matchFull[2]);
+        } else if (matchXOnly) {
+          x = parseFloat(matchXOnly[1]);
+          y = lastY;
+        } else if (matchYOnly) {
+          x = lastX;
+          y = parseFloat(matchYOnly[1]);
+        }
+  
+        if (x !== null && y !== null) {
+          lastX = x;
+          lastY = y;
+        
+          if (isEagle) {
+            // Eagle uses implied decimals and is in inches
+            x = inchesToMm(x / 10000);
+            y = inchesToMm(y / 10000);
+          } else if (isAltium) {
+            // Altium's METRIC,LZ format uses explicit values in mm, no scaling needed
+            // Use x and y as-is
+            x = (x / 100);
+            y = (y / 100);
+          } else if (unitMode === "inch") {
+            // KiCad uses actual decimals
+            x = inchesToMm(x);
+            y = inchesToMm(y);
+          }
+          
+        
+          parsedDrills.push({
+            tool: currentTool || "Unknown",
+            size: toolSizes[currentTool] ? `${toolSizes[currentTool]} mm` : "Unknown",
+            x,
+            y,
+          });
+        }
+        
+      }
+
+      console.log("Format detected:", {
+        isEagle,
+        isAltium,
+        unitMode,
+        file: file.name
+      });
+      
   
       drillStore.setDrillData(parsedDrills, toolSizes);
       drillStore.triggerCanvasUpdate();
@@ -121,6 +110,7 @@ export function useFileHandlers() {
   
     reader.readAsText(file);
   }
+  
   
   function inchesToMm(inches) {
     return Math.round(inches * 25.4 * 1000) / 1000;
@@ -149,6 +139,8 @@ export function useFileHandlers() {
       drillStore.mountHeight = project.mountHeight || 28.8;
       drillStore.feedPrime = project.feedPrime || 1.0;
       drillStore.feedRetract = project.feedRetract || 0.5;
+      drillStore.defaultSolderAllPoints = project.defaultSolderAllPoints ?? false;
+
 
       drillStore.updatePathIndices();
       drillStore.triggerCanvasUpdate();
@@ -169,6 +161,7 @@ export function useFileHandlers() {
       mountHeight: drillStore.mountHeight,
       feedPrime: drillStore.feedPrime,
       feedRetract: drillStore.feedRetract,
+      defaultSolderAllPoints: drillStore.defaultSolderAllPoints,
     };
 
     const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });

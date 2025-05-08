@@ -18,6 +18,7 @@ export const useDrillStore = defineStore("drill", {
     defaultSolderFeed: 3.0,
     defaultDwellTime: 1.5,
     defaultApproachDistance: 0.8,
+    defaultSolderAllPoints: false,
   }),
   getters: {
     selectedPoints: (state) => state.drillData.filter(d => d.selected),
@@ -50,7 +51,7 @@ export const useDrillStore = defineStore("drill", {
       this.drillData = data.map((d, i) => ({
         ...d,
         id: i,
-        solder: true,
+        solder: this.defaultSolderAllPoints,
         selected: false,
         pathIndex: null,
         feed: this.defaultSolderFeed,

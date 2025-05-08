@@ -82,7 +82,7 @@ watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
 
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="fa-solid fa-gears"></i> Machine Configuration</h5>
+          <h5 class="modal-title"><i class="fa-solid fa-gears"></i> Advanced Settings</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -92,7 +92,7 @@ watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
             <div class="container mt-4">
     <ul class="nav nav-tabs">
       <li class="nav-item">
-        <a class="nav-link" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">Machine Settings</a>
+        <a class="nav-link" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">Settings</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" :class="{ active: activeTab === 'gcode' }" @click="activeTab = 'gcode'">G-code Templates</a>
@@ -112,6 +112,12 @@ watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
 
           <label class="form-label mt-3">Approach Distance (mm)</label>
           <input type="number" class="form-control" v-model="defaultApproachDistance" />
+
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" v-model="drillStore.defaultSolderAllPoints" />
+            <label class="form-check-label">Solder All Points</label>
+          </div>
+
         </div>
 
         <div class="col-md-6">

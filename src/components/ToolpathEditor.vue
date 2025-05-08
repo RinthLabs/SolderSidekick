@@ -76,6 +76,8 @@
       </div>
 
       <div class="col-lg-4 position-relative right-panel">
+       
+
       <div class="scrolling-table">
         <table class="table table-sm table-striped">
           <thead class="table-dark">
@@ -90,6 +92,7 @@
               <th title="Approach distance from the right side (mm)"><i class="fas fa-dot-circle"></i> <i class="fas fa-long-arrow-alt-left"></i></th>
             </tr>
           </thead>
+          
           <tbody>
             <tr
               v-for="(hole, index) in sortedDrillData"
@@ -145,7 +148,19 @@
 
             </tr>
           </tbody>
+
+          
         </table>
+
+        <div v-if="drillStore.drillData.length === 0" class="m-3 p-3 text-center example-drill-file">
+          <p class="mb-2"><b>Need an example drill file?</b></p>
+          <button class="btn btn-outline-dark" @click="downloadExampleDrillFile">
+            <i class="fa fa-download me-1"></i> Download PCB_breadboard.drl
+          </button>
+          <a href="https://github.com/RinthLabs/SolderSidekick/blob/main/Documentation.md" target="_blank" class="d-block mt-3">
+            How to export drill file
+          </a>
+        </div>
       </div>
 
        <!-- Save G-code Button -->
@@ -583,14 +598,48 @@ const updateCanvas = () => {
     ctx.stroke();
 
     // draw index number if in path
-    if (d.pathIndex !== null) {
-      ctx.fillStyle = "black";
-      ctx.font = `${12 / scale}px sans-serif`;
-      ctx.fillText((d.pathIndex + 1).toString(), x + 4 / scale, y - 4 / scale);
-    }
+    // if (d.pathIndex !== null) {
+    //   ctx.fillStyle = "black";
+    //   ctx.font = `${12 / scale}px sans-serif`;
+    //   ctx.fillText((d.pathIndex + 1).toString(), x + 4 / scale, y - 4 / scale);
+    // }
   });
 
   ctx.restore();
+
+  // === Draw upright path index labels (after restore, in screen space) ===
+ctx.save();
+ctx.font = `${12}px sans-serif`;
+ctx.fillStyle = "black";
+ctx.textAlign = "left";
+ctx.textBaseline = "bottom";
+
+// ⛔ INVERT the rotation angle
+const rad = -(drillStore.rotation * Math.PI) / 180;
+const cos = Math.cos(rad);
+const sin = Math.sin(rad);
+
+drillStore.drillData.forEach((d) => {
+  if (d.pathIndex !== null) {
+    // Step 1: Apply rotation (inverted to match real world)
+    const rotatedX = d.x * cos - d.y * sin;
+    const rotatedY = d.x * sin + d.y * cos;
+
+    // Step 2: Apply offset
+    const canvasX = rotatedX + drillStore.originOffsetX;
+    const canvasY = rotatedY + drillStore.originOffsetY;
+
+    // Step 3: Convert to screen space
+    const screenX = offsetX + canvasX * scale + 6;
+    const screenY = offsetY - canvasY * scale - 6;
+
+    ctx.fillText((d.pathIndex + 1).toString(), screenX, screenY);
+  }
+});
+ctx.restore();
+
+
+
 
 
   // === Draw fixed-size origin arrows and cross in screen space ===
@@ -897,6 +946,20 @@ const handleCanvasDrop = (event) => {
   }
 };
 
+function downloadExampleDrillFile() {
+  const url = "https://raw.githubusercontent.com/RinthLabs/SolderSidekick/refs/heads/main/example/PCB_breadboard-PTH.drl";
+  fetch(url)
+    .then(res => res.blob())
+    .then(blob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "PCB_breadboard-PTH.drl";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+}
+
+
 </script>
 
 <style scoped>
@@ -1149,6 +1212,12 @@ table th {
   margin-top: 1rem;
   pointer-events: auto;
   width: 200px;
+}
+
+.example-drill-file{
+  background-color: #fff;
+  border-radius: 0.5rem;
+  
 }
 
 

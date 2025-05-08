@@ -173,7 +173,7 @@ const canvas = ref(null);
 const editorLabels = ref([
   { html: '<img src="/mouse-right.svg" alt="Right Click Mouse">+ <b>Drag to Pan</b>' },
   { html: '<img src="/mouse-middle.svg" alt="Middle Mouse Scroll"> to <b>Zoom</b>' },
-  { html: '<img src="/mouse-left.svg" alt="Left Click Mouse"> point to <b>Add to Toolpath</b>' },
+  { html: '<img src="/mouse-left.svg" alt="Left Click Mouse"> to <b>Add Point to Toolpath</b>' },
   { html: '<span class="key-icon">Ctrl</span> +<img src="/mouse-left.svg" alt="Left Click Mouse"> to <b>Remove Points from Path</b>' },
   { html: '<img src="/mouse-left.svg" alt="Left Click Mouse"> <b>Drag to Box Select</b>' },
   { html: '<img src="/mouse-left.svg" alt="Left Click Mouse"> drag <img src="/origin-icon.svg" alt="Origin Icon"> to <b>Position PCB</b>' },

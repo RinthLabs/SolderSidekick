@@ -167,10 +167,12 @@ export const useDrillStore = defineStore("drill", {
           originOffsetX: this.originOffsetX,
           originOffsetY: this.originOffsetY,
           rotation: this.rotation
-        }
+        },
+        drillDataSnapshot: this.drillData.map(d => ({ ...d }))
       });
       this.redoStack = [];
     },
+    
     
     restoreTransformState(state) {
       if (state.transform) {
@@ -178,7 +180,11 @@ export const useDrillStore = defineStore("drill", {
         this.originOffsetY = state.transform.originOffsetY;
         this.rotation = state.transform.rotation;
       }
+      if (state.drillDataSnapshot) {
+        this.drillData = state.drillDataSnapshot.map(d => ({ ...d }));
+      }
     },
+    
     
     
     

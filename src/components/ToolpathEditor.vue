@@ -12,9 +12,9 @@
 
   <div class="mb-3 d-flex align-items-center pcb-controls">
       <label class="form-label">PCB Offset (mm) <i class="fas fa-arrows-alt-h pcb-icon"></i></label>
-      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetX" @input="updateCanvas">
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetX" @input="saveOffsetUndoState(); updateCanvas()">
       <label class="form-label"><i class="fas fa-arrows-alt-v pcb-icon"></i></label>
-      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetY" @input="updateCanvas">
+      <input type="number" class="form-control d-inline w-auto pcb-input" v-model.number="drillStore.originOffsetY"@input="saveOffsetUndoState(); updateCanvas()">
 
       <label class="form-label pcb-section">Rotate</label>
       <button class="btn btn-outline-secondary" @click="rotateAndSave(-90)">
@@ -368,6 +368,18 @@ const rotateAndSave = (angleDelta) => {
   updateCanvas();
 };
 
+const saveOffsetUndoState = () => {
+  drillStore.undoStack.push({
+    transform: {
+      originOffsetX: drillStore.originOffsetX,
+      originOffsetY: drillStore.originOffsetY,
+      rotation: drillStore.rotation
+    }
+  });
+  drillStore.redoStack = [];
+};
+
+
 
 const onSolderToggle = (hole) => {
   drillStore.undoStack.push({
@@ -596,13 +608,6 @@ const updateCanvas = () => {
     ctx.lineWidth = 2 / scale;
     ctx.fill();
     ctx.stroke();
-
-    // draw index number if in path
-    // if (d.pathIndex !== null) {
-    //   ctx.fillStyle = "black";
-    //   ctx.font = `${12 / scale}px sans-serif`;
-    //   ctx.fillText((d.pathIndex + 1).toString(), x + 4 / scale, y - 4 / scale);
-    // }
   });
 
   ctx.restore();
@@ -745,6 +750,7 @@ const handleMouseDown = (e) => {
 
   if (e.button === 0 && distanceToOrigin < 2) {
     // Begin dragging origin if close to it
+    drillStore.saveTransformUndoState();
     isDraggingOrigin = true;
     dragOriginStart = { x: e.clientX, y: e.clientY, offsetX: drillStore.originOffsetX, offsetY: drillStore.originOffsetY };
     return;
@@ -830,7 +836,6 @@ const handleMouseMove = (e) => {
 const handleMouseUp = () => {
 
   if (isDraggingOrigin) {
-    drillStore.saveTransformUndoState();
     isDraggingOrigin = false;
     dragOriginStart = null;
     return;

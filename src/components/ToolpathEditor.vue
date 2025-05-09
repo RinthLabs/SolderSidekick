@@ -606,46 +606,36 @@ const updateCanvas = () => {
   ctx.lineTo(0, originLength / scale);
   ctx.stroke();
 
-
-
-  // draw path lines
-  const path = drillStore.path;
-  ctx.strokeStyle = "#999";
-  ctx.lineWidth = 8 / scale;
-  ctx.beginPath();
-  if (Array.isArray(path)) {
-    path.forEach((id, idx) => {
-      const pt = drillStore.drillData.find(d => d.id === id);
-      if (pt) {
-        const x = pt.x;
-        const y = -pt.y;
-
-        if (idx === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-    });
+   // Path lines (draw all at once)
+   const path = drillStore.path;
+  if (Array.isArray(path) && path.length > 1) {
+    ctx.beginPath();
+    ctx.strokeStyle = "#999";
+    ctx.lineWidth = 8 / scale;
+    for (let i = 0; i < path.length; i++) {
+      const pt = drillStore.drillDataMap?.[path[i]] || drillStore.drillData.find(d => d.id === path[i]);
+      if (!pt) continue;
+      const x = pt.x, y = -pt.y;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
   }
 
-  ctx.stroke();
-
-  // draw holes
-  drillStore.drillData.forEach((d, i) => {
-    const x = d.x;
-    const y = -d.y;
-
+  // Draw all holes
+  const drillData = drillStore.drillData;
+  const r = radius / scale;
+  for (let i = 0; i < drillData.length; i++) {
+    const d = drillData[i];
+    const x = d.x, y = -d.y;
     ctx.beginPath();
-    ctx.arc(x, y, radius / scale, 0, 2 * Math.PI);
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
     ctx.fillStyle = d.solder ? "red" : "gray";
     ctx.strokeStyle = d.selected ? "cyan" : "black";
     ctx.lineWidth = 2 / scale;
     ctx.fill();
     ctx.stroke();
-  });
+  }
 
-  
 
   ctx.restore();
 
@@ -661,27 +651,18 @@ const rad = -(drillStore.rotation * Math.PI) / 180;
 const cos = Math.cos(rad);
 const sin = Math.sin(rad);
 
-drillStore.drillData.forEach((d) => {
-  if (d.pathIndex !== null) {
-    // Step 1: Apply rotation (inverted to match real world)
-    const rotatedX = d.x * cos - d.y * sin;
-    const rotatedY = d.x * sin + d.y * cos;
 
-    // Step 2: Apply offset
-    const canvasX = rotatedX + drillStore.originOffsetX;
-    const canvasY = rotatedY + drillStore.originOffsetY;
-
-    // Step 3: Convert to screen space
-    const screenX = offsetX + canvasX * scale + 6;
-    const screenY = offsetY - canvasY * scale - 6;
-
-    ctx.fillText((d.pathIndex + 1).toString(), screenX, screenY);
+for (let i = 0; i < drillStore.drillData.length; i++) {
+    const d = drillStore.drillData[i];
+    if (d.pathIndex == null) continue;
+    const rx = d.x * cos - d.y * sin + drillStore.originOffsetX;
+    const ry = d.x * sin + d.y * cos + drillStore.originOffsetY;
+    const sx = offsetX + rx * scale + 6;
+    const sy = offsetY - ry * scale - 6;
+    ctx.fillText((d.pathIndex + 1).toString(), sx, sy);
   }
-});
+
 ctx.restore();
-
-
-
 
 
   // === Draw fixed-size origin arrows and cross in screen space ===

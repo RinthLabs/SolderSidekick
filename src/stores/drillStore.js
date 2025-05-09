@@ -100,6 +100,7 @@ export const useDrillStore = defineStore("drill", {
       this.path = [];
       this.updatePathIndices();
     },
+
     undoLast() {
       if (this.undoStack.length > 0) {
         const current = {
@@ -108,24 +109,23 @@ export const useDrillStore = defineStore("drill", {
           transform: {
             originOffsetX: this.originOffsetX,
             originOffsetY: this.originOffsetY,
-            rotation: this.rotation
-          }
+            rotation: this.rotation,
+            pcbThickness: this.pcbThickness
+          },
+          drillDataSnapshot: this.drillData.map(d => ({ ...d }))
         };
         this.redoStack.push(current);
     
         const previous = this.undoStack.pop();
     
-        // Safely restore transform
         if (previous.transform) {
           this.restoreTransformState(previous);
         }
     
-        // Safely restore path
         if (previous.path) {
           this.path = previous.path;
         }
     
-        // Safely restore solder states
         if (previous.solderStates) {
           previous.solderStates.forEach(({ id, solder }) => {
             const d = this.drillData.find(p => p.id === id);
@@ -133,40 +133,64 @@ export const useDrillStore = defineStore("drill", {
           });
         }
     
+        if (previous.drillDataSnapshot) {
+          this.drillData = previous.drillDataSnapshot.map(d => ({ ...d }));
+        }
+    
         this.updatePathIndices();
       }
     },
     
+
     redoLast() {
       if (this.redoStack.length > 0) {
         const current = {
           path: [...this.path],
-          solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
+          solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder })),
+          transform: {
+            originOffsetX: this.originOffsetX,
+            originOffsetY: this.originOffsetY,
+            rotation: this.rotation,
+            pcbThickness: this.pcbThickness
+          },
+          drillDataSnapshot: this.drillData.map(d => ({ ...d }))
         };
         this.undoStack.push(current);
     
         const next = this.redoStack.pop();
-        this.path = next.path;
+    
+        if (next.transform) {
+          this.restoreTransformState(next);
+        }
+    
+        if (next.path) {
+          this.path = next.path;
+        }
+    
         if (next.solderStates) {
           next.solderStates.forEach(({ id, solder }) => {
             const d = this.drillData.find(p => p.id === id);
             if (d) d.solder = solder;
           });
         }
-        
-        if (next.transform) {
-          this.restoreTransformState(next);
+    
+        if (next.drillDataSnapshot) {
+          this.drillData = next.drillDataSnapshot.map(d => ({ ...d }));
         }
+    
         this.updatePathIndices();
       }
     },
+    
+    
 
     saveTransformUndoState() {
       this.undoStack.push({
         transform: {
           originOffsetX: this.originOffsetX,
           originOffsetY: this.originOffsetY,
-          rotation: this.rotation
+          rotation: this.rotation,
+          pcbThickness: this.pcbThickness
         },
         drillDataSnapshot: this.drillData.map(d => ({ ...d }))
       });
@@ -179,7 +203,11 @@ export const useDrillStore = defineStore("drill", {
         this.originOffsetX = state.transform.originOffsetX;
         this.originOffsetY = state.transform.originOffsetY;
         this.rotation = state.transform.rotation;
+        if (typeof state.transform.pcbThickness === 'number') {
+          this.pcbThickness = state.transform.pcbThickness;
+        }
       }
+      
       if (state.drillDataSnapshot) {
         this.drillData = state.drillDataSnapshot.map(d => ({ ...d }));
       }

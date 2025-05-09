@@ -26,9 +26,21 @@ const playBeep = ref(true);
 const startGcode = ref(`; Start G-code
 G28 X Y ; Home X and Y
 G28 Z ; Home Z
-G1 Z{LIFT} F600 ; Initial lift height
+G0 Z{LIFT} F600 ; Initial lift height
+
+G0 X3 Y4.1 F6000 ; Move to start position X and Y
+G0 Z1.6 F600 ; Move to start position Z
+G92 X0 Y0 Z0 ; Set current position as 0,0,0
+
 M221 S{MULTIPLIER} ; Extruder multiplier
+M302 S0 ; Allow cold extrusion
+M83 ; Set extruder to relative mode
+
 M117 Ready to Solder!`);
+
+//G0 X16 Y16 F6000 ; Move to start position X and Y
+
+//G0 X0 Y0 F6000
 
 const perPointGcode = ref(`; Solder Point G-code
 G0 X{X} Y{Y}

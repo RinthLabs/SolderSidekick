@@ -29,6 +29,17 @@
       <button class="btn btn-outline-secondary" @click="mirrorHorizontal"><i class="fa-solid fa-right-left"></i></button>
       <button class="btn btn-outline-secondary" @click="mirrorVertical"><i class="fa-solid fa-right-left r90"></i></button>
 
+      <label class="form-label mw-5 pcb-section">PCB Thickness (mm) <i class="fas fa-layer-group"></i></label>
+      <input
+        type="number"
+        class="form-control d-inline w-auto pcb-input"
+        v-model.number="drillStore.pcbThickness"
+        @blur="commitThicknessChange"
+        @keyup.enter="commitThicknessChange"
+      />
+
+
+
     </div>
 
     <!-- Toolbar -->
@@ -211,6 +222,19 @@ let selectionEnd = null;
 let isDraggingOrigin = false;
 let dragOriginStart = null;
 
+const lastCommittedThickness = ref(drillStore.pcbThickness);
+
+const commitThicknessChange = () => {
+  const newVal = drillStore.pcbThickness;
+  if (newVal !== lastCommittedThickness.value) {
+    drillStore.saveTransformUndoState(); // 👈 always uses the correct format
+    drillStore.redoStack = [];
+    lastCommittedThickness.value = newVal;
+    updateCanvas();
+  }
+};
+
+
 
 const saveGcode = () => {
   console.log("G-code saved!");
@@ -288,6 +312,19 @@ watch(
     }
   }
 );
+
+
+// let lastThickness = drillStore.pcbThickness;
+// watch(
+//   () => drillStore.pcbThickness,
+//   (newVal) => {
+//     if (newVal !== lastThickness) {
+//       drillStore.saveTransformUndoState();
+//       updateCanvas();
+//       lastThickness = newVal;
+//     }
+//   }
+// );
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", resizeCanvas);

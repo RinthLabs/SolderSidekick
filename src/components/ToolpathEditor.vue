@@ -109,7 +109,8 @@
               v-for="(hole, index) in sortedDrillData"
               :key="hole.id"
               :class="{ 'table-primary': hole.selected }"
-              @click="toggleSelect(hole.id)"
+              @click="(e) => toggleSelect(hole.id, index, e)"
+
             >
               <td class="checkbox-cell">
                 <input type="checkbox" v-model="hole.solder" @change="onSolderToggle(hole)" />
@@ -209,6 +210,8 @@ const editorLabels = ref([
 ]);
 
 const currentLabelIndex = ref(0);
+const lastSelectedIndex = ref(null);
+
 
 let ctx, scale = 1, offsetX = 0, offsetY = 0;
 
@@ -319,11 +322,10 @@ watch(
 onBeforeUnmount(() => {
   window.removeEventListener("resize", resizeCanvas);
   window.removeEventListener("keydown", handleKeyDown);
+  window.removeEventListener("mousedown", handleMouseDown);
+  window.removeEventListener("mouseup", handleMouseUp);
 });
 
-// onBeforeUnmount(() => {
-    
-//   });
 
 onMounted(async () => {
   const canvasEl = canvas.value;
@@ -366,6 +368,17 @@ onMounted(async () => {
   };
 
   window.addEventListener("keydown", handleKeyDown);
+
+  const handleMouseDown = (e) => {
+    if (e.shiftKey) {
+      document.body.classList.add("prevent-select");
+    }
+  };
+  const handleMouseUp = () => {
+    document.body.classList.remove("prevent-select");
+  };
+  window.addEventListener("mousedown", handleMouseDown);
+  window.addEventListener("mouseup", handleMouseUp);
   
 
   setInterval(() => {
@@ -926,10 +939,40 @@ const getMousePosition = (e, applyOffset = true) => {
 
 
 
-const toggleSelect = (id) => {
-  drillStore.toggleSelection(id);
+// const toggleSelect = (id) => {
+//   drillStore.toggleSelection(id);
+//   updateCanvas();
+// };
+
+const toggleSelect = (id, index, event) => {
+  const drillData = drillStore.drillData;
+  const clicked = drillData.find(d => d.id === id);
+  if (!clicked) return;
+
+  const tableBody = event.currentTarget?.closest("tbody");
+  if (event.shiftKey && tableBody) {
+    tableBody.classList.add("no-select");     // Prevent text selection
+
+    requestAnimationFrame(() => {
+      tableBody.classList.remove("no-select"); // Re-enable selection shortly after
+    });
+  }
+
+  if (event.shiftKey && lastSelectedIndex.value != null) {
+    const start = Math.min(lastSelectedIndex.value, index);
+    const end = Math.max(lastSelectedIndex.value, index);
+    for (let i = start; i <= end; i++) {
+      drillData[i].selected = true;
+    }
+  } else {
+    clicked.selected = !clicked.selected;
+    lastSelectedIndex.value = index;
+  }
+
   updateCanvas();
 };
+
+
 
 const autoOptimizePath = () => {
   drillStore.autoOptimizePath();
@@ -1266,4 +1309,16 @@ table th {
   background-color: #fff;
   margin: 0;
 }
+
+/* Add this to your <style scoped> or global style */
+.no-select * {
+  user-select: none !important;
+}
+
+body.prevent-select,
+body.prevent-select * {
+  user-select: none !important;
+}
+
+
 </style>

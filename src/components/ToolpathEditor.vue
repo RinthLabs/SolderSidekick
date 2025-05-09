@@ -943,11 +943,6 @@ const autoOptimizePath = () => {
 };
 
 const optimizeSelected = () => {
-  const selected = drillStore.drillData.filter(d => d.selected);
-  selected.forEach(d => {
-    d.solder = true;
-    drillStore.addToPath(d.id);
-  });
   drillStore.optimizeSelection();
   updateCanvas();
 };

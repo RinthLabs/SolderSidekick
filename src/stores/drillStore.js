@@ -260,13 +260,26 @@ export const useDrillStore = defineStore("drill", {
     optimizeSelection() {
       const selected = this.drillData.filter(d => d.selected);
       if (selected.length < 2) return;
-
+    
+      // Capture a single undo snapshot BEFORE modifying solder/path
+      this.undoStack.push({
+        path: [...this.path],
+        solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
+      });
+      this.redoStack = [];
+    
+      // Mark selected points as soldered
+      selected.forEach(d => {
+        d.solder = true;
+      });
+    
+      // Nearest-neighbor order
       const newOrder = [];
       const visited = new Set();
       let current = selected[0];
       newOrder.push(current.id);
       visited.add(current.id);
-
+    
       while (newOrder.length < selected.length) {
         const next = selected
           .filter(d => !visited.has(d.id))
@@ -275,7 +288,7 @@ export const useDrillStore = defineStore("drill", {
             const distB = Math.hypot(current.x - b.x, current.y - b.y);
             return distA - distB;
           })[0];
-
+    
         if (next) {
           newOrder.push(next.id);
           visited.add(next.id);
@@ -284,18 +297,15 @@ export const useDrillStore = defineStore("drill", {
           break;
         }
       }
-
-      // Replace selected path segments only
-      this.undoStack.push({
-        path: [...this.path],
-        solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
-      });
-      
+    
+      // Remove selected points from current path
       const idsToReplace = new Set(selected.map(d => d.id));
       this.path = this.path.filter(id => !idsToReplace.has(id));
-      const insertIndex = this.path.length;
-      this.path.splice(insertIndex, 0, ...newOrder);
+    
+      // Insert new optimized path for selected
+      this.path.push(...newOrder);
       this.updatePathIndices();
     }
+    
   }
 });

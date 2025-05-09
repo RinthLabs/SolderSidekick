@@ -196,6 +196,9 @@ const { parseDrillFile, parseProjectFile, saveProject } = useFileHandlers();
 const drillStore = useDrillStore();
 const canvas = ref(null);
 
+let pendingRenderFrame = null;
+
+
 const editorLabels = ref([
   { html: '<img src="/mouse-right.svg" alt="Right Click Mouse">+ <b>Drag to Pan</b>' },
   { html: '<img src="/mouse-middle.svg" alt="Middle Mouse Scroll"> to <b>Zoom</b>' },
@@ -548,37 +551,38 @@ const drawClippedGrid = (ctx, width, height, spacing = 16, color = "#aaaaaa") =>
   ctx.restore(); // ✨ Exit clipping before drawing labels
 
   // === Axis Labels ===
-ctx.save();
-ctx.font = `${10 / scale}px sans-serif`;
-ctx.fillStyle = "#000";
-ctx.textAlign = "center";
-ctx.textBaseline = "middle";
+  ctx.save();
+  ctx.font = `${10 / scale}px sans-serif`;
+  ctx.fillStyle = "#000";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
 
-// X-axis labels (skip 0)
-for (let x = 0; x <= width; x += spacing) {
-  if (x !== 0) {
-    ctx.fillText(`${x}`, x, 6 / scale);
+  // X-axis labels (skip 0)
+  for (let x = 0; x <= width; x += spacing) {
+    if (x !== 0) {
+      ctx.fillText(`${x}`, x, 6 / scale);
+    }
   }
-}
 
-// Y-axis labels (skip 0)
-ctx.textAlign = "right";
-for (let y = 0; y <= height; y += spacing) {
-  if (y !== 0) {
-    ctx.fillText(`${y}`, -6 / scale, -y);
+  // Y-axis labels (skip 0)
+  ctx.textAlign = "right";
+  for (let y = 0; y <= height; y += spacing) {
+    if (y !== 0) {
+      ctx.fillText(`${y}`, -6 / scale, -y);
+    }
   }
-}
-
-ctx.restore();
-
+  ctx.restore();
 };
-
-
-
 
 
 const updateCanvas = () => {
   if (!ctx) return;
+  if (pendingRenderFrame) return; // Skip if already scheduled
+
+
+  pendingRenderFrame = requestAnimationFrame(() => {
+    pendingRenderFrame = null;
+
   ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
   ctx.save();
   ctx.translate(offsetX, offsetY);
@@ -606,26 +610,61 @@ const updateCanvas = () => {
   ctx.lineTo(0, originLength / scale);
   ctx.stroke();
 
-   // Path lines (draw all at once)
-   const path = drillStore.path;
-  if (Array.isArray(path) && path.length > 1) {
-    ctx.beginPath();
-    ctx.strokeStyle = "#999";
-    ctx.lineWidth = 8 / scale;
-    for (let i = 0; i < path.length; i++) {
-      const pt = drillStore.drillDataMap?.[path[i]] || drillStore.drillData.find(d => d.id === path[i]);
-      if (!pt) continue;
-      const x = pt.x, y = -pt.y;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-  }
+  drawPathLines();
+  drawDrillHoles();
+  ctx.restore();
+  drawPathLabels();
 
-  // Draw all holes
-  const drillData = drillStore.drillData;
+  // === Draw fixed-size origin arrows and cross in screen space ===
+  ctx.save();
+
+  const originX = offsetX;
+  const originY = offsetY;
+
+  // Draw blue origin cross
+  ctx.strokeStyle = "blue";
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(originX - 16, originY);
+  ctx.lineTo(originX + 16, originY);
+  ctx.moveTo(originX, originY - 16);
+  ctx.lineTo(originX, originY + 16);
+  ctx.stroke();
+
+  // Draw fixed-size arrows (e.g., 40px length)
+  drawFixedArrow(ctx, originX, originY, 60, 0, "red");    // X-axis
+  drawFixedArrow(ctx, originX, originY, 0, -60, "green"); // Y-axis
+
+  ctx.restore();
+
+  drawSelectionBox();
+});
+
+};
+
+
+// Draw all path lines (after transform applied)
+const drawPathLines = () => {
+  const path = drillStore.path;
+  if (!Array.isArray(path) || path.length < 2) return;
+
+  ctx.beginPath();
+  ctx.strokeStyle = "#999";
+  ctx.lineWidth = 8 / scale;
+
+  for (let i = 0; i < path.length; i++) {
+    const pt = drillStore.drillDataMap?.[path[i]] || drillStore.drillData.find(d => d.id === path[i]);
+    if (!pt) continue;
+    const x = pt.x, y = -pt.y;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+};
+
+// Draw all holes (after transform applied)
+const drawDrillHoles = () => {
   const r = radius / scale;
-  for (let i = 0; i < drillData.length; i++) {
-    const d = drillData[i];
+  for (const d of drillStore.drillData) {
     const x = d.x, y = -d.y;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI);
@@ -635,25 +674,23 @@ const updateCanvas = () => {
     ctx.fill();
     ctx.stroke();
   }
+};
 
+// Draw drill path labels in screen space (if zoomed in)
+const drawPathLabels = () => {
+  if (scale < 3) return; // ⛔ Hide labels when zoomed out
 
-  ctx.restore();
+  ctx.save();
+  ctx.font = `${12}px sans-serif`;
+  ctx.fillStyle = "black";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "bottom";
 
-  // === Draw upright path index labels (after restore, in screen space) ===
-ctx.save();
-ctx.font = `${12}px sans-serif`;
-ctx.fillStyle = "black";
-ctx.textAlign = "left";
-ctx.textBaseline = "bottom";
+  const rad = -(drillStore.rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
 
-// ⛔ INVERT the rotation angle
-const rad = -(drillStore.rotation * Math.PI) / 180;
-const cos = Math.cos(rad);
-const sin = Math.sin(rad);
-
-
-for (let i = 0; i < drillStore.drillData.length; i++) {
-    const d = drillStore.drillData[i];
+  for (const d of drillStore.drillData) {
     if (d.pathIndex == null) continue;
     const rx = d.x * cos - d.y * sin + drillStore.originOffsetX;
     const ry = d.x * sin + d.y * cos + drillStore.originOffsetY;
@@ -662,35 +699,13 @@ for (let i = 0; i < drillStore.drillData.length; i++) {
     ctx.fillText((d.pathIndex + 1).toString(), sx, sy);
   }
 
-ctx.restore();
+  ctx.restore();
+};
 
+// Draw the selection rectangle (screen space)
+const drawSelectionBox = () => {
+  if (!(isSelecting && selectionStart && selectionEnd)) return;
 
-  // === Draw fixed-size origin arrows and cross in screen space ===
-ctx.save();
-
-
-const originX = offsetX;
-const originY = offsetY;
-
-// Draw blue origin cross
-ctx.strokeStyle = "blue";
-ctx.lineWidth = 6;
-ctx.beginPath();
-ctx.moveTo(originX - 16, originY);
-ctx.lineTo(originX + 16, originY);
-ctx.moveTo(originX, originY - 16);
-ctx.lineTo(originX, originY + 16);
-ctx.stroke();
-
-// Draw fixed-size arrows (e.g., 40px length)
-drawFixedArrow(ctx, originX, originY, 60, 0, "red");    // X-axis
-drawFixedArrow(ctx, originX, originY, 0, -60, "green"); // Y-axis
-
-ctx.restore();
-
-
-if (isSelecting && selectionStart && selectionEnd) {
-  // Draw the selection box in screen space (no transform)
   ctx.save();
   ctx.translate(offsetX, offsetY);
   ctx.scale(scale, scale);
@@ -705,8 +720,6 @@ if (isSelecting && selectionStart && selectionEnd) {
   ctx.strokeRect(x, y, w, h);
 
   ctx.restore();
-}
-
 };
 
 

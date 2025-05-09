@@ -24,6 +24,13 @@ export const useDrillStore = defineStore("drill", {
     selectedPoints: (state) => state.drillData.filter(d => d.selected),
   },
   actions: {
+
+    addUndoSnapshot(snapshot) {
+      if (this.undoStack.length >= 50) {
+        this.undoStack.shift(); // Drop oldest
+      }
+      this.undoStack.push(snapshot);
+    },    
     
     setDrillFile(fileContent, filename) {
       this.drillFile = fileContent;
@@ -69,10 +76,11 @@ export const useDrillStore = defineStore("drill", {
     },
     addToPath(id) {
       if (!this.path.includes(id)) {
-        this.undoStack.push({
+        this.addUndoSnapshot({
           path: [...this.path],
           solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
         });
+        
         
         this.redoStack = [];
         this.path.push(id);
@@ -82,7 +90,7 @@ export const useDrillStore = defineStore("drill", {
     
     removeFromPath(id) {
       if (this.path.includes(id)) {
-        this.undoStack.push({
+        this.addUndoSnapshot({
           path: [...this.path],
           solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
         });
@@ -92,7 +100,7 @@ export const useDrillStore = defineStore("drill", {
       }
     },
     clearPath() {
-      this.undoStack.push({
+      this.addUndoSnapshot({
         path: [...this.path],
         solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
       });
@@ -185,7 +193,7 @@ export const useDrillStore = defineStore("drill", {
     
 
     saveTransformUndoState() {
-      this.undoStack.push({
+      this.addUndoSnapshot({
         transform: {
           originOffsetX: this.originOffsetX,
           originOffsetY: this.originOffsetY,
@@ -249,7 +257,7 @@ export const useDrillStore = defineStore("drill", {
         }
       }
 
-      this.undoStack.push({
+      this.addUndoSnapshot({
         path: [...this.path],
         solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
       });
@@ -262,7 +270,7 @@ export const useDrillStore = defineStore("drill", {
       if (selected.length < 2) return;
     
       // Capture a single undo snapshot BEFORE modifying solder/path
-      this.undoStack.push({
+      this.addUndoSnapshot({
         path: [...this.path],
         solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
       });

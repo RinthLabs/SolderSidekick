@@ -313,22 +313,14 @@ watch(
   }
 );
 
-
-// let lastThickness = drillStore.pcbThickness;
-// watch(
-//   () => drillStore.pcbThickness,
-//   (newVal) => {
-//     if (newVal !== lastThickness) {
-//       drillStore.saveTransformUndoState();
-//       updateCanvas();
-//       lastThickness = newVal;
-//     }
-//   }
-// );
-
 onBeforeUnmount(() => {
   window.removeEventListener("resize", resizeCanvas);
+  window.removeEventListener("keydown", handleKeyDown);
 });
+
+// onBeforeUnmount(() => {
+    
+//   });
 
 onMounted(async () => {
   const canvasEl = canvas.value;
@@ -371,9 +363,7 @@ onMounted(async () => {
   };
 
   window.addEventListener("keydown", handleKeyDown);
-  onBeforeUnmount(() => {
-    window.removeEventListener("keydown", handleKeyDown);
-  });
+  
 
   setInterval(() => {
     currentLabelIndex.value = (currentLabelIndex.value + 1) % editorLabels.value.length;
@@ -455,54 +445,62 @@ const setSelectedSolder = (state) => {
 const mirrorHorizontal = () => {
   drillStore.saveTransformUndoState();
 
-  const rad = (drillStore.rotation * Math.PI) / 180;
-  const cos = Math.cos(rad);
-  const sin = Math.sin(rad);
+  const angle = (drillStore.rotation * Math.PI) / 180;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
 
-  drillStore.drillData.forEach(d => {
-    // Rotate into canvas space
+  const newDrillData = drillStore.drillData.map(d => {
     const x = d.x;
     const y = d.y;
+
+    // Rotate to canvas space
     const rotatedX = x * cos - y * sin;
     const rotatedY = x * sin + y * cos;
 
-    // Mirror horizontally in canvas space (flip X)
+    // Flip X in canvas space
     const mirroredX = -rotatedX;
-    const mirroredY = rotatedY;
 
-    // Rotate back into PCB space
-    d.x = mirroredX * cos + mirroredY * sin;
-    d.y = -mirroredX * sin + mirroredY * cos;
+    // Rotate back to PCB space
+    const newX = mirroredX * cos + rotatedY * sin;
+    const newY = -mirroredX * sin + rotatedY * cos;
+
+    return { ...d, x: newX, y: newY };
   });
 
+  drillStore.drillData = newDrillData;
   updateCanvas();
 };
+
 
 const mirrorVertical = () => {
   drillStore.saveTransformUndoState();
 
-  const rad = (drillStore.rotation * Math.PI) / 180;
-  const cos = Math.cos(rad);
-  const sin = Math.sin(rad);
+  const angle = (drillStore.rotation * Math.PI) / 180;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
 
-  drillStore.drillData.forEach(d => {
-    // Rotate into canvas space
+  const newDrillData = drillStore.drillData.map(d => {
     const x = d.x;
     const y = d.y;
+
+    // Rotate to canvas space
     const rotatedX = x * cos - y * sin;
     const rotatedY = x * sin + y * cos;
 
-    // Mirror vertically in canvas space (flip Y)
-    const mirroredX = rotatedX;
+    // Flip Y in canvas space
     const mirroredY = -rotatedY;
 
-    // Rotate back into PCB space
-    d.x = mirroredX * cos + mirroredY * sin;
-    d.y = -mirroredX * sin + mirroredY * cos;
+    // Rotate back to PCB space
+    const newX = rotatedX * cos + mirroredY * sin;
+    const newY = -rotatedX * sin + mirroredY * cos;
+
+    return { ...d, x: newX, y: newY };
   });
 
+  drillStore.drillData = newDrillData;
   updateCanvas();
 };
+
 
 
 
@@ -646,6 +644,8 @@ const updateCanvas = () => {
     ctx.fill();
     ctx.stroke();
   });
+
+  
 
   ctx.restore();
 

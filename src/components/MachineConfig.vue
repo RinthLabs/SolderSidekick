@@ -1,35 +1,43 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch   } from "vue";
 import { useDrillStore } from "@/stores/drillStore";
+
 
 const drillStore = useDrillStore();
 const activeTab = ref("settings");
+
 
 // Machine Settings
 const feedPrime = ref(drillStore.feedPrime ?? 1.0);
 const feedRetract = ref(drillStore.feedRetract ?? 1.0);
 
 const defaultSolderFeed = ref(drillStore.defaultSolderFeed ?? 3.0);
+const defaultSoakTime = ref(drillStore.defaultSoakTime ?? 1.5);
 const defaultDwellTime = ref(drillStore.dwellTime ?? 1.5);
 const defaultApproachDistance = ref(drillStore.defaultApproachDistance ?? 2.0);
 
 
 const solderFeedMultiplier = ref(105);
 const initialLiftHeight = ref(10);
+const zeroX = ref(20);
+const zeroY = ref(25);
 const homeXYFirst = ref(true);
 const retractAfterSolder = ref(10);
 const bedForwardY = ref(235);
 const disableSteppers = ref(true);
 const playBeep = ref(true);
 
+//G0 X3 Y4.1 F6000 ; Move to start position X and Y
 // G-code Templates
 const startGcode = ref(`; Start G-code
+M117 Homing XYZ
 G28 X Y ; Home X and Y
 G28 Z ; Home Z
-G0 Z{LIFT} F600 ; Initial lift height
+G0 Z{SAFE} F600 ; Initial lift height
 
-G0 X3 Y4.1 F6000 ; Move to start position X and Y
-G0 Z1.6 F600 ; Move to start position Z
+M117 Moving to 0,0,0
+G0 X{CORNER_X} Y{CORNER_Y} F6000 ; Move to start position X and Y
+G0 Z{PCB_THICKNESS} F600 ; Move to start position Z
 G92 X0 Y0 Z0 ; Set current position as 0,0,0
 
 M221 S{MULTIPLIER} ; Extruder multiplier
@@ -43,22 +51,33 @@ M117 Ready to Solder!`);
 //G0 X0 Y0 F6000
 
 const perPointGcode = ref(`; Solder Point G-code
-G0 X{X} Y{Y}
-G1 Z-1
-G1 E{PRIME} F600
-G1 E{FEED}
-G1 E-{RETRACT} F600
-G1 Z0`);
+M117 Soldering {INDEX}/{TOTAL_POINTS}
+M73 P{INDEX / TOTAL_POINTS} ; Set progress bar %
+G0 X{X} Y{Y + APPROACH} F6000 ; Move to point with approach offset
+G1 E{PRIME} F600 ; Prime soldering iron with a small amount of solder
+G1 E-{PRIME_RETRACT} F600 ; Retract solder from touching soldering iron
+G1 Z0 ; Move PCB height
+G0 X{X} Y{Y} F6000 ; Move to solder point
+G4 S{SOAK} ; Soak time
+G1 E{FEED} ; Solder the point
+G4 S{DWELL} ; Dwell time
+G1 E-{RETRACT} F600 ; Retract solder from touching soldering iron
+G1 Z{LIFT} F600 ; Lift soldering iron`);
 
 const endGcode = ref(`; End G-code
-G1 Z{RETRACT} F300
-G1 Y{BED_FORWARD} F3000
-M104 S0
-M140 S0
-M107
-M84
-M117 Done
-{BEEP}`);
+G1 Z{SAFE} F600 ; Lift soldering iron
+G1 Y{BED_FORWARD} F6000 ; Move bed forward
+M18 ; Disable steppers
+M84 ; Disable steppers
+M73 P100 ; Set progress bar to 100%
+M117 Solder Sidekick Done!
+M300 S440 P250 ; Beep
+G4 P250 ; Wait for 0.25 seconds
+M300 S440 P250 ; Beep
+G4 P250 ; Wait for 0.25 seconds
+M300 S440 P250 ; Beep
+G4 P250 ; Wait for 0.25 seconds
+`);
 
 // Sync relevant settings to G-code templates
 watch([initialLiftHeight, solderFeedMultiplier, retractAfterSolder, bedForwardY, playBeep], () => {
@@ -85,6 +104,11 @@ watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
   drillStore.defaultApproachDistance = defaultApproachDistance.value;
 });
 
+watch([defaultSoakTime], () => {
+  drillStore.defaultSoakTime = defaultSoakTime.value;
+});
+
+
 </script>
 
 <!-- MachineConfig.vue -->
@@ -94,7 +118,7 @@ watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
 
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="fa-solid fa-gears"></i> Advanced Settings</h5>
+          <h5 class="modal-title"><i class="fa-solid fa-gears"></i> Settings</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -114,12 +138,15 @@ watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
     <div v-if="activeTab === 'settings'" class="mt-3">
       <div class="row g-4">
         <div class="col-md-6">
-          <h5 class="mt-4"><i class="fa-solid fa-sliders"></i> Defaults</h5>
+          <h5 class=""><i class="fa-solid fa-sliders"></i> Defaults</h5>
 
-          <label class="form-label mt-2">Solder Feed (mm)</label>
+          <label class="form-label">Solder Feed (mm)</label>
           <input type="number" class="form-control" v-model="defaultSolderFeed" />
 
-          <label class="form-label mt-3">Solder Time (seconds)</label>
+          <label class="form-label mt-3">Solder Soak Time (seconds)</label>
+          <input type="number" class="form-control" v-model="defaultSoakTime" />
+
+          <label class="form-label mt-3">Solder Dwell Time (seconds)</label>
           <input type="number" class="form-control" v-model="defaultDwellTime" />
 
           <label class="form-label mt-3">Approach Distance (mm)</label>
@@ -146,6 +173,17 @@ watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
 
         <div class="col-md-6">
           <h5><i class="fa-solid fa-play"></i> Start G-code</h5>
+
+          <label class="form-label">Build Plate Zero Position</label>
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <label class="form-label mb-0">X:</label>
+            <input type="number" class="form-control form-control-sm w-25" v-model="zeroX" />
+            <label class="form-label mb-0">Y:</label>
+            <input type="number" class="form-control form-control-sm w-25" v-model="zeroY" />
+          </div>
+
+
+
           <label class="form-label">Initial Lift Height</label>
           <input type="number" class="form-control" v-model="initialLiftHeight" />
 
@@ -177,11 +215,14 @@ watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
       <label class="form-label"><i class="fa-solid fa-play"></i> Start G-code</label>
       <textarea class="form-control gcode-textarea" v-model="startGcode"></textarea>
 
-      <label class="form-label mt-3"><i class="fa-solid fa-crosshairs"></i> Per-Point G-code</label>
-      <textarea class="form-control gcode-textarea" v-model="perPointGcode"></textarea>
 
-      <label class="form-label mt-3"><i class="fa-solid fa-stop"></i> End G-code</label>
-      <textarea class="form-control gcode-textarea" v-model="endGcode"></textarea>
+
+
+    <label class="form-label mt-3"><i class="fa-solid fa-crosshairs"></i> Per-Point G-code</label>
+    <textarea class="form-control gcode-textarea" v-model="perPointGcode"></textarea>
+
+    <label class="form-label mt-3"><i class="fa-solid fa-stop"></i> End G-code</label>
+    <textarea class="form-control gcode-textarea" v-model="endGcode"></textarea>
     </div>
   </div>
 
@@ -217,9 +258,7 @@ textarea {
 
 .gcode-textarea {
   min-height: 18vh;
-  resize: vertical; /* Optional: allows manual resizing */
-  font-family: monospace;
+  resize: vertical;
 }
-
 
 </style>

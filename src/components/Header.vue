@@ -17,7 +17,7 @@
         </button>
 
         <button class="btn btn-outline-light btn-sm nav-link" data-bs-toggle="modal" data-bs-target="#machineConfigModal">
-            <i class="fa-solid fa-gears me-1"></i> Advanced Settings
+            <i class="fa-solid fa-gears me-1"></i> Settings
         </button>
 
         <!-- Navigation -->

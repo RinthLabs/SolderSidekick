@@ -98,8 +98,9 @@
               <th title="X position in mm">X</th>
               <th title="Y position in mm">Y</th>
               <th title="Drill tool used, can be useful for feed/dwell time"><i class="fas fa-tools"></i></th>
+              <th title="Seconds spent preheating the pad and the part">Soak</th>
               <th title="Amount of solder to extrude (mm)">Feed</th>
-              <th title="Seconds spent soldering the point">Time</th>
+              <th title="Seconds spent holding the soldering iron after applying solder">Dwell</th>
               <th title="Approach distance from the right side (mm)"><i class="fas fa-dot-circle"></i> <i class="fas fa-long-arrow-alt-left"></i></th>
             </tr>
           </thead>
@@ -120,6 +121,19 @@
               <td>{{ hole.y.toFixed(1) }}</td>
               <td>{{ hole.tool }}</td>
               
+              
+              <td>
+                <input
+                  type="number"
+                  class="form-control form-control-sm"
+                  :value="hole.soak"
+                  min="0"
+                  step="0.1"
+                  style="max-width: 50px;"
+                  @click.stop
+                  @change="updateField(hole, 'soak', $event.target.valueAsNumber)"
+                />
+              </td>
               <td>
                 <input
                   type="number"
@@ -1157,7 +1171,7 @@ function downloadExampleDrillFile() {
 }
 
 .right-panel {
-  width: 400px;
+  width: 450px;
   display: flex;
   flex-direction: column;
   position: relative;

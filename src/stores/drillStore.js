@@ -16,6 +16,7 @@ export const useDrillStore = defineStore("drill", {
     feedRetract: 0.5,
     rotation: 0,
     defaultSolderFeed: 3.0,
+    defaultSoakTime: 1.5,
     defaultDwellTime: 1.5,
     defaultApproachDistance: 0.8,
     defaultSolderAllPoints: false,
@@ -62,6 +63,7 @@ export const useDrillStore = defineStore("drill", {
         selected: false,
         pathIndex: null,
         feed: this.defaultSolderFeed,
+        soak: this.defaultSoakTime,
         dwell: this.defaultDwellTime,
         solderOffset: this.defaultApproachDistance
       }));

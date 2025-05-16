@@ -20,4 +20,15 @@ const router = createRouter({
   ],
 })
 
+// On first page load, check if we were redirected
+router.isReady().then(() => {
+  const redirectPath = sessionStorage.getItem('redirectPath')
+  if (redirectPath) {
+    sessionStorage.removeItem('redirectPath')
+    if (redirectPath !== window.location.pathname) {
+      router.replace(redirectPath)
+    }
+  }
+})
+
 export default router

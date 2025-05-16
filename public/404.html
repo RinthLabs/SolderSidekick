@@ -3,12 +3,9 @@
   <head>
     <meta charset="utf-8">
     <script>
-      // force client-side routing fallback
-      var redirect = sessionStorage.redirect;
-      delete sessionStorage.redirect;
-      if (redirect && redirect != location.href) {
-        history.replaceState(null, null, redirect);
-      }
+        // Store the current path in sessionStorage so the app can restore it after going to /
+        sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search + window.location.hash);
+        window.location.replace('/');
     </script>
   </head>
   <body>

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import GettingStarted from '../views/GettingStartedView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,12 +9,14 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: { pageClass: 'toolpath-editor-page' },
     },
-    // {
-    //   path: '/about',
-    //   name: 'about',
-    //   component: () => import('../views/AboutView.vue'),
-    // },
+    {
+      path: '/getting-started',
+      name: 'getting-started',
+      component: GettingStarted,
+      meta: { pageClass: 'getting-started-page' },
+    },
   ],
 })
 

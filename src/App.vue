@@ -2,7 +2,7 @@
 <template>
   <div class="app-root">
 
-    <div v-if="isMobile" class="mobile-message">
+    <div v-if="isMobile && route.meta.pageClass == 'toolpath-editor-page'" class="mobile-message">
   <div class="mobile-content">
     <img src="/logo/solder-sidekick-logo-dark-bg.svg" alt="Solder Sidekick Logo" class="mobile-logo" />
 
@@ -25,6 +25,9 @@
     <p class="mobile-note">
       This app runs on desktop. Here's a quick video — check it out on your computer later.
     </p>
+    <a href="/getting-started" class="btn btn-outline-light share-btn">
+      <i class="fa-solid fa-check me-2"></i> Have a kit? Get started!
+    </a>
   </div>
 
 <!-- Bottom section -->
@@ -52,7 +55,7 @@
 
 
 
-    <div v-else> 
+  <div v-else :class="routeClass">
    
     <RouterView />
 
@@ -87,10 +90,14 @@
 </template>
 
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import { ref, onMounted } from "vue";
+import { RouterLink, RouterView, useRoute  } from 'vue-router'
+import { ref, onMounted, computed} from "vue";
 
 const isMobile = ref(false)
+const route = useRoute();
+
+// Dynamically get route class from meta
+const routeClass = computed(() => route.meta.pageClass || '');
 
 // Define links for GitHub, Shop, and Donate
 const githubRepo = ref("https://github.com/RinthLabs/SolderSidekick");
@@ -202,6 +209,32 @@ onMounted(() => {
 </style>
 
 <style>
+
+/* General resets remain global */
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Route-specific page layouts */
+.toolpath-editor-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.getting-started-page {
+  padding: 1rem;
+  background: #f9f9f9;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+
+
 /* GLOBAL Cookie Banner Styles (not scoped!) */
 #cookie-banner {
   position: fixed !important;
@@ -368,18 +401,6 @@ onMounted(() => {
   font-weight: 600;
   flex-shrink: 0; /* prevents squishing on small screens */
 }
-
-
-
-
-
-.app-root {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-}
-
 
 
 </style>

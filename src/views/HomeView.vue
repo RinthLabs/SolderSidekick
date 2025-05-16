@@ -23,12 +23,20 @@ import Header from "@/components/Header.vue";
 
 </template>
 
-<style scoped>
+<style>
 
+/* .app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
 
-/* .footer {
-  border-top: 1px solid #ddd;
-  font-size: 0.9rem;
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
 } */
 
 

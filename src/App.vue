@@ -59,7 +59,10 @@
    
     <RouterView />
 
-    <CookieAcceptDecline
+    
+  </div>
+
+  <CookieAcceptDecline
   elementId="cookie-banner"
   @decline="handleDecline"
   @accept="handleAccept"
@@ -82,7 +85,6 @@
 </template>
 
 </CookieAcceptDecline>
-  </div>
 
 
 </div>
@@ -227,11 +229,12 @@ html, body, #app {
 }
 
 .getting-started-page {
-  padding: 1rem;
+  padding: 0; /* remove all padding to allow child to be 100% wide */
   background: #f9f9f9;
   overflow-y: auto;
   height: 100vh;
 }
+
 
 
 
@@ -347,7 +350,7 @@ html, body, #app {
 
 .video-wrapper {
   width: 100%;
-  max-width: 640px;
+  /* max-width: 640px; */
   aspect-ratio: 16 / 9;
   margin-bottom: 1rem;
   border-radius: 8px;

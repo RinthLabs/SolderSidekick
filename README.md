@@ -69,6 +69,22 @@ You can find the gerber and drill files for the example [**PCB Breadboard**](./e
 👉 Learn more or browse the design files:
 [PCB Breadboard](https://github.com/RinthLabs/PCB-breadboard-locking-pins-hardware-design)
 
+---
+
+## 🚀 Getting Started Guide
+
+Ready to bring your Solder Sidekick™ to life?
+
+Follow our step-by-step setup guide to:
+
+1. 🧩 **Assemble your kit**
+2. 🧾 **Prepare your PCB drill files**
+3. 🧠 **Generate G-code using the web app**
+4. ❓ **Browse FAQs and troubleshooting tips**
+
+👉 [**Start Here: Solder Sidekick Setup & Guide**](https://www.soldersidekick.com/getting-started)
+
+Whether you're soldering your first board or tuning your workflow, this page has everything you need to hit the ground running.
 
 ---
 

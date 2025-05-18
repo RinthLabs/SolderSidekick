@@ -72,6 +72,29 @@ You can find the gerber and drill files for the example [**PCB Breadboard**](./e
 
 ---
 
+## 🧰 Recommended Gear
+To get the most out of your Solder Sidekick™, we recommend picking up the following essentials:
+
+🖨️ Compatible Printer
+Solder Sidekick is designed specifically for the Ender-3 3D printer. Other printers may require custom modifications.
+
+[![Ender 3 3D Printer](./docs/ender3-small.jpg)
+<br>👉 Buy on Amazon](https://amzn.to/43fXs6A)
+
+---
+
+🧵 Recommended Solder
+We suggest using 1.0mm solder for optimal feed performance and joint coverage.
+
+[![Ender 3 3D Printer](./docs/solder-1mm-small.jpg)
+<br>👉 Buy on Amazon](https://amzn.to/43n6xuv)
+
+---
+
+Note: These are Amazon affiliate links. If you make a purchase, a small portion helps fund the development of the Solder Sidekick™ project — at no extra cost to you. ❤️
+
+---
+
 ## 💖 Support the Project
 
 This project is **community-driven** and **open-source**!

@@ -76,12 +76,12 @@
           },
           {
             question: 'Can I use this with any printer?',
-            answer: 'Solder Sidekick is designed for the Ender 3. Other printers may require custom mods.<br><a href="https://www.amazon.com/Comgrow-Creality-Ender-Aluminum-220x220x250mm/dp/B07BR3F9N6/" target="_blank"><img src="/faq/ender3.jpg" alt="Ender 3 3D Printer"><br>Buy on Amazon</a>',
+            answer: 'Solder Sidekick is designed for the Ender 3. Other printers may require custom mods.<br><a href="https://amzn.to/43fXs6A" target="_blank"><img src="/faq/ender3.jpg" alt="Ender 3 3D Printer"><br>Buy on Amazon</a>',
             open: false,
           },
           {
             question: 'What type of solder should I use?',
-            answer: 'We recommend using 1.0mm solder for best results.<br><a href="https://www.amazon.com/Electronic-Soldering-Electrical-Activity-Diameter/dp/B09KT5P3N8/" target="_blank"><img src="/faq/solder-1mm.jpg" alt="1mm Solder"><br>Buy on Amazon</a>',
+            answer: 'We recommend using 1.0mm solder for best results.<br><a href="https://amzn.to/43n6xuv" target="_blank"><img src="/faq/solder-1mm.jpg" alt="1mm Solder"><br>Buy on Amazon</a>',
             open: false,
           },
         ],

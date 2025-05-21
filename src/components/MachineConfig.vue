@@ -36,7 +36,8 @@ G28 Z ; Home Z
 G0 Z{SAFE} F600 ; Initial lift height
 
 M117 Moving to 0,0,0
-G0 X{CORNER_X} Y{CORNER_Y} F6000 ; Move to start position X and Y
+G0 X{CORNER_X} Y{CORNER_Y} F6000 ; Move to start position X and Y (1,3.3)
+G0 Z{CORNER_Z} F600 ; Move to start position Z (0.3)
 G0 Z{PCB_THICKNESS} F600 ; Move to start position Z
 G92 X0 Y0 Z0 ; Set current position as 0,0,0
 

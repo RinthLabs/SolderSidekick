@@ -1,0 +1,61 @@
+name: Feature Request
+description: Suggest an idea to improve Solder Sidekick
+title: "[FEATURE] "
+labels: [enhancement]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🚀 Thanks for suggesting an idea!
+
+        Please check the [📘 DESIGN_DECISIONS.md](https://github.com/RinthLabs/SolderSidekick/blob/main/DESIGN_DECISIONS.md) file before submitting.  
+        Some ideas may be out of scope for this project by design.
+
+        Help us understand your use case so we can make this better for everyone.
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment (optional)
+      description: What hardware or setup are you using this on?
+      placeholder: "e.g. Ender 3 Pro, MacOS, etc."
+    validations:
+      required: false
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What would you like to see?
+      description: Describe the feature you're proposing.
+      placeholder: "I'd like a setting to automatically retract solder when idle for 30 seconds..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefit
+    attributes:
+      label: Why is this useful?
+      description: Tell us how this feature would help your workflow or others.
+      placeholder: "This would save time during production and reduce solder waste..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Have you tried any workarounds?
+      description: Let us know if you're currently solving this another way.
+      placeholder: "I'm manually retracting solder between jobs..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add screenshots, sketches, or any other notes here.
+      placeholder: "Any mockups or links to similar tools/features"
+    validations:
+      required: false

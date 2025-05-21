@@ -1,0 +1,64 @@
+name: Bug Report
+description: Report something that isn't working as expected
+title: "[BUG] "
+labels: [bug]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🐛 Thanks for reporting a bug!
+
+        Please fill out the details below so we can fix it quickly.
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: What hardware and browser/OS are you using?
+      placeholder: "e.g. Ender 3 V2, Chrome on Windows 11"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected instead.
+      placeholder: "The solder feed motor doesn’t activate when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce the issue?
+      placeholder: |
+        1. Go to '...'
+        2. Click '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Screenshots or logs
+      description: Drag & drop images or copy/paste relevant logs or error messages.
+      placeholder: "Attach screenshots or log output here"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Low
+        - Medium
+        - High
+    validations:
+      required: false

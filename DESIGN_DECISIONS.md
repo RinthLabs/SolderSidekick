@@ -33,13 +33,11 @@ We wanted a platform that users can **trust**, **easily repair**, and **modify**
 
 ---
 
-## 🛠 Why is the Soldering Iron Mounted Vertically?
+## 🛠 Why is the Soldering Iron Mounted at a fixed angle?
 
-Mounting the soldering iron **vertically** provides major advantages:
-- ✏️ **Simplified mechanical design**: No need for tilt or rotation mechanisms.
-- 🚀 **No firmware changes**: Keeping the iron fixed allows full reuse of stock Ender-3 firmware.
-- 🔒 **Avoids tall component collisions**: A vertical approach minimizes chances of side collisions with components.
-- 🔥 **Custom machined tip**: A groove cut into the soldering iron tip allows precise control of solder placement even with a fixed vertical orientation.
+Mounting the soldering iron angle fixed provides major advantages:
+- ✏️ **Simplified mechanical design**: No need for tilt or rotation mechanisms, keeps the soldering iron rigidly mounted in place.
+- 🚀 **No firmware changes**: Keeping the iron fixed allows full reuse of stock Ender-3 firmware without needing to upgrade the controller for an additional axis of rotation.
 
 This design reduces complexity and improves reliability for users building their own system.
 

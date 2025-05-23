@@ -14,14 +14,8 @@ const activeTab = ref("settings");
 const feedPrime = ref(drillStore.feedPrime ?? 1.0);
 const feedRetract = ref(drillStore.feedRetract ?? 1.0);
 
-const defaultSolderFeed = ref(drillStore.defaultSolderFeed ?? 3.0);
-const defaultSoakTime = ref(drillStore.defaultSoakTime ?? 1.5);
-const defaultDwellTime = ref(drillStore.dwellTime ?? 1.5);
-const defaultApproachDistance = ref(drillStore.defaultApproachDistance ?? 2.0);
-
-
 const solderFeedMultiplier = ref(105);
-const initialLiftHeight = ref(10);
+const startSafeZ = ref(10);
 const zeroX = ref(20);
 const zeroY = ref(25);
 const zeroZ = ref(1);
@@ -35,7 +29,7 @@ const startGcode = ref(`; Start G-code
 M117 Homing XYZ
 G28 X Y ; Home X and Y
 G28 Z ; Home Z
-G0 Z{SAFE} F600 ; Initial lift height
+G0 Z{START_SAFE_Z} F600 ; Initial lift height
 
 M117 Moving to 0,0,0
 G0 X{ORIGIN_X} Y{ORIGIN_Y} F6000 ; Move to start position X and Y (1,3.3)
@@ -56,7 +50,7 @@ M117 Ready to Solder!`);
 const perPointGcode = ref(`; Solder Point G-code
 M117 Soldering {INDEX}/{TOTAL_POINTS}
 M73 P{INDEX / TOTAL_POINTS} ; Set progress bar %
-G0 X{X} Y{Y + APPROACH} F6000 ; Move to point with approach offset
+G0 X{X + APPROACH} Y{Y} F6000 ; Move to point with approach offset
 G1 E{PRIME} F600 ; Prime soldering iron with a small amount of solder
 G1 E-{PRIME_RETRACT} F600 ; Retract solder from touching soldering iron
 G1 Z0 ; Move to PCB height
@@ -83,33 +77,33 @@ G4 P{BEEP} ; Wait for 0.25 seconds
 `);
 
 // Sync relevant settings to G-code templates
-watch([initialLiftHeight, solderFeedMultiplier, retractAfterSolder, bedForwardY, playBeep], () => {
-  startGcode.value = startGcode.value
-    .replace(/\{LIFT\}/g, initialLiftHeight.value)
-    .replace(/\{MULTIPLIER\}/g, solderFeedMultiplier.value);
+// watch([startSafeZ, solderFeedMultiplier, retractAfterSolder, bedForwardY, playBeep], () => {
+//   startGcode.value = startGcode.value
+//     .replace(/\{LIFT\}/g, startSafeZ.value)
+//     .replace(/\{MULTIPLIER\}/g, solderFeedMultiplier.value);
 
-  endGcode.value = endGcode.value
-    .replace(/\{RETRACT\}/g, retractAfterSolder.value)
-    .replace(/\{BED_FORWARD\}/g, bedForwardY.value)
-    .replace(/\{BEEP\}/g, playBeep.value ? "M300 S440 P200" : "");
-});
+//   endGcode.value = endGcode.value
+//     .replace(/\{RETRACT\}/g, retractAfterSolder.value)
+//     .replace(/\{BED_FORWARD\}/g, bedForwardY.value)
+//     .replace(/\{BEEP\}/g, playBeep.value ? "M300 S440 P200" : "");
+// });
 
-watch([feedPrime, feedRetract, defaultSolderFeed], () => {
-  perPointGcode.value = perPointGcode.value
-    .replace(/\{PRIME\}/g, feedPrime.value)
-    .replace(/\{RETRACT\}/g, feedRetract.value)
-    .replace(/\{FEED\}/g, defaultSolderFeed.value);
-});
+// watch([feedPrime, feedRetract, defaultSolderFeed], () => {
+//   perPointGcode.value = perPointGcode.value
+//     .replace(/\{PRIME\}/g, feedPrime.value)
+//     .replace(/\{RETRACT\}/g, feedRetract.value)
+//     .replace(/\{FEED\}/g, defaultSolderFeed.value);
+// });
 
-watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
-  drillStore.defaultSolderFeed = defaultSolderFeed.value;
-  drillStore.defaultDwellTime = defaultDwellTime.value;
-  drillStore.defaultApproachDistance = defaultApproachDistance.value;
-});
+// watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
+//   drillStore.defaultSolderFeed = defaultSolderFeed.value;
+//   drillStore.defaultDwellTime = defaultDwellTime.value;
+//   drillStore.defaultApproachDistance = defaultApproachDistance.value;
+// });
 
-watch([defaultSoakTime], () => {
-  drillStore.defaultSoakTime = defaultSoakTime.value;
-});
+// watch([defaultSoakTime], () => {
+//   drillStore.defaultSoakTime = defaultSoakTime.value;
+// });
 
 
 </script>
@@ -148,8 +142,8 @@ watch([defaultSoakTime], () => {
                   </div>
                 </div>
 
-                <label class="form-label mt-3" title="{SAFE}">Start Safe Z</label>
-                <input type="number" class="form-control" v-model="initialLiftHeight" />
+                <label class="form-label mt-3" title="{START_SAFE_Z}">Start Safe Z</label>
+                <input type="number" class="form-control" v-model="startSafeZ" />
 
                 <label class="form-label mt-3" title="{MULTIPLIER}">Solder Feed Multiplier</label>
                 <input type="number" class="form-control" v-model="solderFeedMultiplier" />
@@ -169,8 +163,6 @@ watch([defaultSoakTime], () => {
             <div class="row mt-4">
               <div class="col-md-6">
                 <h5><i class="fa-solid fa-crosshairs"></i> Per Point G-code</h5>
-                <label class="form-label" title="{APPROACH}">Approach Distance</label>
-                <input type="number" class="form-control" v-model="defaultApproachDistance" />
 
                 <label class="form-label mt-3" title="{PRIME}">Solder Prime</label>
                 <input type="number" class="form-control" v-model="feedPrime" />
@@ -181,20 +173,11 @@ watch([defaultSoakTime], () => {
                 <label class="form-label mt-3" title="{POINT_OFFSET_X}">Solder Point Offset X</label>
                 <input type="number" class="form-control" v-model="drillStore.originOffsetX" />
 
-                <label class="form-label mt-3" title="{SOAK}">Solder Soak</label>
-                <input type="number" class="form-control" v-model="defaultSoakTime" />
-
-                <label class="form-label mt-3" title="{FEED}">Solder Feed</label>
-                <input type="number" class="form-control" v-model="defaultSolderFeed" />
-
-                <label class="form-label mt-3" title="{DWELL}">Solder Dwell</label>
-                <input type="number" class="form-control" v-model="defaultDwellTime" />
-
                 <label class="form-label mt-3" title="{RETRACT}">Solder Retract</label>
                 <input type="number" class="form-control" v-model="retractAfterSolder" />
 
                 <label class="form-label mt-3" title="{SOLDER_SAFE_Z}">Solder Safe Z</label>
-                <input type="number" class="form-control" v-model="initialLiftHeight" />
+                <input type="number" class="form-control" v-model="startSafeZ" />
               </div>
 
               <div class="col-md-6">
@@ -211,7 +194,7 @@ watch([defaultSoakTime], () => {
               <div class="col-md-6">
                 <h5><i class="fa-solid fa-stop"></i> End G-code</h5>
                 <label class="form-label" title="{END_SAFE_Z}">End Safe Z</label>
-                <input type="number" class="form-control" v-model="initialLiftHeight" />
+                <input type="number" class="form-control" v-model="startSafeZ" />
 
                 <label class="form-label mt-3" title="{BED_FORWARD}">Bed Forward</label>
                 <input type="number" class="form-control" v-model="bedForwardY" />

@@ -1,6 +1,9 @@
 <script setup>
 import { ref, watch   } from "vue";
+import GcodeEditor from './GcodeEditor.vue'; // Adjust path if needed
+
 import { useDrillStore } from "@/stores/drillStore";
+
 
 
 const drillStore = useDrillStore();
@@ -21,10 +24,9 @@ const solderFeedMultiplier = ref(105);
 const initialLiftHeight = ref(10);
 const zeroX = ref(20);
 const zeroY = ref(25);
-const homeXYFirst = ref(true);
+const zeroZ = ref(1);
 const retractAfterSolder = ref(10);
 const bedForwardY = ref(235);
-const disableSteppers = ref(true);
 const playBeep = ref(true);
 
 //G0 X3 Y4.1 F6000 ; Move to start position X and Y
@@ -111,131 +113,126 @@ watch([defaultSoakTime], () => {
 
 
 </script>
-
-<!-- MachineConfig.vue -->
 <template>
   <div class="modal fade" id="machineConfigModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-ish">
-
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="fa-solid fa-gears"></i> Settings</h5>
+          <h5 class="modal-title">
+            <i class="fa-solid fa-gears"></i> Settings
+          </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+
         <div class="modal-body">
-          
+          <div class="container-fluid">
+            <div class="row">
+              <!-- Settings column -->
+              <div class="col-md-6">
+                <!-- Start G-code Settings -->
+                <h5 class="mt-3"><i class="fa-solid fa-play"></i> Start G-code</h5>
+                <label class="form-label" title="{SAFE}">Start Safe Z</label>
+                <input type="number" class="form-control" v-model="initialLiftHeight" />
+
+               <label class="form-label mt-3" title="{ORIGIN_X} {ORIGIN_Y} {ORIGIN_Z}">Homing Origin XYZ</label>
+                <div class="row mb-2">
+                  <div class="col-auto d-flex align-items-center">
+                    <label class="me-2 mb-0" style="min-width: 1.5em;"><b>X</b></label>
+                    <input type="number" class="form-control form-control-sm" v-model="zeroX" />
+                  </div>
+                  <div class="col-auto d-flex align-items-center">
+                    <label class="me-2 mb-0" style="min-width: 1.5em;"><b>Y</b></label>
+                    <input type="number" class="form-control form-control-sm" v-model="zeroY" />
+                  </div>
+                  <div class="col-auto d-flex align-items-center">
+                    <label class="me-2 mb-0" style="min-width: 1.5em;"><b>Z</b></label>
+                    <input type="number" class="form-control form-control-sm" v-model="zeroZ" />
+                  </div>
+                </div>
 
 
-            <div class="container mt-4">
-    <ul class="nav nav-tabs">
-      <li class="nav-item">
-        <a class="nav-link" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">Settings</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" :class="{ active: activeTab === 'gcode' }" @click="activeTab = 'gcode'">G-code Templates</a>
-      </li>
-    </ul>
 
-    <div v-if="activeTab === 'settings'" class="mt-3">
-      <div class="row g-4">
-        <div class="col-md-6">
-          <h5 class=""><i class="fa-solid fa-sliders"></i> Defaults</h5>
+                <label class="form-label mt-3" title="{MULTIPLIER}">Solder Feed Multiplier</label>
+                <input type="number" class="form-control" v-model="solderFeedMultiplier" />
 
-          <label class="form-label">Solder Feed (mm)</label>
-          <input type="number" class="form-control" v-model="defaultSolderFeed" />
+                <!-- Per-Point G-code Settings -->
+                <h5 class="mt-4"><i class="fa-solid fa-crosshairs"></i> Per Point G-code</h5>
+                <label class="form-label" title="{APPROACH}">Approach Distance</label>
+                <input type="number" class="form-control" v-model="defaultApproachDistance" />
 
-          <label class="form-label mt-3">Solder Soak Time (seconds)</label>
-          <input type="number" class="form-control" v-model="defaultSoakTime" />
+                <label class="form-label mt-3" title="{PRIME}">Solder Prime</label>
+                <input type="number" class="form-control" v-model="feedPrime" />
 
-          <label class="form-label mt-3">Solder Dwell Time (seconds)</label>
-          <input type="number" class="form-control" v-model="defaultDwellTime" />
+                <label class="form-label mt-3" title="{PRIME_RETRACT}">Solder Prime Retract</label>
+                <input type="number" class="form-control" v-model="feedRetract" />
 
-          <label class="form-label mt-3">Approach Distance (mm)</label>
-          <input type="number" class="form-control" v-model="defaultApproachDistance" />
+                <label class="form-label mt-3" title="{POINT_OFFSET_X}">Solder Point Offset X</label>
+                <input type="number" class="form-control" v-model="drillStore.originOffsetX" />
 
-          <div class="form-check mt-3">
-            <input class="form-check-input" type="checkbox" v-model="drillStore.defaultSolderAllPoints" />
-            <label class="form-check-label">Solder All Points</label>
+                <label class="form-label mt-3" title="{SOAK}">Solder Soak</label>
+                <input type="number" class="form-control" v-model="defaultSoakTime" />
+
+                <label class="form-label mt-3" title="{FEED}">Solder Feed</label>
+                <input type="number" class="form-control" v-model="defaultSolderFeed" />
+
+                <label class="form-label mt-3" title="{DWELL}">Solder Dwell</label>
+                <input type="number" class="form-control" v-model="defaultDwellTime" />
+
+                <label class="form-label mt-3" title="{RETRACT}">Solder Retract</label>
+                <input type="number" class="form-control" v-model="retractAfterSolder" />
+
+                <label class="form-label mt-3" title="{SOLDER_SAFE_Z}">Solder Safe Z</label>
+                <input type="number" class="form-control" v-model="initialLiftHeight" />
+
+                <!-- End G-code Settings -->
+                <h5 class="mt-4"><i class="fa-solid fa-stop"></i> End G-code</h5>
+                <label class="form-label" title="{END_SAFE_Z}">End Safe Z</label>
+                <input type="number" class="form-control" v-model="initialLiftHeight" />
+
+                <label class="form-label mt-3" title="{BED_FORWARD}">Bed Forward</label>
+                <input type="number" class="form-control" v-model="bedForwardY" />
+
+                <div class="form-check mt-3">
+                  <input class="form-check-input" type="checkbox" v-model="playBeep" />
+                  <label class="form-check-label" title="{BEEP}">Play Beep</label>
+                </div>
+              </div>
+
+              <!-- G-code Previews column -->
+              <div class="col-md-6">
+                <GcodeEditor
+                  :code="startGcode"
+                  title="Start G-code"
+                  icon="fa-play"
+                  @update:code="startGcode = $event"
+                />
+
+                <GcodeEditor
+                  class="mt-4"
+                  :code="perPointGcode"
+                  title="Per-Point G-code"
+                  icon="fa-crosshairs"
+                  @update:code="perPointGcode = $event"
+                />
+
+                <GcodeEditor
+                  class="mt-4"
+                  :code="endGcode"
+                  title="End G-code"
+                  icon="fa-stop"
+                  @update:code="endGcode = $event"
+                />
+              </div>
+            </div>
           </div>
-
-        </div>
-
-        <div class="col-md-6">
-          <h5><i class="fa-solid fa-syringe"></i> Solder Extrusion</h5>
-          <label class="form-label">Solder Feed Multiplier</label>
-          <input type="number" class="form-control" v-model="solderFeedMultiplier" />
-
-          <label class="form-label mt-3">Prime Amount (mm)</label>
-          <input type="number" class="form-control" v-model="feedPrime" />
-
-          <label class="form-label mt-3">Retract Amount (mm)</label>
-          <input type="number" class="form-control" v-model="feedRetract" />
-        </div>
-
-        <div class="col-md-6">
-          <h5><i class="fa-solid fa-play"></i> Start G-code</h5>
-
-          <label class="form-label">Build Plate Zero Position</label>
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <label class="form-label mb-0">X:</label>
-            <input type="number" class="form-control form-control-sm w-25" v-model="zeroX" />
-            <label class="form-label mb-0">Y:</label>
-            <input type="number" class="form-control form-control-sm w-25" v-model="zeroY" />
-          </div>
-
-
-
-          <label class="form-label">Initial Lift Height</label>
-          <input type="number" class="form-control" v-model="initialLiftHeight" />
-
-          <div class="form-check mt-3">
-            <input class="form-check-input" type="checkbox" v-model="homeXYFirst" />
-            <label class="form-check-label">Home XY before Z</label>
-          </div>
-
-          <h5 class="mt-4"><i class="fa-solid fa-stop"></i> End G-code</h5>
-          <label class="form-label">Raise Z Before Ending</label>
-          <input type="number" class="form-control" v-model="retractAfterSolder" />
-
-          <label class="form-label mt-3">Move Bed Forward (Y)</label>
-          <input type="number" class="form-control" v-model="bedForwardY" />
-
-          <div class="form-check mt-1">
-            <input class="form-check-input" type="checkbox" v-model="playBeep" />
-            <label class="form-check-label">Play beep</label>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="activeTab === 'gcode'" class="mt-3">
-      <label class="form-label"><i class="fa-solid fa-play"></i> Start G-code</label>
-      <textarea class="form-control gcode-textarea" v-model="startGcode"></textarea>
-
-
-
-
-    <label class="form-label mt-3"><i class="fa-solid fa-crosshairs"></i> Per-Point G-code</label>
-    <textarea class="form-control gcode-textarea" v-model="perPointGcode"></textarea>
-
-    <label class="form-label mt-3"><i class="fa-solid fa-stop"></i> End G-code</label>
-    <textarea class="form-control gcode-textarea" v-model="endGcode"></textarea>
-    </div>
-  </div>
-
-
-
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-textarea {
-  font-family: monospace;
-}
 
+<style scoped>
 .modal-fullscreen-ish {
   max-width: 95vw;
   max-height: 95vh;

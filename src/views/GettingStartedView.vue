@@ -3,7 +3,7 @@
       <!-- Hero -->
       <section class="hero">
         <img src="/logo/solder-sidekick-logo-light-bg.svg" alt="Solder Sidekick" class="logo" />
-        <p class="tagline">Let's get you soldering in no time.</p>
+        <p class="tagline">Every Maker needs a Sidekick</p>
       </section>
   
       <!-- Step 1 -->
@@ -197,7 +197,7 @@
   
   <style>
 .faq-answer img {
-  max-width: 60%;
+  max-width: 20%;
   height: auto;
   margin-top: 0.5rem;
   border-radius: 4px;

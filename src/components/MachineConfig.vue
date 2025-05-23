@@ -36,8 +36,8 @@ G28 Z ; Home Z
 G0 Z{SAFE} F600 ; Initial lift height
 
 M117 Moving to 0,0,0
-G0 X{CORNER_X} Y{CORNER_Y} F6000 ; Move to start position X and Y (1,3.3)
-G0 Z{CORNER_Z} F600 ; Move to start position Z (0.3)
+G0 X{ORIGIN_X} Y{ORIGIN_Y} F6000 ; Move to start position X and Y (1,3.3)
+G0 Z{ORIGIN_Z} F600 ; Move to start position Z (0.3)
 G0 Z{PCB_THICKNESS} F600 ; Move to start position Z
 G92 X0 Y0 Z0 ; Set current position as 0,0,0
 
@@ -57,27 +57,27 @@ M73 P{INDEX / TOTAL_POINTS} ; Set progress bar %
 G0 X{X} Y{Y + APPROACH} F6000 ; Move to point with approach offset
 G1 E{PRIME} F600 ; Prime soldering iron with a small amount of solder
 G1 E-{PRIME_RETRACT} F600 ; Retract solder from touching soldering iron
-G1 Z0 ; Move PCB height
-G0 X{X} Y{Y} F6000 ; Move to solder point
+G1 Z0 ; Move to PCB height
+G0 X{X + POINT_OFFSET_X} Y{Y} F6000 ; Move to solder point
 G4 S{SOAK} ; Soak time
 G1 E{FEED} ; Solder the point
 G4 S{DWELL} ; Dwell time
 G1 E-{RETRACT} F600 ; Retract solder from touching soldering iron
-G1 Z{LIFT} F600 ; Lift soldering iron`);
+G1 Z{SOLDER_SAFE_Z} F600 ; Lift soldering iron`);
 
 const endGcode = ref(`; End G-code
-G1 Z{SAFE} F600 ; Lift soldering iron
+G1 Z{END_SAFE_Z} F600 ; Lift soldering iron
 G1 Y{BED_FORWARD} F6000 ; Move bed forward
 M18 ; Disable steppers
 M84 ; Disable steppers
 M73 P100 ; Set progress bar to 100%
 M117 Solder Sidekick Done!
-M300 S440 P250 ; Beep
-G4 P250 ; Wait for 0.25 seconds
-M300 S440 P250 ; Beep
-G4 P250 ; Wait for 0.25 seconds
-M300 S440 P250 ; Beep
-G4 P250 ; Wait for 0.25 seconds
+M300 S440 P{BEEP} ; Beep
+G4 P{BEEP} ; Wait for 0.25 seconds
+M300 S440 P{BEEP} ; Beep
+G4 P{BEEP} ; Wait for 0.25 seconds
+M300 S440 P{BEEP} ; Beep
+G4 P{BEEP} ; Wait for 0.25 seconds
 `);
 
 // Sync relevant settings to G-code templates
@@ -200,10 +200,6 @@ watch([defaultSoakTime], () => {
           <label class="form-label mt-3">Move Bed Forward (Y)</label>
           <input type="number" class="form-control" v-model="bedForwardY" />
 
-          <div class="form-check mt-3">
-            <input class="form-check-input" type="checkbox" v-model="disableSteppers" />
-            <label class="form-check-label">Disable steppers</label>
-          </div>
           <div class="form-check mt-1">
             <input class="form-check-input" type="checkbox" v-model="playBeep" />
             <label class="form-check-label">Play beep</label>

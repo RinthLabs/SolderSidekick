@@ -113,6 +113,7 @@ watch([defaultSoakTime], () => {
 
 
 </script>
+
 <template>
   <div class="modal fade" id="machineConfigModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-ish">
@@ -126,16 +127,13 @@ watch([defaultSoakTime], () => {
 
         <div class="modal-body">
           <div class="container-fluid">
+            <!-- Start G-code Settings + GcodeEditor in same row -->
             <div class="row">
-              <!-- Settings column -->
               <div class="col-md-6">
-                <!-- Start G-code Settings -->
                 <h5 class="mt-3"><i class="fa-solid fa-play"></i> Start G-code</h5>
-                <label class="form-label" title="{SAFE}">Start Safe Z</label>
-                <input type="number" class="form-control" v-model="initialLiftHeight" />
-
-               <label class="form-label mt-3" title="{ORIGIN_X} {ORIGIN_Y} {ORIGIN_Z}">Homing Origin XYZ</label>
-                <div class="row mb-2">
+                
+                <label class="form-label" title="{ORIGIN_X} {ORIGIN_Y} {ORIGIN_Z}">Homing Origin XYZ</label>
+                <div class="row">
                   <div class="col-auto d-flex align-items-center">
                     <label class="me-2 mb-0" style="min-width: 1.5em;"><b>X</b></label>
                     <input type="number" class="form-control form-control-sm" v-model="zeroX" />
@@ -150,13 +148,27 @@ watch([defaultSoakTime], () => {
                   </div>
                 </div>
 
-
+                <label class="form-label mt-3" title="{SAFE}">Start Safe Z</label>
+                <input type="number" class="form-control" v-model="initialLiftHeight" />
 
                 <label class="form-label mt-3" title="{MULTIPLIER}">Solder Feed Multiplier</label>
                 <input type="number" class="form-control" v-model="solderFeedMultiplier" />
+              </div>
 
-                <!-- Per-Point G-code Settings -->
-                <h5 class="mt-4"><i class="fa-solid fa-crosshairs"></i> Per Point G-code</h5>
+              <div class="col-md-6">
+                <GcodeEditor
+                  :code="startGcode"
+                  title="Start G-code"
+                  icon="fa-play"
+                  @update:code="startGcode = $event"
+                />
+              </div>
+            </div>
+
+            <!-- Per Point + End Settings remain grouped -->
+            <div class="row mt-4">
+              <div class="col-md-6">
+                <h5><i class="fa-solid fa-crosshairs"></i> Per Point G-code</h5>
                 <label class="form-label" title="{APPROACH}">Approach Distance</label>
                 <input type="number" class="form-control" v-model="defaultApproachDistance" />
 
@@ -183,9 +195,21 @@ watch([defaultSoakTime], () => {
 
                 <label class="form-label mt-3" title="{SOLDER_SAFE_Z}">Solder Safe Z</label>
                 <input type="number" class="form-control" v-model="initialLiftHeight" />
+              </div>
 
-                <!-- End G-code Settings -->
-                <h5 class="mt-4"><i class="fa-solid fa-stop"></i> End G-code</h5>
+              <div class="col-md-6">
+                <GcodeEditor
+                  :code="perPointGcode"
+                  title="Per-Point G-code"
+                  icon="fa-crosshairs"
+                  @update:code="perPointGcode = $event"
+                />
+              </div>
+            </div>
+
+            <div class="row mt-4">
+              <div class="col-md-6">
+                <h5><i class="fa-solid fa-stop"></i> End G-code</h5>
                 <label class="form-label" title="{END_SAFE_Z}">End Safe Z</label>
                 <input type="number" class="form-control" v-model="initialLiftHeight" />
 
@@ -198,25 +222,8 @@ watch([defaultSoakTime], () => {
                 </div>
               </div>
 
-              <!-- G-code Previews column -->
               <div class="col-md-6">
                 <GcodeEditor
-                  :code="startGcode"
-                  title="Start G-code"
-                  icon="fa-play"
-                  @update:code="startGcode = $event"
-                />
-
-                <GcodeEditor
-                  class="mt-4"
-                  :code="perPointGcode"
-                  title="Per-Point G-code"
-                  icon="fa-crosshairs"
-                  @update:code="perPointGcode = $event"
-                />
-
-                <GcodeEditor
-                  class="mt-4"
                   :code="endGcode"
                   title="End G-code"
                   icon="fa-stop"
@@ -224,13 +231,13 @@ watch([defaultSoakTime], () => {
                 />
               </div>
             </div>
+
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .modal-fullscreen-ish {
@@ -254,5 +261,4 @@ watch([defaultSoakTime], () => {
   min-height: 18vh;
   resize: vertical;
 }
-
 </style>

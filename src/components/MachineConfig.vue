@@ -23,7 +23,6 @@ const retractAfterSolder = ref(10);
 const bedForwardY = ref(235);
 const playBeep = ref(true);
 
-//G0 X3 Y4.1 F6000 ; Move to start position X and Y
 // G-code Templates
 const startGcode = ref(`; Start G-code
 M117 Homing XYZ
@@ -33,77 +32,41 @@ G0 Z{START_SAFE_Z} F600 ; Initial lift height
 
 M117 Moving to 0,0,0
 G0 X{ORIGIN_X} Y{ORIGIN_Y} F6000 ; Move to start position X and Y (1,3.3)
-G0 Z{ORIGIN_Z} F600 ; Move to start position Z (0.3)
-G0 Z{PCB_THICKNESS} F600 ; Move to start position Z
+G0 Z{ORIGIN_Z + PCB_THICKNESS} F600 ; Move to start position Z + PCB Thickness (0.3)
 G92 X0 Y0 Z0 ; Set current position as 0,0,0
 
 M221 S{MULTIPLIER} ; Extruder multiplier
 M302 S0 ; Allow cold extrusion
 M83 ; Set extruder to relative mode
 
-M117 Ready to Solder!`);
+`);
 
-//G0 X16 Y16 F6000 ; Move to start position X and Y
-
-//G0 X0 Y0 F6000
 
 const perPointGcode = ref(`; Solder Point G-code
-M117 Soldering {INDEX}/{TOTAL_POINTS}
-M73 P{INDEX / TOTAL_POINTS} ; Set progress bar %
+M117 Soldering {INDEX + 1}/{TOTAL_POINTS}
+M73 P{INDEX / TOTAL_POINTS * 100} ; Set progress bar %
 G0 X{X + APPROACH} Y{Y} F6000 ; Move to point with approach offset
-G1 E{PRIME} F600 ; Prime soldering iron with a small amount of solder
+G1 E{PRIME} F300 ; Prime soldering iron with a small amount of solder
 G1 E-{PRIME_RETRACT} F600 ; Retract solder from touching soldering iron
 G1 Z0 ; Move to PCB height
-G0 X{X + POINT_OFFSET_X} Y{Y} F6000 ; Move to solder point
+G0 X{X + POINT_OFFSET_X} F600 ; Move to solder point
 G4 S{SOAK} ; Soak time
-G1 E{FEED} ; Solder the point
-G4 S{DWELL} ; Dwell time
+G1 E{FEED} F300 ; Solder the point
 G1 E-{RETRACT} F600 ; Retract solder from touching soldering iron
+G4 S{DWELL} ; Dwell time
 G1 Z{SOLDER_SAFE_Z} F600 ; Lift soldering iron`);
 
 const endGcode = ref(`; End G-code
-G1 Z{END_SAFE_Z} F600 ; Lift soldering iron
-G1 Y{BED_FORWARD} F6000 ; Move bed forward
-M18 ; Disable steppers
-M84 ; Disable steppers
-M73 P100 ; Set progress bar to 100%
 M117 Solder Sidekick Done!
+M73 P100 ; Set progress bar to 100%
+G0 Z{END_SAFE_Z} F600 ; Lift soldering iron
+
 M300 S440 P{BEEP} ; Beep
-G4 P{BEEP} ; Wait for 0.25 seconds
+G4 P500 ; Wait for 0.5 seconds
 M300 S440 P{BEEP} ; Beep
-G4 P{BEEP} ; Wait for 0.25 seconds
+G4 P500 ; Wait for 0.5 seconds
 M300 S440 P{BEEP} ; Beep
-G4 P{BEEP} ; Wait for 0.25 seconds
 `);
-
-// Sync relevant settings to G-code templates
-// watch([startSafeZ, solderFeedMultiplier, retractAfterSolder, bedForwardY, playBeep], () => {
-//   startGcode.value = startGcode.value
-//     .replace(/\{LIFT\}/g, startSafeZ.value)
-//     .replace(/\{MULTIPLIER\}/g, solderFeedMultiplier.value);
-
-//   endGcode.value = endGcode.value
-//     .replace(/\{RETRACT\}/g, retractAfterSolder.value)
-//     .replace(/\{BED_FORWARD\}/g, bedForwardY.value)
-//     .replace(/\{BEEP\}/g, playBeep.value ? "M300 S440 P200" : "");
-// });
-
-// watch([feedPrime, feedRetract, defaultSolderFeed], () => {
-//   perPointGcode.value = perPointGcode.value
-//     .replace(/\{PRIME\}/g, feedPrime.value)
-//     .replace(/\{RETRACT\}/g, feedRetract.value)
-//     .replace(/\{FEED\}/g, defaultSolderFeed.value);
-// });
-
-// watch([defaultSolderFeed, defaultDwellTime, defaultApproachDistance], () => {
-//   drillStore.defaultSolderFeed = defaultSolderFeed.value;
-//   drillStore.defaultDwellTime = defaultDwellTime.value;
-//   drillStore.defaultApproachDistance = defaultApproachDistance.value;
-// });
-
-// watch([defaultSoakTime], () => {
-//   drillStore.defaultSoakTime = defaultSoakTime.value;
-// });
 
 
 </script>

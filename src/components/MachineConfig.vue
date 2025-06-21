@@ -1,72 +1,109 @@
 <script setup>
-import { ref, watch   } from "vue";
+import { ref, watch, onMounted  } from "vue";
 import GcodeEditor from './GcodeEditor.vue'; // Adjust path if needed
 
 import { useDrillStore } from "@/stores/drillStore";
 
 
-
 const drillStore = useDrillStore();
-const activeTab = ref("settings");
+const selectedProfile = ref(drillStore.currentProfile);
+
+// Pull settings from store defaults instead of hardcoding
+const zeroX = ref(drillStore.defaultProfileSettings.zeroX);
+const zeroY = ref(drillStore.defaultProfileSettings.zeroY);
+const zeroZ = ref(drillStore.defaultProfileSettings.zeroZ);
+const startSafeZ = ref(drillStore.defaultProfileSettings.startSafeZ);
+const solderSafeZ = ref(drillStore.defaultProfileSettings.solderSafeZ);
+const endSafeZ = ref(drillStore.defaultProfileSettings.endSafeZ);
+const solderFeedMultiplier = ref(drillStore.defaultProfileSettings.solderFeedMultiplier);
+const feedPrime = ref(drillStore.defaultProfileSettings.feedPrime);
+const feedRetract = ref(drillStore.defaultProfileSettings.feedRetract);
+const retractAfterSolder = ref(drillStore.defaultProfileSettings.retractAfterSolder);
+const bedForwardY = ref(drillStore.defaultProfileSettings.bedForwardY);
+const playBeep = ref(drillStore.defaultProfileSettings.playBeep);
+const startGcode = ref(drillStore.defaultProfileSettings.startGcode);
+const perPointGcode = ref(drillStore.defaultProfileSettings.perPointGcode);
+const endGcode = ref(drillStore.defaultProfileSettings.endGcode);
+
+
+
+// Load from profile
+function loadSettingsToUI() {
+  const s = drillStore.profiles[selectedProfile.value];
+  zeroX.value = s.zeroX;
+  zeroY.value = s.zeroY;
+  zeroZ.value = s.zeroZ;
+  startSafeZ.value = s.startSafeZ;
+  solderSafeZ.value = s.solderSafeZ;
+  endSafeZ.value = s.endSafeZ;
+  solderFeedMultiplier.value = s.solderFeedMultiplier;
+  feedPrime.value = s.feedPrime;
+  feedRetract.value = s.feedRetract;
+  retractAfterSolder.value = s.retractAfterSolder;
+  bedForwardY.value = s.bedForwardY;
+  playBeep.value = s.playBeep;
+  startGcode.value = s.startGcode;
+  perPointGcode.value = s.perPointGcode;
+  endGcode.value = s.endGcode;
+}
+
+function saveSettingsToProfile() {
+  drillStore.updateCurrentProfileSettings({
+    zeroX: zeroX.value,
+    zeroY: zeroY.value,
+    zeroZ: zeroZ.value,
+    startSafeZ: startSafeZ.value,
+    solderSafeZ: solderSafeZ.value,
+    endSafeZ: endSafeZ.value,
+    solderFeedMultiplier: solderFeedMultiplier.value,
+    feedPrime: feedPrime.value,
+    feedRetract: feedRetract.value,
+    retractAfterSolder: retractAfterSolder.value,
+    bedForwardY: bedForwardY.value,
+    playBeep: playBeep.value,
+    startGcode: startGcode.value,
+    perPointGcode: perPointGcode.value,
+    endGcode: endGcode.value
+  });
+}
+
+watch(selectedProfile, (newProfile) => {
+  drillStore.setCurrentProfile(newProfile);
+  loadSettingsToUI();
+});
+
+watch([
+  zeroX, zeroY, zeroZ, startSafeZ, solderSafeZ, endSafeZ,  solderFeedMultiplier,
+  feedPrime, feedRetract, retractAfterSolder, bedForwardY, playBeep,
+  startGcode, perPointGcode, endGcode
+], saveSettingsToProfile, { deep: true });
+
+onMounted(() => {
+  loadSettingsToUI()
+})
+
+function resetToDefaults() {
+  drillStore.resetCurrentProfileToDefault();
+  loadSettingsToUI();
+}
+
+// const activeTab = ref("settings");
 
 
 // Machine Settings
-const feedPrime = ref(drillStore.feedPrime ?? 1.0);
-const feedRetract = ref(drillStore.feedRetract ?? 1.0);
+// const feedPrime = ref(drillStore.feedPrime ?? 1.0);
+// const feedRetract = ref(drillStore.feedRetract ?? 1.0);
 
-const solderFeedMultiplier = ref(105);
-const startSafeZ = ref(10);
-const zeroX = ref(20);
-const zeroY = ref(25);
-const zeroZ = ref(1);
-const retractAfterSolder = ref(10);
-const bedForwardY = ref(235);
-const playBeep = ref(true);
+// const solderFeedMultiplier = ref(105);
+// const startSafeZ = ref(12);
+// const zeroX = ref(20);
+// const zeroY = ref(25);
+// const zeroZ = ref(1);
+// const retractAfterSolder = ref(10);
+// const bedForwardY = ref(235);
+// const playBeep = ref(true);
 
 // G-code Templates
-const startGcode = ref(`; Start G-code
-M117 Homing XYZ
-G28 X Y ; Home X and Y
-G28 Z ; Home Z
-G0 Z{START_SAFE_Z} F600 ; Initial lift height
-
-M117 Moving to 0,0,0
-G0 X{ORIGIN_X} Y{ORIGIN_Y} F6000 ; Move to start position X and Y (1,3.3)
-G0 Z{ORIGIN_Z + PCB_THICKNESS} F600 ; Move to start position Z + PCB Thickness (0.3)
-G92 X0 Y0 Z0 ; Set current position as 0,0,0
-
-M221 S{MULTIPLIER} ; Extruder multiplier
-M302 S0 ; Allow cold extrusion
-M83 ; Set extruder to relative mode
-
-`);
-
-
-const perPointGcode = ref(`; Solder Point G-code
-M117 Soldering {INDEX + 1}/{TOTAL_POINTS}
-M73 P{INDEX / TOTAL_POINTS * 100} ; Set progress bar %
-G0 X{X + APPROACH} Y{Y} F6000 ; Move to point with approach offset
-G1 E{PRIME} F300 ; Prime soldering iron with a small amount of solder
-G1 E-{PRIME_RETRACT} F600 ; Retract solder from touching soldering iron
-G1 Z0 ; Move to PCB height
-G0 X{X + POINT_OFFSET_X} F600 ; Move to solder point
-G4 S{SOAK} ; Soak time
-G1 E{FEED} F300 ; Solder the point
-G1 E-{RETRACT} F600 ; Retract solder from touching soldering iron
-G4 S{DWELL} ; Dwell time
-G1 Z{SOLDER_SAFE_Z} F600 ; Lift soldering iron`);
-
-const endGcode = ref(`; End G-code
-M117 Solder Sidekick Done!
-M73 P100 ; Set progress bar to 100%
-G0 Z{END_SAFE_Z} F600 ; Lift soldering iron
-
-M300 S440 P{BEEP} ; Beep
-G4 P500 ; Wait for 0.5 seconds
-M300 S440 P{BEEP} ; Beep
-G4 P500 ; Wait for 0.5 seconds
-M300 S440 P{BEEP} ; Beep
-`);
 
 
 </script>
@@ -84,6 +121,23 @@ M300 S440 P{BEEP} ; Beep
 
         <div class="modal-body">
           <div class="container-fluid">
+
+
+           <div class="mb-3 d-flex align-items-center">
+  <label class="me-2">Profile:</label>
+  <select class="form-select w-auto" v-model="selectedProfile">
+    <option>Custom 1</option>
+    <option>Custom 2</option>
+    <option>Custom 3</option>
+    <option>Custom 4</option>
+    <option>Custom 5</option>
+  </select>
+  <button class="btn btn-outline-secondary ms-3" @click="resetToDefaults">
+    Reset to Defaults
+  </button>
+</div>
+
+
             <!-- Start G-code Settings + GcodeEditor in same row -->
             <div class="row">
               <div class="col-md-6">
@@ -140,7 +194,7 @@ M300 S440 P{BEEP} ; Beep
                 <input type="number" class="form-control" v-model="retractAfterSolder" />
 
                 <label class="form-label mt-3" title="{SOLDER_SAFE_Z}">Solder Safe Z</label>
-                <input type="number" class="form-control" v-model="startSafeZ" />
+                <input type="number" class="form-control" v-model="solderSafeZ" />
               </div>
 
               <div class="col-md-6">
@@ -157,7 +211,7 @@ M300 S440 P{BEEP} ; Beep
               <div class="col-md-6">
                 <h5><i class="fa-solid fa-stop"></i> End G-code</h5>
                 <label class="form-label" title="{END_SAFE_Z}">End Safe Z</label>
-                <input type="number" class="form-control" v-model="startSafeZ" />
+                <input type="number" class="form-control" v-model="endSafeZ" />
 
                 <label class="form-label mt-3" title="{BED_FORWARD}">Bed Forward</label>
                 <input type="number" class="form-control" v-model="bedForwardY" />

@@ -1,15 +1,65 @@
 import { defineStore } from "pinia";
 
+
+const startGcodeTemplate = `; Start G-code
+M117 Homing XYZ
+G28 X Y ; Home X and Y
+G28 Z ; Home Z
+G0 Z{START_SAFE_Z} F600 ; Initial lift height
+
+M117 Moving to 0,0,0
+G0 X{ORIGIN_X} Y{ORIGIN_Y} F600 ; Move to start position X and Y (1,3.3)
+G0 Z{ORIGIN_Z + PCB_THICKNESS} F600 ; Move to start position Z + PCB Thickness (0.3)
+G92 X0 Y0 Z0 ; Set current position as 0,0,0
+
+M221 S{MULTIPLIER} ; Extruder multiplier
+M302 S0 ; Allow cold extrusion
+M83 ; Set extruder to relative mode
+`;
+
+
+const perPointTemplate = `; Solder Point G-code
+M117 Soldering {INDEX + 1}/{TOTAL_POINTS}
+M73 P{INDEX / TOTAL_POINTS * 100} ; Set progress bar %
+G0 X{X + APPROACH} Y{Y} F6000 ; Move to point with approach offset
+G1 Z3 F600; ; Get near the point
+G1 E{PRIME} F300 ; Prime soldering iron with a small amount of solder
+G1 E-{PRIME_RETRACT} F600 ; Retract solder from touching soldering iron
+G1 Z0.5 F600; Move to PCB height
+G1 X{X + POINT_OFFSET_X} F600 ; Move to solder point
+G4 S{SOAK} ; Soak time
+G1 E{FEED} F300 ; Solder the point
+G1 E-{RETRACT} F600 ; Retract solder from touching soldering iron
+G4 S{DWELL} ; Dwell time
+G1 Z{SOLDER_SAFE_Z} F600 ; Lift soldering iron`;
+
+const endGcodeTemplate = `; End G-code
+M117 Solder Sidekick Done!
+M73 P100 ; Set progress bar to 100%
+G0 Z{END_SAFE_Z} F600 ; Lift soldering iron
+
+M300 S440 P{BEEP} ; Beep
+G4 P500 ; Wait for 0.5 seconds
+M300 S440 P{BEEP} ; Beep
+G4 P500 ; Wait for 0.5 seconds
+M300 S440 P{BEEP} ; Beep
+`;
+
+
 export const useDrillStore = defineStore("drill", {
   state: () => ({
+     // --- Core drill data ---
     drillData: [],
     path: [],
-    originOffsetX: 16,
-    originOffsetY: 16,
     toolSizes: {},
     undoStack: [],
     redoStack: [],
     canvasShouldUpdate: false,
+    drillFilename: "",
+    
+    // --- Transform & tooling settings ---
+    originOffsetX: 16,
+    originOffsetY: 16,
     pcbThickness: 1.6,
     mountHeight: 28.8,
     feedPrime: 1.0,
@@ -20,11 +70,91 @@ export const useDrillStore = defineStore("drill", {
     defaultDwellTime: 1.5,
     defaultApproachDistance: 0.8,
     defaultSolderAllPoints: false,
+
+    // --- Profile management ---
+    defaultProfileSettings: {
+      zeroX: 20,
+      zeroY: 25,
+      zeroZ: 1,
+      startSafeZ: 12,
+      solderSafeZ: 12,
+      endSafeZ: 12,
+      solderFeedMultiplier: 105,
+      feedPrime: 1.0,
+      feedRetract: 1.0,
+      retractAfterSolder: 10,
+      bedForwardY: 235,
+      playBeep: true,
+      startGcode: startGcodeTemplate,
+      perPointGcode: perPointTemplate,
+      endGcode: endGcodeTemplate,
+    },
+    profiles: {
+      "Custom 1": {},
+      "Custom 2": {},
+      "Custom 3": {},
+      "Custom 4": {},
+      "Custom 5": {},
+    },
+    currentProfile: "Custom 1",
   }),
   getters: {
     selectedPoints: (state) => state.drillData.filter(d => d.selected),
   },
   actions: {
+
+    initProfiles() {
+      const stored = localStorage.getItem("solderProfiles");
+      if (stored) {
+        this.profiles = JSON.parse(stored);
+      }
+
+      // Fill in any missing keys in each profile from defaults
+      for (let key in this.profiles) {
+        this.profiles[key] = {
+          ...this.defaultProfileSettings,
+          ...this.profiles[key],
+        };
+      }
+
+      // If profile data was missing, set it up
+      if (!stored) {
+        for (let key in this.profiles) {
+          this.profiles[key] = { ...this.defaultProfileSettings };
+        }
+        this.saveProfilesToStorage();
+      }
+
+      // Always load the current profile
+      this.loadSettingsFromProfile(this.currentProfile);
+    },
+
+
+    saveProfilesToStorage() {
+      localStorage.setItem("solderProfiles", JSON.stringify(this.profiles));
+    },
+
+    setCurrentProfile(name) {
+      this.currentProfile = name;
+      this.loadSettingsFromProfile(name);
+    },
+
+    loadSettingsFromProfile(name) {
+      const settings = this.profiles[name];
+      if (!settings) return;
+      Object.assign(this, settings);
+    },
+
+    updateCurrentProfileSettings(newSettings) {
+      this.profiles[this.currentProfile] = { ...newSettings };
+      this.saveProfilesToStorage();
+    },
+
+    resetCurrentProfileToDefault() {
+      this.profiles[this.currentProfile] = { ...this.defaultProfileSettings };
+      this.loadSettingsFromProfile(this.currentProfile);
+      this.saveProfilesToStorage();
+    },
 
     addUndoSnapshot(snapshot) {
       if (this.undoStack.length >= 50) {

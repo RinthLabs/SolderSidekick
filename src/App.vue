@@ -94,6 +94,7 @@
 <script setup>
 import { RouterLink, RouterView, useRoute  } from 'vue-router'
 import { ref, onMounted, computed} from "vue";
+import { useDrillStore } from '@/stores/drillStore'
 
 const isMobile = ref(false)
 const route = useRoute();
@@ -182,6 +183,10 @@ onMounted(() => {
     loadGoogleAnalytics();
     loadFacebookPixel();
   }
+
+  const drillStore = useDrillStore()
+  drillStore.initProfiles()
+  
 });
 
 

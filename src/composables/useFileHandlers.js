@@ -141,6 +141,12 @@ export function useFileHandlers() {
       drillStore.feedRetract = project.feedRetract || 0.5;
       drillStore.defaultSolderAllPoints = project.defaultSolderAllPoints ?? false;
 
+      if (project.currentProfile && project.profileSettings) {
+        drillStore.profiles[project.currentProfile] = project.profileSettings;
+        drillStore.setCurrentProfile(project.currentProfile);
+      }
+
+
 
       drillStore.updatePathIndices();
       drillStore.triggerCanvasUpdate();
@@ -162,6 +168,9 @@ export function useFileHandlers() {
       feedPrime: drillStore.feedPrime,
       feedRetract: drillStore.feedRetract,
       defaultSolderAllPoints: drillStore.defaultSolderAllPoints,
+      currentProfile: drillStore.currentProfile,
+      profileSettings: drillStore.profiles[drillStore.currentProfile],
+
     };
 
     const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });

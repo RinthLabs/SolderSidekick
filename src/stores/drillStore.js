@@ -89,24 +89,29 @@ export const useDrillStore = defineStore("drill", {
       perPointGcode: perPointTemplate,
       endGcode: endGcodeTemplate,
     },
-    profiles: {
-      "Custom 1": {},
-      "Custom 2": {},
-      "Custom 3": {},
-      "Custom 4": {},
-      "Custom 5": {},
-    },
-    currentProfile: "Custom 1",
+    profiles: {},  // Changed from fixed object to empty object
+    currentProfile: "Default",  // Changed from "Custom 1" to "Default"
   }),
   getters: {
     selectedPoints: (state) => state.drillData.filter(d => d.selected),
+    currentPcbThickness: (state) => {
+      return state.profiles[state.currentProfile]?.pcbThickness ?? state.pcbThickness;
+    },
   },
   actions: {
 
-    initProfiles() {
+   initProfiles() {
       const stored = localStorage.getItem("solderProfiles");
+      const storedCurrentProfile = localStorage.getItem("solderCurrentProfile");
+      
       if (stored) {
         this.profiles = JSON.parse(stored);
+      }
+
+      // If no profiles exist, create a default one
+      if (Object.keys(this.profiles).length === 0) {
+        this.profiles["Default"] = { ...this.defaultProfileSettings };
+        this.saveProfilesToStorage();
       }
 
       // Fill in any missing keys in each profile from defaults
@@ -117,52 +122,106 @@ export const useDrillStore = defineStore("drill", {
         };
       }
 
-      // If profile data was missing, set it up
-      if (!stored) {
-        for (let key in this.profiles) {
-          this.profiles[key] = { ...this.defaultProfileSettings };
-        }
-        this.saveProfilesToStorage();
+      // Load saved current profile or use first available
+      if (storedCurrentProfile && this.profiles[storedCurrentProfile]) {
+        this.currentProfile = storedCurrentProfile;
+      } else if (!this.profiles[this.currentProfile]) {
+        this.currentProfile = Object.keys(this.profiles)[0] || "Default";
       }
 
       // Always load the current profile
       this.loadSettingsFromProfile(this.currentProfile);
     },
 
-    updateCurrentProfileSettings(newSettings) {
-  // Merge new settings with existing profile settings
-  this.profiles[this.currentProfile] = { 
-    ...this.profiles[this.currentProfile], 
-    ...newSettings 
-  };
-  this.saveProfilesToStorage();
-},
+    createProfile(name) {
+      if (!name || name.trim().length === 0) {
+        throw new Error("Profile name must be at least 1 character");
+      }
+      
+      if (this.profiles[name]) {
+        throw new Error("Profile already exists");
+      }
 
-loadSettingsFromProfile(name) {
-  const settings = this.profiles[name];
-  if (!settings) return;
-  
-  // Only sync settings that exist at the store root level
-  if (settings.pcbThickness !== undefined) {
-    this.pcbThickness = settings.pcbThickness;
-  }
-  if (settings.feedPrime !== undefined) {
-    this.feedPrime = settings.feedPrime;
-  }
-  if (settings.feedRetract !== undefined) {
-    this.feedRetract = settings.feedRetract;
-  }
-  // Add any other settings that need to be synced to store root
-},
+      // Copy current profile settings to new profile
+      this.profiles[name] = { ...this.profiles[this.currentProfile] };
+      this.saveProfilesToStorage();
+      return name;
+    },
 
+    deleteProfile(name) {
+      if (Object.keys(this.profiles).length <= 1) {
+        throw new Error("Cannot delete the last profile");
+      }
+
+      delete this.profiles[name];
+      
+      // If we deleted the current profile, switch to another
+      if (this.currentProfile === name) {
+        this.currentProfile = Object.keys(this.profiles)[0];
+        this.loadSettingsFromProfile(this.currentProfile);
+        this.saveCurrentProfileToStorage(); // Save new selection
+      }
+      
+      this.saveProfilesToStorage();
+    },
+
+    renameProfile(oldName, newName) {
+      if (!newName || newName.trim().length === 0) {
+        throw new Error("Profile name must be at least 1 character");
+      }
+      
+      if (oldName === newName) return;
+      
+      if (this.profiles[newName]) {
+        throw new Error("Profile already exists");
+      }
+
+      this.profiles[newName] = this.profiles[oldName];
+      delete this.profiles[oldName];
+      
+      if (this.currentProfile === oldName) {
+        this.currentProfile = newName;
+        this.saveCurrentProfileToStorage(); // Save renamed selection
+      }
+      
+      this.saveProfilesToStorage();
+    },
+
+    duplicateProfile(name, newName) {
+      if (!newName || newName.trim().length === 0) {
+        throw new Error("Profile name must be at least 1 character");
+      }
+      
+      if (this.profiles[newName]) {
+        throw new Error("Profile already exists");
+      }
+
+      this.profiles[newName] = { ...this.profiles[name] };
+      this.saveProfilesToStorage();
+      return newName;
+    },
 
     saveProfilesToStorage() {
       localStorage.setItem("solderProfiles", JSON.stringify(this.profiles));
     },
 
+    saveCurrentProfileToStorage() {
+      localStorage.setItem("solderCurrentProfile", this.currentProfile);
+    },
+
     setCurrentProfile(name) {
       this.currentProfile = name;
       this.loadSettingsFromProfile(name);
+      this.saveCurrentProfileToStorage(); // Save selection
+    },
+
+    updateCurrentProfileSettings(newSettings) {
+      // Merge new settings with existing profile settings
+      this.profiles[this.currentProfile] = { 
+        ...this.profiles[this.currentProfile], 
+        ...newSettings 
+      };
+      this.saveProfilesToStorage();
     },
 
     resetCurrentProfileToDefault() {
@@ -170,6 +229,53 @@ loadSettingsFromProfile(name) {
       this.loadSettingsFromProfile(this.currentProfile);
       this.saveProfilesToStorage();
     },
+
+     loadProfilesFromProject(profiles, currentProfile) {
+      if (profiles && Object.keys(profiles).length > 0) {
+        // Load profiles from project file
+        this.profiles = profiles;
+        
+        // Fill in any missing keys in each profile from defaults
+        for (let key in this.profiles) {
+          this.profiles[key] = {
+            ...this.defaultProfileSettings,
+            ...this.profiles[key],
+          };
+        }
+        
+        // Set current profile from project or fallback to first
+        if (currentProfile && this.profiles[currentProfile]) {
+          this.currentProfile = currentProfile;
+        } else {
+          this.currentProfile = Object.keys(this.profiles)[0];
+        }
+        
+        // Save to localStorage so they persist
+        this.saveProfilesToStorage();
+        this.saveCurrentProfileToStorage();
+        
+        // Load the current profile settings
+        this.loadSettingsFromProfile(this.currentProfile);
+      }
+    },
+
+    loadSettingsFromProfile(name) {
+      const settings = this.profiles[name];
+      if (!settings) return;
+      
+      // Only sync settings that exist at the store root level
+      if (settings.pcbThickness !== undefined) {
+        this.pcbThickness = settings.pcbThickness;
+      }
+      if (settings.feedPrime !== undefined) {
+        this.feedPrime = settings.feedPrime;
+      }
+      if (settings.feedRetract !== undefined) {
+        this.feedRetract = settings.feedRetract;
+      }
+      // Add any other settings that need to be synced to store root
+    },
+
 
     addUndoSnapshot(snapshot) {
       if (this.undoStack.length >= 50) {

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, onMounted, computed  } from "vue";
+import ProfileManager from './ProfileManager.vue';
 import GcodeEditor from './GcodeEditor.vue'; // Adjust path if needed
 
 import { useDrillStore } from "@/stores/drillStore";
@@ -13,6 +14,8 @@ const selectedProfile = computed({
   get: () => drillStore.currentProfile,
   set: (val) => drillStore.setCurrentProfile(val)
 });
+
+const profileNames = computed(() => Object.keys(drillStore.profiles));
 
 // Origin inputs
 const zeroX = computed({
@@ -111,98 +114,6 @@ function resetToDefaults() {
   drillStore.resetCurrentProfileToDefault();
 }
 
-
-
-// const startSafeZ = ref(drillStore.defaultProfileSettings.startSafeZ);
-// const solderSafeZ = ref(drillStore.defaultProfileSettings.solderSafeZ);
-// const endSafeZ = ref(drillStore.defaultProfileSettings.endSafeZ);
-// const solderFeedMultiplier = ref(drillStore.defaultProfileSettings.solderFeedMultiplier);
-// const feedPrime = ref(drillStore.defaultProfileSettings.feedPrime);
-// const feedRetract = ref(drillStore.defaultProfileSettings.feedRetract);
-// const retractAfterSolder = ref(drillStore.defaultProfileSettings.retractAfterSolder);
-// const playBeep = ref(drillStore.defaultProfileSettings.playBeep);
-// const startGcode = ref(drillStore.defaultProfileSettings.startGcode);
-// const perPointGcode = ref(drillStore.defaultProfileSettings.perPointGcode);
-// const endGcode = ref(drillStore.defaultProfileSettings.endGcode);
-
-
-
-// Load from profile
-// function loadSettingsToUI() {
-//   const s = drillStore.profiles[selectedProfile.value];
-//   zeroX.value = s.zeroX;
-//   zeroY.value = s.zeroY;
-//   zeroZ.value = s.zeroZ;
-//   startSafeZ.value = s.startSafeZ;
-//   solderSafeZ.value = s.solderSafeZ;
-//   endSafeZ.value = s.endSafeZ;
-//   solderFeedMultiplier.value = s.solderFeedMultiplier;
-//   feedPrime.value = s.feedPrime;
-//   feedRetract.value = s.feedRetract;
-//   retractAfterSolder.value = s.retractAfterSolder;
-//   playBeep.value = s.playBeep;
-//   startGcode.value = s.startGcode;
-//   perPointGcode.value = s.perPointGcode;
-//   endGcode.value = s.endGcode;
-// }
-
-// function saveSettingsToProfile() {
-//   drillStore.updateCurrentProfileSettings({
-//     zeroX: zeroX.value,
-//     zeroY: zeroY.value,
-//     zeroZ: zeroZ.value,
-//     startSafeZ: startSafeZ.value,
-//     solderSafeZ: solderSafeZ.value,
-//     endSafeZ: endSafeZ.value,
-//     solderFeedMultiplier: solderFeedMultiplier.value,
-//     feedPrime: feedPrime.value,
-//     feedRetract: feedRetract.value,
-//     retractAfterSolder: retractAfterSolder.value,
-//     playBeep: playBeep.value,
-//     startGcode: startGcode.value,
-//     perPointGcode: perPointGcode.value,
-//     endGcode: endGcode.value
-//   });
-// }
-
-// watch(selectedProfile, (newProfile) => {
-//   drillStore.setCurrentProfile(newProfile);
-//   loadSettingsToUI();
-// });
-
-// watch([
-//   zeroX, zeroY, zeroZ, startSafeZ, solderSafeZ, endSafeZ,  solderFeedMultiplier,
-//   feedPrime, feedRetract, retractAfterSolder, playBeep,
-//   startGcode, perPointGcode, endGcode
-// ], saveSettingsToProfile, { deep: true });
-
-onMounted(() => {
-  //loadSettingsToUI()
-})
-
-// function resetToDefaults() {
-//   drillStore.resetCurrentProfileToDefault();
-//   loadSettingsToUI();
-// }
-
-// const activeTab = ref("settings");
-
-
-// Machine Settings
-// const feedPrime = ref(drillStore.feedPrime ?? 1.0);
-// const feedRetract = ref(drillStore.feedRetract ?? 1.0);
-
-// const solderFeedMultiplier = ref(105);
-// const startSafeZ = ref(12);
-// const zeroX = ref(20);
-// const zeroY = ref(25);
-// const zeroZ = ref(1);
-// const retractAfterSolder = ref(10);
-// const playBeep = ref(true);
-
-// G-code Templates
-
-
 </script>
 
 <template>
@@ -222,13 +133,7 @@ onMounted(() => {
 
            <div class="mb-3 d-flex align-items-center">
   <label class="me-2">Profile:</label>
-  <select class="form-select w-auto" v-model="selectedProfile">
-    <option>Custom 1</option>
-    <option>Custom 2</option>
-    <option>Custom 3</option>
-    <option>Custom 4</option>
-    <option>Custom 5</option>
-  </select>
+  <ProfileManager />
   <button class="btn btn-outline-secondary ms-3" @click="resetToDefaults">
     Reset to Defaults
   </button>

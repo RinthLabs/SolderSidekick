@@ -125,64 +125,70 @@ export function useFileHandlers() {
   
 
   function parseProjectFile(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const project = JSON.parse(e.target.result);
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const project = JSON.parse(e.target.result);
 
-      drillStore.drillFilename = project.drillFilename || "imported.drl";
-      drillStore.drillData = project.drillData || [];
-      drillStore.path = project.path || [];
-      drillStore.originOffsetX = project.originOffsetX || 0;
-      drillStore.originOffsetY = project.originOffsetY || 0;
-      drillStore.toolSizes = project.toolSizes || {};
-      drillStore.pcbThickness = project.pcbThickness || 1.6;
-      drillStore.mountHeight = project.mountHeight || 28.8;
-      drillStore.feedPrime = project.feedPrime || 1.0;
-      drillStore.feedRetract = project.feedRetract || 0.5;
-      drillStore.defaultSolderAllPoints = project.defaultSolderAllPoints ?? false;
+    drillStore.drillFilename = project.drillFilename || "imported.drl";
+    drillStore.drillData = project.drillData || [];
+    drillStore.path = project.path || [];
+    drillStore.originOffsetX = project.originOffsetX || 0;
+    drillStore.originOffsetY = project.originOffsetY || 0;
+    drillStore.toolSizes = project.toolSizes || {};
+    drillStore.pcbThickness = project.pcbThickness || 1.6;
+    drillStore.mountHeight = project.mountHeight || 28.8;
+    drillStore.feedPrime = project.feedPrime || 1.0;
+    drillStore.feedRetract = project.feedRetract || 0.5;
+    drillStore.defaultSolderAllPoints = project.defaultSolderAllPoints ?? false;
 
-      if (project.currentProfile && project.profileSettings) {
-        // Ensure pcbThickness is included in profile settings
-        if (project.profileSettings.pcbThickness === undefined && project.pcbThickness) {
-          project.profileSettings.pcbThickness = project.pcbThickness;
-        }
-        drillStore.profiles[project.currentProfile] = project.profileSettings;
-        drillStore.setCurrentProfile(project.currentProfile);
-      }
+    // Handle both old format (single profileSettings) and new format (all profiles)
+    if (project.profiles) {
+      // New format: use the new method to load profiles from project
+      drillStore.loadProfilesFromProject(project.profiles, project.currentProfile);
+    } else if (project.currentProfile && project.profileSettings) {
+      // Old format: convert to new format
+      const profiles = {
+        [project.currentProfile]: project.profileSettings
+      };
+      drillStore.loadProfilesFromProject(profiles, project.currentProfile);
+    } else {
+      // No profile data in project, just ensure profiles are initialized
+      drillStore.initProfiles();
+    }
 
-      drillStore.updatePathIndices();
-      drillStore.triggerCanvasUpdate();
-    };
-    reader.readAsText(file);
-  }
+    drillStore.updatePathIndices();
+    drillStore.triggerCanvasUpdate();
+  };
+  reader.readAsText(file);
+}
 
   function saveProject() {
-    const baseName = drillStore.drillFilename?.replace(/\.[^/.]+$/, "") || "solder-project";
-    const project = {
-      drillFilename: drillStore.drillFilename,
-      drillData: drillStore.drillData,
-      path: drillStore.path,
-      originOffsetX: drillStore.originOffsetX,
-      originOffsetY: drillStore.originOffsetY,
-      toolSizes: drillStore.toolSizes,
-      pcbThickness: drillStore.pcbThickness,
-      mountHeight: drillStore.mountHeight,
-      feedPrime: drillStore.feedPrime,
-      feedRetract: drillStore.feedRetract,
-      defaultSolderAllPoints: drillStore.defaultSolderAllPoints,
-      currentProfile: drillStore.currentProfile,
-      profileSettings: drillStore.profiles[drillStore.currentProfile],
+  const baseName = drillStore.drillFilename?.replace(/\.[^/.]+$/, "") || "solder-project";
+  const project = {
+    drillFilename: drillStore.drillFilename,
+    drillData: drillStore.drillData,
+    path: drillStore.path,
+    originOffsetX: drillStore.originOffsetX,
+    originOffsetY: drillStore.originOffsetY,
+    toolSizes: drillStore.toolSizes,
+    pcbThickness: drillStore.pcbThickness,
+    mountHeight: drillStore.mountHeight,
+    feedPrime: drillStore.feedPrime,
+    feedRetract: drillStore.feedRetract,
+    defaultSolderAllPoints: drillStore.defaultSolderAllPoints,
+    currentProfile: drillStore.currentProfile,
+    // Save ALL profiles, not just the current one
+    profiles: drillStore.profiles,
+  };
 
-    };
-
-    const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${baseName}.soldersidekick.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${baseName}.soldersidekick.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
   return {
     parseDrillFile,

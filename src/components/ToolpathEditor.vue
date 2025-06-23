@@ -29,17 +29,6 @@
       <button class="btn btn-outline-secondary" @click="mirrorHorizontal"><i class="fa-solid fa-right-left"></i></button>
       <button class="btn btn-outline-secondary" @click="mirrorVertical"><i class="fa-solid fa-right-left r90"></i></button>
 
-      <!-- <label class="form-label mw-5 pcb-section">PCB Thickness (mm) <i class="fas fa-layer-group"></i></label>
-      <input
-        type="number"
-        class="form-control d-inline w-auto pcb-input"
-        v-model.number="drillStore.pcbThickness"
-        @blur="commitThicknessChange"
-        @keyup.enter="commitThicknessChange"
-      /> -->
-
-
-
     </div>
 
     <!-- Toolbar -->
@@ -51,12 +40,9 @@
       <button class="btn btn-success" @click="setSelectedSolder(true)"><i class="fa-solid fa-check"></i></button>
       <button class="btn btn-secondary" @click="setSelectedSolder(false)"><i class="fa-solid fa-xmark"></i></button>
 
-      
-
       <button class="btn btn-outline-danger" @click="clearPath"><i class="fa-solid fa-trash"></i> Clear Path</button>
       <button class="btn btn-outline-dark" @click="undo"><i class="fa-solid fa-rotate-left"></i> Undo</button>
       <button class="btn btn-outline-dark" @click="redo"><i class="fa-solid fa-rotate-right"></i> Redo</button>
-
     </div>
   </div>
 </div>
@@ -89,44 +75,36 @@
       <div class="col-lg-4 position-relative right-panel">
 
         <div class="align-items-center">
-            <div class="mx-3 my-2">
-            <div class="d-flex align-items-center my-2">
-              <label class="form-label profile-label">Machine Profile <i class="fas fa-user-cog"></i></label>
-              <select class="form-select profile-dropdown ms-2" v-model="selectedProfile">
-                <option>Custom 1</option>
-                <option>Custom 2</option>
-                <option>Custom 3</option>
-                <option>Custom 4</option>
-                <option>Custom 5</option>
-              </select>
-            </div>
+  <div class="mx-3 my-2">
+    <div class="d-flex align-items-center my-2">
+      <label class="form-label profile-label">Machine Profile <i class="fas fa-user-cog"></i></label>
+      <ProfileManager />
+    </div>
 
-            <div class="d-flex align-items-center sidebar-home-origin my-2">
-              <label class="form-label profile-label">Origin X</label>
-              <input type="number" class="form-control d-inline w-auto ms-2" v-model="zeroX" />
-              <label class="form-label profile-label mw-1">Y</label>
-              <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroY" />
-              <label class="form-label profile-label mw-1">Z</label>
-              <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroZ" />
-            </div>
+    <div class="d-flex align-items-center sidebar-home-origin my-2">
+      <label class="form-label profile-label">Origin X</label>
+      <input type="number" class="form-control d-inline w-auto ms-2" v-model="zeroX" />
+      <label class="form-label profile-label mw-1">Y</label>
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroY" />
+      <label class="form-label profile-label mw-1">Z</label>
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroZ" />
+    </div>
 
-            
+    <div class="my-2">
+      <label class="form-label">PCB Thickness (mm) <i class="fas fa-layer-group"></i></label>
+      <input
+        type="number"
+        class="form-control d-inline w-auto pcb-input ms-2"
+        step="0.1"
+        v-model.number="pcbThickness"
+      />
+    </div>
 
-            <div class="my-2">
-            <label class="form-label">PCB Thickness (mm) <i class="fas fa-layer-group"></i></label>
-            <input
-              type="number"
-              class="form-control d-inline w-auto pcb-input ms-2"
-              v-model.number="pcbThickness"
-            />
-            </div>
-
-            <div class="measure-note my-2">
-              <a href="#" target="_blank"><p>Measure homing origin XYZ on your machine</p></a>
-            </div>
-
-            </div>
-          </div>
+    <div class="measure-note my-2">
+      <a href="#" target="_blank"><p>Measure homing origin XYZ on your machine</p></a>
+    </div>
+  </div>
+</div>
        
 
       <div class="scrolling-table">
@@ -250,6 +228,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick  } from "vue";
 import GettingStarted from "@/components/GettingStarted.vue";
+import ProfileManager from '@/components/ProfileManager.vue';
 import { useDrillStore } from "@/stores/drillStore";
 import { useFileHandlers } from "@/composables/useFileHandlers";
 const { parseDrillFile, parseProjectFile, saveProject } = useFileHandlers();
@@ -323,18 +302,6 @@ let selectionEnd = null;
 let isDraggingOrigin = false;
 let dragOriginStart = null;
 
-// const lastCommittedThickness = ref(drillStore.pcbThickness);
-
-// const commitThicknessChange = () => {
-//   const newVal = drillStore.pcbThickness;
-//   if (newVal !== lastCommittedThickness.value) {
-//     drillStore.saveTransformUndoState(); // 👈 always uses the correct format
-//     drillStore.redoStack = [];
-//     lastCommittedThickness.value = newVal;
-//     updateCanvas();
-//   }
-// };
-
 const pcbThickness = computed({
   get: () => drillStore.profiles[drillStore.currentProfile].pcbThickness ?? drillStore.pcbThickness,
   set: (val) => {
@@ -344,8 +311,6 @@ const pcbThickness = computed({
     updateCanvas();
   }
 });
-
-
 
 const saveGcode = () => {
   console.log("G-code saved!");

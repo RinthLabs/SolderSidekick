@@ -265,26 +265,33 @@ const deleteCurrentProfile = () => {
 }
 
 .modal-dialog-custom {
-  width: 400px;
-  max-width: 90vw;
+  /* width: 400px;
+  max-width: 90vw; */
 }
 
 .modal-content {
   background-color: white;
   border-radius: 0.5rem;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-  padding: 0.5rem;
+  padding: 0.5rem !important;
+}
+
+.modal-body{
+    padding: 0rem !important;
 }
 
 .modal-header {
   border-bottom: 1px solid #dee2e6;
   border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0rem !important;
+  padding-bottom: 0.5rem !important;
 }
 
 .modal-footer {
   border-top: 1px solid #dee2e6;
   border-radius: 0 0 0.5rem 0.5rem;
   gap: 0.5rem;
+  padding: 0rem !important;
 }
 
 .modal-footer button{
@@ -295,4 +302,13 @@ const deleteCurrentProfile = () => {
   opacity: 0.5;
   pointer-events: none;
 }
+
+
+.modal-dialog-custom {
+  /* max-width: 100vw;
+  max-height: 100vh; */
+  width: 400px;
+  margin: 2.5vh auto;
+}
+
 </style>

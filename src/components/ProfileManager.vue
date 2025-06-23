@@ -48,8 +48,8 @@
     </div>
 
     <!-- New Profile Modal -->
-    <div v-if="showNewProfile" class="modal-backdrop">
-      <div class="modal-dialog-custom">
+    <div v-if="showNewProfile" class="modal-backdrop" @click="showNewProfile = false">
+      <div class="modal-dialog-custom" @click.stop>
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">New Profile</h5>
@@ -76,8 +76,8 @@
     </div>
 
     <!-- Rename Profile Modal -->
-    <div v-if="showRenameProfile" class="modal-backdrop">
-      <div class="modal-dialog-custom">
+    <div v-if="showRenameProfile" class="modal-backdrop" @click="showRenameProfile = false">
+      <div class="modal-dialog-custom" @click.stop>
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Rename Profile</h5>
@@ -104,8 +104,8 @@
     </div>
 
     <!-- Duplicate Profile Modal -->
-    <div v-if="showDuplicateProfile" class="modal-backdrop">
-      <div class="modal-dialog-custom">
+    <div v-if="showDuplicateProfile" class="modal-backdrop" @click="showDuplicateProfile = false">
+      <div class="modal-dialog-custom" @click.stop>
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Duplicate Profile</h5>
@@ -160,31 +160,6 @@ const selectedProfile = computed({
 const profileNames = computed(() => Object.keys(drillStore.profiles));
 
 // Auto-focus inputs when modals open
-watch(showNewProfile, async (val) => {
-  if (val) {
-    await nextTick();
-    newProfileInput.value?.focus();
-  }
-});
-
-watch(showRenameProfile, async (val) => {
-  if (val) {
-    renameProfileName.value = selectedProfile.value;
-    await nextTick();
-    renameProfileInput.value?.focus();
-    renameProfileInput.value?.select();
-  }
-});
-
-watch(showDuplicateProfile, async (val) => {
-  if (val) {
-    duplicateProfileName.value = `Copy of ${selectedProfile.value}`;
-    await nextTick();
-    duplicateProfileInput.value?.focus();
-    duplicateProfileInput.value?.select();
-  }
-});
-
 watch(showNewProfile, async (val) => {
   if (val) {
     await nextTick();
@@ -292,6 +267,28 @@ const deleteCurrentProfile = () => {
 .modal-dialog-custom {
   width: 400px;
   max-width: 90vw;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  padding: 0.5rem;
+}
+
+.modal-header {
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+  border-radius: 0 0 0.5rem 0.5rem;
+  gap: 0.5rem;
+}
+
+.modal-footer button{
+    margin-top: 0.5rem;
 }
 
 .dropdown-item.disabled {

@@ -77,7 +77,7 @@
         <div class="align-items-center">
   <div class="mx-3 my-2">
     <div class="d-flex align-items-center my-2">
-      <label class="form-label profile-label">Machine Profile <i class="fas fa-user-cog"></i></label>
+      <label class="form-label profile-label me-2">Machine Profile</label>
       <ProfileManager />
     </div>
 

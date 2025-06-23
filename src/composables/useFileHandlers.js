@@ -142,11 +142,13 @@ export function useFileHandlers() {
       drillStore.defaultSolderAllPoints = project.defaultSolderAllPoints ?? false;
 
       if (project.currentProfile && project.profileSettings) {
+        // Ensure pcbThickness is included in profile settings
+        if (project.profileSettings.pcbThickness === undefined && project.pcbThickness) {
+          project.profileSettings.pcbThickness = project.pcbThickness;
+        }
         drillStore.profiles[project.currentProfile] = project.profileSettings;
         drillStore.setCurrentProfile(project.currentProfile);
       }
-
-
 
       drillStore.updatePathIndices();
       drillStore.triggerCanvasUpdate();

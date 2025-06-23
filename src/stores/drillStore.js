@@ -76,6 +76,7 @@ export const useDrillStore = defineStore("drill", {
       zeroX: 20,
       zeroY: 25,
       zeroZ: 1,
+      pcbThickness: 1.6,
       startSafeZ: 12,
       solderSafeZ: 12,
       endSafeZ: 12,
@@ -83,7 +84,6 @@ export const useDrillStore = defineStore("drill", {
       feedPrime: 1.0,
       feedRetract: 1.0,
       retractAfterSolder: 10,
-      bedForwardY: 235,
       playBeep: true,
       startGcode: startGcodeTemplate,
       perPointGcode: perPointTemplate,
@@ -129,6 +129,32 @@ export const useDrillStore = defineStore("drill", {
       this.loadSettingsFromProfile(this.currentProfile);
     },
 
+    updateCurrentProfileSettings(newSettings) {
+  // Merge new settings with existing profile settings
+  this.profiles[this.currentProfile] = { 
+    ...this.profiles[this.currentProfile], 
+    ...newSettings 
+  };
+  this.saveProfilesToStorage();
+},
+
+loadSettingsFromProfile(name) {
+  const settings = this.profiles[name];
+  if (!settings) return;
+  
+  // Only sync settings that exist at the store root level
+  if (settings.pcbThickness !== undefined) {
+    this.pcbThickness = settings.pcbThickness;
+  }
+  if (settings.feedPrime !== undefined) {
+    this.feedPrime = settings.feedPrime;
+  }
+  if (settings.feedRetract !== undefined) {
+    this.feedRetract = settings.feedRetract;
+  }
+  // Add any other settings that need to be synced to store root
+},
+
 
     saveProfilesToStorage() {
       localStorage.setItem("solderProfiles", JSON.stringify(this.profiles));
@@ -137,17 +163,6 @@ export const useDrillStore = defineStore("drill", {
     setCurrentProfile(name) {
       this.currentProfile = name;
       this.loadSettingsFromProfile(name);
-    },
-
-    loadSettingsFromProfile(name) {
-      const settings = this.profiles[name];
-      if (!settings) return;
-      Object.assign(this, settings);
-    },
-
-    updateCurrentProfileSettings(newSettings) {
-      this.profiles[this.currentProfile] = { ...newSettings };
-      this.saveProfilesToStorage();
     },
 
     resetCurrentProfileToDefault() {
@@ -352,9 +367,6 @@ export const useDrillStore = defineStore("drill", {
         this.drillData = state.drillDataSnapshot.map(d => ({ ...d }));
       }
     },
-    
-    
-    
     
     updatePathIndices() {
       this.drillData.forEach(d => d.pathIndex = null);

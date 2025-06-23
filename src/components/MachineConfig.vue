@@ -1,91 +1,189 @@
 <script setup>
-import { ref, watch, onMounted  } from "vue";
+import { ref, watch, onMounted, computed  } from "vue";
 import GcodeEditor from './GcodeEditor.vue'; // Adjust path if needed
 
 import { useDrillStore } from "@/stores/drillStore";
 
 
 const drillStore = useDrillStore();
-const selectedProfile = ref(drillStore.currentProfile);
 
-// Pull settings from store defaults instead of hardcoding
-const zeroX = ref(drillStore.defaultProfileSettings.zeroX);
-const zeroY = ref(drillStore.defaultProfileSettings.zeroY);
-const zeroZ = ref(drillStore.defaultProfileSettings.zeroZ);
-const startSafeZ = ref(drillStore.defaultProfileSettings.startSafeZ);
-const solderSafeZ = ref(drillStore.defaultProfileSettings.solderSafeZ);
-const endSafeZ = ref(drillStore.defaultProfileSettings.endSafeZ);
-const solderFeedMultiplier = ref(drillStore.defaultProfileSettings.solderFeedMultiplier);
-const feedPrime = ref(drillStore.defaultProfileSettings.feedPrime);
-const feedRetract = ref(drillStore.defaultProfileSettings.feedRetract);
-const retractAfterSolder = ref(drillStore.defaultProfileSettings.retractAfterSolder);
-const bedForwardY = ref(drillStore.defaultProfileSettings.bedForwardY);
-const playBeep = ref(drillStore.defaultProfileSettings.playBeep);
-const startGcode = ref(drillStore.defaultProfileSettings.startGcode);
-const perPointGcode = ref(drillStore.defaultProfileSettings.perPointGcode);
-const endGcode = ref(drillStore.defaultProfileSettings.endGcode);
+
+// Profile selection
+const selectedProfile = computed({
+  get: () => drillStore.currentProfile,
+  set: (val) => drillStore.setCurrentProfile(val)
+});
+
+// Origin inputs
+const zeroX = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].zeroX,
+  set: (val) => drillStore.updateCurrentProfileSettings({ zeroX: val })
+});
+const zeroY = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].zeroY,
+  set: (val) => drillStore.updateCurrentProfileSettings({ zeroY: val })
+});
+const zeroZ = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].zeroZ,
+  set: (val) => drillStore.updateCurrentProfileSettings({ zeroZ: val })
+});
+
+// Homing inputs
+const homeX = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].homeX,
+  set: (val) => drillStore.updateCurrentProfileSettings({ homeX: val })
+});
+const homeY = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].homeY,
+  set: (val) => drillStore.updateCurrentProfileSettings({ homeY: val })
+});
+const homeZ = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].homeZ,
+  set: (val) => drillStore.updateCurrentProfileSettings({ homeZ: val })
+});
+
+
+// Add after the existing computed properties
+const pcbThickness = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].pcbThickness ?? drillStore.pcbThickness,
+  set: (val) => {
+    drillStore.updateCurrentProfileSettings({ pcbThickness: val });
+    drillStore.pcbThickness = val;
+  }
+});
+
+const startSafeZ = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].startSafeZ,
+  set: (val) => drillStore.updateCurrentProfileSettings({ startSafeZ: val })
+});
+
+const solderSafeZ = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].solderSafeZ,
+  set: (val) => drillStore.updateCurrentProfileSettings({ solderSafeZ: val })
+});
+
+const endSafeZ = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].endSafeZ,
+  set: (val) => drillStore.updateCurrentProfileSettings({ endSafeZ: val })
+});
+
+const solderFeedMultiplier = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].solderFeedMultiplier,
+  set: (val) => drillStore.updateCurrentProfileSettings({ solderFeedMultiplier: val })
+});
+
+const feedPrime = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].feedPrime,
+  set: (val) => drillStore.updateCurrentProfileSettings({ feedPrime: val })
+});
+
+const feedRetract = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].feedRetract,
+  set: (val) => drillStore.updateCurrentProfileSettings({ feedRetract: val })
+});
+
+const retractAfterSolder = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].retractAfterSolder,
+  set: (val) => drillStore.updateCurrentProfileSettings({ retractAfterSolder: val })
+});
+
+const playBeep = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].playBeep,
+  set: (val) => drillStore.updateCurrentProfileSettings({ playBeep: val })
+});
+
+const startGcode = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].startGcode,
+  set: (val) => drillStore.updateCurrentProfileSettings({ startGcode: val })
+});
+
+const perPointGcode = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].perPointGcode,
+  set: (val) => drillStore.updateCurrentProfileSettings({ perPointGcode: val })
+});
+
+const endGcode = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].endGcode,
+  set: (val) => drillStore.updateCurrentProfileSettings({ endGcode: val })
+});
+
+function resetToDefaults() {
+  drillStore.resetCurrentProfileToDefault();
+}
+
+
+
+// const startSafeZ = ref(drillStore.defaultProfileSettings.startSafeZ);
+// const solderSafeZ = ref(drillStore.defaultProfileSettings.solderSafeZ);
+// const endSafeZ = ref(drillStore.defaultProfileSettings.endSafeZ);
+// const solderFeedMultiplier = ref(drillStore.defaultProfileSettings.solderFeedMultiplier);
+// const feedPrime = ref(drillStore.defaultProfileSettings.feedPrime);
+// const feedRetract = ref(drillStore.defaultProfileSettings.feedRetract);
+// const retractAfterSolder = ref(drillStore.defaultProfileSettings.retractAfterSolder);
+// const playBeep = ref(drillStore.defaultProfileSettings.playBeep);
+// const startGcode = ref(drillStore.defaultProfileSettings.startGcode);
+// const perPointGcode = ref(drillStore.defaultProfileSettings.perPointGcode);
+// const endGcode = ref(drillStore.defaultProfileSettings.endGcode);
 
 
 
 // Load from profile
-function loadSettingsToUI() {
-  const s = drillStore.profiles[selectedProfile.value];
-  zeroX.value = s.zeroX;
-  zeroY.value = s.zeroY;
-  zeroZ.value = s.zeroZ;
-  startSafeZ.value = s.startSafeZ;
-  solderSafeZ.value = s.solderSafeZ;
-  endSafeZ.value = s.endSafeZ;
-  solderFeedMultiplier.value = s.solderFeedMultiplier;
-  feedPrime.value = s.feedPrime;
-  feedRetract.value = s.feedRetract;
-  retractAfterSolder.value = s.retractAfterSolder;
-  bedForwardY.value = s.bedForwardY;
-  playBeep.value = s.playBeep;
-  startGcode.value = s.startGcode;
-  perPointGcode.value = s.perPointGcode;
-  endGcode.value = s.endGcode;
-}
+// function loadSettingsToUI() {
+//   const s = drillStore.profiles[selectedProfile.value];
+//   zeroX.value = s.zeroX;
+//   zeroY.value = s.zeroY;
+//   zeroZ.value = s.zeroZ;
+//   startSafeZ.value = s.startSafeZ;
+//   solderSafeZ.value = s.solderSafeZ;
+//   endSafeZ.value = s.endSafeZ;
+//   solderFeedMultiplier.value = s.solderFeedMultiplier;
+//   feedPrime.value = s.feedPrime;
+//   feedRetract.value = s.feedRetract;
+//   retractAfterSolder.value = s.retractAfterSolder;
+//   playBeep.value = s.playBeep;
+//   startGcode.value = s.startGcode;
+//   perPointGcode.value = s.perPointGcode;
+//   endGcode.value = s.endGcode;
+// }
 
-function saveSettingsToProfile() {
-  drillStore.updateCurrentProfileSettings({
-    zeroX: zeroX.value,
-    zeroY: zeroY.value,
-    zeroZ: zeroZ.value,
-    startSafeZ: startSafeZ.value,
-    solderSafeZ: solderSafeZ.value,
-    endSafeZ: endSafeZ.value,
-    solderFeedMultiplier: solderFeedMultiplier.value,
-    feedPrime: feedPrime.value,
-    feedRetract: feedRetract.value,
-    retractAfterSolder: retractAfterSolder.value,
-    bedForwardY: bedForwardY.value,
-    playBeep: playBeep.value,
-    startGcode: startGcode.value,
-    perPointGcode: perPointGcode.value,
-    endGcode: endGcode.value
-  });
-}
+// function saveSettingsToProfile() {
+//   drillStore.updateCurrentProfileSettings({
+//     zeroX: zeroX.value,
+//     zeroY: zeroY.value,
+//     zeroZ: zeroZ.value,
+//     startSafeZ: startSafeZ.value,
+//     solderSafeZ: solderSafeZ.value,
+//     endSafeZ: endSafeZ.value,
+//     solderFeedMultiplier: solderFeedMultiplier.value,
+//     feedPrime: feedPrime.value,
+//     feedRetract: feedRetract.value,
+//     retractAfterSolder: retractAfterSolder.value,
+//     playBeep: playBeep.value,
+//     startGcode: startGcode.value,
+//     perPointGcode: perPointGcode.value,
+//     endGcode: endGcode.value
+//   });
+// }
 
-watch(selectedProfile, (newProfile) => {
-  drillStore.setCurrentProfile(newProfile);
-  loadSettingsToUI();
-});
+// watch(selectedProfile, (newProfile) => {
+//   drillStore.setCurrentProfile(newProfile);
+//   loadSettingsToUI();
+// });
 
-watch([
-  zeroX, zeroY, zeroZ, startSafeZ, solderSafeZ, endSafeZ,  solderFeedMultiplier,
-  feedPrime, feedRetract, retractAfterSolder, bedForwardY, playBeep,
-  startGcode, perPointGcode, endGcode
-], saveSettingsToProfile, { deep: true });
+// watch([
+//   zeroX, zeroY, zeroZ, startSafeZ, solderSafeZ, endSafeZ,  solderFeedMultiplier,
+//   feedPrime, feedRetract, retractAfterSolder, playBeep,
+//   startGcode, perPointGcode, endGcode
+// ], saveSettingsToProfile, { deep: true });
 
 onMounted(() => {
-  loadSettingsToUI()
+  //loadSettingsToUI()
 })
 
-function resetToDefaults() {
-  drillStore.resetCurrentProfileToDefault();
-  loadSettingsToUI();
-}
+// function resetToDefaults() {
+//   drillStore.resetCurrentProfileToDefault();
+//   loadSettingsToUI();
+// }
 
 // const activeTab = ref("settings");
 
@@ -100,7 +198,6 @@ function resetToDefaults() {
 // const zeroY = ref(25);
 // const zeroZ = ref(1);
 // const retractAfterSolder = ref(10);
-// const bedForwardY = ref(235);
 // const playBeep = ref(true);
 
 // G-code Templates
@@ -143,7 +240,7 @@ function resetToDefaults() {
               <div class="col-md-6">
                 <h5 class="mt-3"><i class="fa-solid fa-play"></i> Start G-code</h5>
                 
-                <label class="form-label" title="{ORIGIN_X} {ORIGIN_Y} {ORIGIN_Z}">Homing Origin XYZ</label>
+                <label class="form-label" title="{ORIGIN_X} {ORIGIN_Y} {ORIGIN_Z}">Origin XYZ</label>
                 <div class="row">
                   <div class="col-auto d-flex align-items-center">
                     <label class="me-2 mb-0" style="min-width: 1.5em;"><b>X</b></label>
@@ -158,6 +255,9 @@ function resetToDefaults() {
                     <input type="number" class="form-control form-control-sm" v-model="zeroZ" />
                   </div>
                 </div>
+
+                <label class="form-label mt-3" title="{PCB_THICKNESS}">PCB Thickness (mm)</label>
+                <input type="number" class="form-control" v-model="pcbThickness" step="0.1" />
 
                 <label class="form-label mt-3" title="{START_SAFE_Z}">Start Safe Z</label>
                 <input type="number" class="form-control" v-model="startSafeZ" />
@@ -212,9 +312,6 @@ function resetToDefaults() {
                 <h5><i class="fa-solid fa-stop"></i> End G-code</h5>
                 <label class="form-label" title="{END_SAFE_Z}">End Safe Z</label>
                 <input type="number" class="form-control" v-model="endSafeZ" />
-
-                <label class="form-label mt-3" title="{BED_FORWARD}">Bed Forward</label>
-                <input type="number" class="form-control" v-model="bedForwardY" />
 
                 <div class="form-check mt-3">
                   <input class="form-check-input" type="checkbox" v-model="playBeep" />

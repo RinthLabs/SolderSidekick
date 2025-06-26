@@ -134,6 +134,7 @@ export function useFileHandlers() {
     drillStore.path = project.path || [];
     drillStore.originOffsetX = project.originOffsetX || 0;
     drillStore.originOffsetY = project.originOffsetY || 0;
+    drillStore.rotation = project.rotation || 0;
     drillStore.toolSizes = project.toolSizes || {};
     drillStore.pcbThickness = project.pcbThickness || 1.6;
     drillStore.mountHeight = project.mountHeight || 28.8;
@@ -170,6 +171,7 @@ export function useFileHandlers() {
     path: drillStore.path,
     originOffsetX: drillStore.originOffsetX,
     originOffsetY: drillStore.originOffsetY,
+    rotation: drillStore.rotation,
     toolSizes: drillStore.toolSizes,
     pcbThickness: drillStore.pcbThickness,
     mountHeight: drillStore.mountHeight,

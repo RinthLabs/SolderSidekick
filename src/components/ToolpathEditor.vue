@@ -100,7 +100,7 @@
       />
     </div>
 
-    <div class="measure-note my-2">
+    <div v-if="zeroX === null || zeroY === null || zeroZ === null" class="measure-note my-2">
       <a href="#" target="_blank"><p>Measure homing origin XYZ on your machine</p></a>
     </div>
   </div>
@@ -316,6 +316,13 @@ const pcbThickness = computed({
 
 const saveGcode = () => {
   try {
+    // Check if origin XYZ values are set
+    const profile = drillStore.profiles[drillStore.currentProfile];
+    if (profile.zeroX === null || profile.zeroY === null || profile.zeroZ === null) {
+      alert("Please measure the origin of your 3D printer and fill in the correct Origin X, Y, and Z values for your machine before saving G-code.");
+      return;
+    }
+    
     const solderPoints = drillStore.drillData.filter(d => d.solder && drillStore.path.includes(d.id));
     
     if (solderPoints.length === 0) {

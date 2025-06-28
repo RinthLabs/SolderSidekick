@@ -5,6 +5,12 @@ export function useGcodeGenerator() {
 
   function generateGcode() {
     const profile = drillStore.profiles[drillStore.currentProfile];
+
+     // Validate origin values
+    if (profile.zeroX === null || profile.zeroY === null || profile.zeroZ === null) {
+      throw new Error("Origin X, Y, and Z values must be set");
+    }
+
     const solderPoints = getSolderPoints();
     
     if (solderPoints.length === 0) {
@@ -26,13 +32,17 @@ export function useGcodeGenerator() {
 
     // Generate per-point G-code
     solderPoints.forEach((point, index) => {
+      // Pre-calculate integer values
+      const pointNumber = index + 1;
+      const progressPercent = Math.round((index / solderPoints.length) * 100);
+      
       const pointVars = {
         INDEX: index,
         TOTAL_POINTS: solderPoints.length,
-        X: point.transformedX.toFixed(2),
-        Y: point.transformedY.toFixed(2),
+        X: point.transformedX,
+        Y: point.transformedY,
         APPROACH: point.solderOffset,
-        POINT_OFFSET_X: profile.pointOffsetX ?? 0, // Additional X offset at solder point
+        POINT_OFFSET_X: profile.pointOffsetX ?? 0,
         SOAK: point.soak,
         FEED: point.feed,
         DWELL: point.dwell,
@@ -40,6 +50,9 @@ export function useGcodeGenerator() {
         PRIME_RETRACT: profile.feedRetract,
         RETRACT: profile.retractAfterSolder,
         SOLDER_SAFE_Z: profile.solderSafeZ,
+        // Add pre-calculated values
+        POINT_NUMBER: pointNumber,
+        PROGRESS_PERCENT: progressPercent,
       };
       
       gcode += processTemplate(profile.perPointGcode, pointVars);
@@ -49,7 +62,7 @@ export function useGcodeGenerator() {
     // Generate end G-code
     gcode += processTemplate(profile.endGcode, {
       END_SAFE_Z: profile.endSafeZ,
-      BEEP: profile.playBeep ? 200 : 0, // 200ms beep duration if enabled
+      BEEP: profile.playBeep ? 200 : 0,
     });
 
     return gcode;
@@ -83,34 +96,43 @@ export function useGcodeGenerator() {
   function processTemplate(template, variables) {
     let processed = template;
     
-    // Replace all variables in the template
-    for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`\\{${key}\\}`, 'g');
-      processed = processed.replace(regex, value);
-    }
+    // First pass: Replace specific patterns with pre-calculated values
+    processed = processed.replace(/\{INDEX\s*\+\s*1\}/g, '{POINT_NUMBER}');
+    processed = processed.replace(/\{INDEX\s*\/\s*TOTAL_POINTS\s*\*\s*100\}/g, '{PROGRESS_PERCENT}');
     
-    // Handle expressions (e.g., {ORIGIN_Z + PCB_THICKNESS})
+    // Second pass: Replace all variables and expressions
     processed = processed.replace(/\{([^}]+)\}/g, (match, expression) => {
+      const trimmed = expression.trim();
+      
+      // Check if it's a simple variable
+      if (variables.hasOwnProperty(trimmed)) {
+        const value = variables[trimmed];
+        if (typeof value === 'number') {
+          // Integer variables - no decimals
+          if (['INDEX', 'TOTAL_POINTS', 'MULTIPLIER', 'BEEP', 'POINT_NUMBER', 'PROGRESS_PERCENT'].includes(trimmed)) {
+            return value.toString();
+          }
+          // Float variables - 2 decimal places
+          return value.toFixed(2);
+        }
+        return value.toString();
+      }
+      
+      // It's an expression - evaluate it
       try {
         const func = new Function(...Object.keys(variables), `return ${expression}`);
         const result = func(...Object.values(variables));
+        
         if (typeof result === 'number') {
-          return Number.isInteger(result) ? result.toString() : result.toFixed(2);
+          // Default: use 2 decimal places for expressions
+          return result.toFixed(2);
         }
-        return result;
+        
+        return result.toString();
       } catch (e) {
-        console.warn(`Failed to evaluate expression: ${expression}`, e);
-        return match;
+        console.error(`Failed to evaluate expression: "${expression}"`, e);
+        return match; // Return original if evaluation fails
       }
-    });
-
-    
-    // Handle progress percentage calculation
-    processed = processed.replace(/\{INDEX \/ TOTAL_POINTS \* 100\}/g, () => {
-      const index = variables.INDEX || 0;
-      const total = variables.TOTAL_POINTS || 1;
-      const percentage = Math.round((Math.floor(index) / total));
-      return `${percentage}`;
     });
     
     return processed;

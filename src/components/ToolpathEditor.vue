@@ -231,7 +231,9 @@ import GettingStarted from "@/components/GettingStarted.vue";
 import ProfileManager from '@/components/ProfileManager.vue';
 import { useDrillStore } from "@/stores/drillStore";
 import { useFileHandlers } from "@/composables/useFileHandlers";
+import { useGcodeGenerator } from "@/composables/useGcodeGenerator";
 const { parseDrillFile, parseProjectFile, saveProject } = useFileHandlers();
+const { generateGcode, saveGcodeFile } = useGcodeGenerator();
 
 
 const drillStore = useDrillStore();
@@ -313,7 +315,21 @@ const pcbThickness = computed({
 });
 
 const saveGcode = () => {
-  console.log("G-code saved!");
+  try {
+    const solderPoints = drillStore.drillData.filter(d => d.solder && drillStore.path.includes(d.id));
+    
+    if (solderPoints.length === 0) {
+      alert("No solder points selected! Please select points to solder.");
+      return;
+    }
+    
+    const gcode = generateGcode();
+    saveGcodeFile(gcode);
+    console.log("G-code saved successfully!");
+  } catch (error) {
+    console.error("Error generating G-code:", error);
+    alert(`Error generating G-code: ${error.message}`);
+  }
 };
 
 const openFileDialog = () => {

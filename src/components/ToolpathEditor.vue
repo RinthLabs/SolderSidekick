@@ -83,11 +83,11 @@
 
     <div class="d-flex align-items-center sidebar-home-origin my-2">
       <label class="form-label profile-label">Origin X</label>
-      <input type="number" class="form-control d-inline w-auto ms-2" v-model="zeroX" />
+      <input type="number" class="form-control d-inline w-auto ms-2" v-model="zeroX" step="0.1"/>
       <label class="form-label profile-label mw-1">Y</label>
-      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroY" />
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroY" step="0.1"/>
       <label class="form-label profile-label mw-1">Z</label>
-      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroZ" />
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroZ" step="0.1"/>
     </div>
 
     <div class="my-2">

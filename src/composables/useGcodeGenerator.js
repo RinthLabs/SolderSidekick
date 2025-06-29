@@ -32,6 +32,9 @@ export function useGcodeGenerator() {
 
     // Generate per-point G-code
     solderPoints.forEach((point, index) => {
+
+      console.log("point", point);
+
       // Pre-calculate integer values
       const pointNumber = index + 1;
       const progressPercent = Math.round((index / solderPoints.length) * 100);

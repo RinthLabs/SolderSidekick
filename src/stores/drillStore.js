@@ -8,13 +8,15 @@ G28 Z ; Home Z
 G0 Z{START_SAFE_Z} F600 ; Initial lift height
 
 M117 Moving to 0,0,0
-G0 X{ORIGIN_X} Y{ORIGIN_Y} F600 ; Move to start position X and Y (1,3.3)
-G0 Z{ORIGIN_Z + PCB_THICKNESS} F600 ; Move to start position Z + PCB Thickness (0.3)
+G0 X{ORIGIN_X} Y{ORIGIN_Y} F600 ; Move to start position X and Y
+G0 Z{ORIGIN_Z + PCB_THICKNESS} F600 ; Move to start position Z + PCB Thickness
 G92 X0 Y0 Z0 ; Set current position as 0,0,0
 
 M221 S{MULTIPLIER} ; Extruder multiplier
 M302 S0 ; Allow cold extrusion
 M83 ; Set extruder to relative mode
+
+G0 X0 Y0 Z{START_SAFE_Z} F600 ; Initial lift height
 `;
 
 
@@ -62,13 +64,13 @@ export const useDrillStore = defineStore("drill", {
     originOffsetY: 16,
     pcbThickness: 1.6,
     mountHeight: 28.8,
-    feedPrime: 3.0,
+    feedPrime: 2.0,
     feedRetract: 0.25,
     rotation: 0,
-    defaultSolderFeed: 3.0,
-    defaultSoakTime: 2.0,
-    defaultDwellTime: 3.0,
-    defaultApproachDistance: 0.8,
+    defaultSolderFeed: 2.0,
+    defaultSoakTime: 3.0,
+    defaultDwellTime: 1.0,
+    defaultApproachDistance: 0.7,
     defaultSolderAllPoints: false,
 
     // --- Profile management ---
@@ -78,14 +80,14 @@ export const useDrillStore = defineStore("drill", {
       zeroZ: null,
       pcbThickness: 1.6,
       startSafeZ: 12,
-      solderSafeZ: 12,
+      solderSafeZ: 5,
       endSafeZ: 12,
       solderFeedMultiplier: 105,
-      feedPrime: 3.0,
+      feedPrime: 2.0,
       feedRetract: 0.25,
       retractAfterSolder: 0.5,
       playBeep: true,
-      pointOffsetX: 0, // Additional X offset at each solder point
+      pointOffsetX: 0.2, // Additional X offset at each solder point
       startGcode: startGcodeTemplate,
       perPointGcode: perPointTemplate,
       endGcode: endGcodeTemplate,

@@ -155,15 +155,15 @@ function resetToDefaults() {
                 <div class="row">
                   <div class="col-auto d-flex align-items-center">
                     <label class="me-2 mb-0" style="min-width: 1.5em;"><b>X</b></label>
-                    <input type="number" class="form-control form-control-sm" v-model="zeroX" />
+                    <input type="number" class="form-control form-control-sm" v-model="zeroX" step="0.1"/>
                   </div>
                   <div class="col-auto d-flex align-items-center">
                     <label class="me-2 mb-0" style="min-width: 1.5em;"><b>Y</b></label>
-                    <input type="number" class="form-control form-control-sm" v-model="zeroY" />
+                    <input type="number" class="form-control form-control-sm" v-model="zeroY" step="0.1"/>
                   </div>
                   <div class="col-auto d-flex align-items-center">
                     <label class="me-2 mb-0" style="min-width: 1.5em;"><b>Z</b></label>
-                    <input type="number" class="form-control form-control-sm" v-model="zeroZ" />
+                    <input type="number" class="form-control form-control-sm" v-model="zeroZ" step="0.1"/>
                   </div>
                 </div>
 
@@ -171,10 +171,10 @@ function resetToDefaults() {
                 <input type="number" class="form-control" v-model="pcbThickness" step="0.1" />
 
                 <label class="form-label mt-3" title="{START_SAFE_Z}">Start Safe Z</label>
-                <input type="number" class="form-control" v-model="startSafeZ" />
+                <input type="number" class="form-control" v-model="startSafeZ" step="0.1" />
 
                 <label class="form-label mt-3" title="{MULTIPLIER}">Solder Feed Multiplier</label>
-                <input type="number" class="form-control" v-model="solderFeedMultiplier" />
+                <input type="number" class="form-control" v-model="solderFeedMultiplier" step="0.1"/>
               </div>
 
               <div class="col-md-6">
@@ -193,19 +193,19 @@ function resetToDefaults() {
                 <h5><i class="fa-solid fa-crosshairs"></i> Per Point G-code</h5>
 
                 <label class="form-label mt-3" title="{PRIME}">Solder Prime</label>
-                <input type="number" class="form-control" v-model="feedPrime" />
+                <input type="number" class="form-control" v-model="feedPrime" step="0.1"/>
 
                 <label class="form-label mt-3" title="{PRIME_RETRACT}">Solder Prime Retract</label>
-                <input type="number" class="form-control" v-model="feedRetract" />
+                <input type="number" class="form-control" v-model="feedRetract" step="0.1"/>
 
                 <label class="form-label mt-3" title="{POINT_OFFSET_X}">Solder Point Offset X</label>
                 <input type="number" class="form-control" v-model="pointOffsetX" step="0.1" />
 
                 <label class="form-label mt-3" title="{RETRACT}">Solder Retract</label>
-                <input type="number" class="form-control" v-model="retractAfterSolder" />
+                <input type="number" class="form-control" v-model="retractAfterSolder" step="0.1"/>
 
                 <label class="form-label mt-3" title="{SOLDER_SAFE_Z}">Solder Safe Z</label>
-                <input type="number" class="form-control" v-model="solderSafeZ" />
+                <input type="number" class="form-control" v-model="solderSafeZ" step="0.1"/>
               </div>
 
               <div class="col-md-6">
@@ -222,7 +222,7 @@ function resetToDefaults() {
               <div class="col-md-6">
                 <h5><i class="fa-solid fa-stop"></i> End G-code</h5>
                 <label class="form-label" title="{END_SAFE_Z}">End Safe Z</label>
-                <input type="number" class="form-control" v-model="endSafeZ" />
+                <input type="number" class="form-control" v-model="endSafeZ" step="0.1"/>
 
                 <div class="form-check mt-3">
                   <input class="form-check-input" type="checkbox" v-model="playBeep" />

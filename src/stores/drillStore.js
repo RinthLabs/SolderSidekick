@@ -23,12 +23,12 @@ G0 X0 Y0 Z{START_SAFE_Z} F600 ; Initial lift height
 const perPointTemplate = `; Solder Point G-code
 M117 Soldering {INDEX + 1}/{TOTAL_POINTS}
 M73 P{INDEX / TOTAL_POINTS * 100} ; Set progress bar %
-G0 X{X + APPROACH} Y{Y} F6000 ; Move to point with approach offset
-G1 Z3 F600; ; Get near the point
+G0 X{X + LEAD_OFFSET + POINT_OFFSET_X} Y{Y} F6000 ; Move to point with lead width offset
+G1 Z{Z_OFFSET + SOLDER_PRIME_Z} F600; ; Get near the point
 G1 E{PRIME} F300 ; Prime soldering iron with a small amount of solder
 G1 E-{PRIME_RETRACT} F600 ; Retract solder from touching soldering iron
-G1 Z0.5 F600; Move to PCB height
-G1 X{X + POINT_OFFSET_X} F600 ; Move to solder point
+G1 Z{Z_OFFSET} F600; Move to PCB height
+G1 X{X + LEAD_OFFSET} F600 ; Move to solder point
 G4 S{SOAK} ; Soak time
 G1 E{FEED} F300 ; Solder the point
 G1 E-{RETRACT} F600 ; Retract solder from touching soldering iron
@@ -70,7 +70,8 @@ export const useDrillStore = defineStore("drill", {
     defaultSolderFeed: 2.0,
     defaultSoakTime: 3.0,
     defaultDwellTime: 1.0,
-    defaultApproachDistance: 0.7,
+    defaultLeadOffset: 0.1,
+    defaultZOffset: 0.0,
     defaultSolderAllPoints: false,
 
     // --- Profile management ---
@@ -81,13 +82,14 @@ export const useDrillStore = defineStore("drill", {
       pcbThickness: 1.6,
       startSafeZ: 12,
       solderSafeZ: 5,
+      solderPrimeZ: 3,
       endSafeZ: 12,
       solderFeedMultiplier: 105,
       feedPrime: 2.0,
       feedRetract: 0.25,
       retractAfterSolder: 0.5,
       playBeep: true,
-      pointOffsetX: 0.2, // Additional X offset at each solder point
+      pointOffsetX: 0.1, // Additional X offset at each solder point
       startGcode: startGcodeTemplate,
       perPointGcode: perPointTemplate,
       endGcode: endGcodeTemplate,
@@ -319,7 +321,8 @@ export const useDrillStore = defineStore("drill", {
         feed: this.defaultSolderFeed,
         soak: this.defaultSoakTime,
         dwell: this.defaultDwellTime,
-        solderOffset: this.defaultApproachDistance
+        solderOffset: this.defaultLeadOffset,
+        zOffset: this.defaultZOffset
       }));
       
       this.path = [];

@@ -44,7 +44,8 @@ export function useGcodeGenerator() {
         TOTAL_POINTS: solderPoints.length,
         X: point.transformedX,
         Y: point.transformedY,
-        APPROACH: point.solderOffset,
+        LEAD_OFFSET: point.solderOffset ?? 0,
+        Z_OFFSET: point.zOffset ?? 0,
         POINT_OFFSET_X: profile.pointOffsetX ?? 0,
         SOAK: point.soak,
         FEED: point.feed,
@@ -53,6 +54,7 @@ export function useGcodeGenerator() {
         PRIME_RETRACT: profile.feedRetract,
         RETRACT: profile.retractAfterSolder,
         SOLDER_SAFE_Z: profile.solderSafeZ,
+        SOLDER_PRIME_Z: profile.solderPrimeZ,
         // Add pre-calculated values
         POINT_NUMBER: pointNumber,
         PROGRESS_PERCENT: progressPercent,

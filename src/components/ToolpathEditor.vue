@@ -119,7 +119,8 @@
               <th title="Seconds spent preheating the pad and the part">Soak</th>
               <th title="Amount of solder to extrude (mm)">Feed</th>
               <th title="Seconds spent holding the soldering iron after applying solder">Dwell</th>
-              <th title="Approach distance from the right side (mm)"><i class="fas fa-dot-circle"></i> <i class="fas fa-long-arrow-alt-left"></i></th>
+              <th title="Lead offset (mm), used to offset from drill point for different lead widths"><i class="fas fa-dot-circle"></i> <i class="fas fa-long-arrow-alt-right"></i></th>
+              <th title="Z offset (mm), used for parts that are raised or lowered from the PCB surface"><i class="fas fa-arrows-alt-v"></i> Z</th>
             </tr>
           </thead>
           
@@ -183,9 +184,20 @@
                   :value="hole.solderOffset"
                   min="0"
                   step="0.1"
-                  style="max-width: 50px;"
+                  style="max-width: 70px;"
                   @click.stop
                   @change="updateField(hole, 'solderOffset', $event.target.valueAsNumber)"
+                />
+              </td>
+               <td>
+                <input
+                  type="number"
+                  class="form-control form-control-sm"
+                  :value="hole.zOffset"
+                  step="0.1"
+                  style="max-width: 70px;"
+                  @click.stop
+                  @change="updateField(hole, 'zOffset', $event.target.valueAsNumber)"
                 />
               </td>
 
@@ -492,9 +504,12 @@ const updateField = (hole, field, value) => {
   });
   drillStore.redoStack = [];
 
-  // Update all selected rows
+  // First, update the specific hole that was changed
+  hole[field] = value;
+
+  // Then, if there are other selected rows, update them too
   drillStore.drillData.forEach(d => {
-    if (d.selected) {
+    if (d.selected && d.id !== hole.id) {
       d[field] = value;
     }
   });
@@ -1255,7 +1270,7 @@ function downloadExampleDrillFile() {
 }
 
 .right-panel {
-  width: 450px;
+  width: 495px;
   display: flex;
   flex-direction: column;
   position: relative;

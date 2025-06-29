@@ -65,6 +65,11 @@ const solderSafeZ = computed({
   set: (val) => drillStore.updateCurrentProfileSettings({ solderSafeZ: val })
 });
 
+const solderPrimeZ = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].solderPrimeZ,
+  set: (val) => drillStore.updateCurrentProfileSettings({ solderPrimeZ: val })
+});
+
 const endSafeZ = computed({
   get: () => drillStore.profiles[drillStore.currentProfile].endSafeZ,
   set: (val) => drillStore.updateCurrentProfileSettings({ endSafeZ: val })
@@ -203,6 +208,9 @@ function resetToDefaults() {
 
                 <label class="form-label mt-3" title="{RETRACT}">Solder Retract</label>
                 <input type="number" class="form-control" v-model="retractAfterSolder" step="0.1"/>
+
+                <label class="form-label mt-3" title="{SOLDER_SAFE_Z}">Solder Prime Z</label>
+                <input type="number" class="form-control" v-model="solderPrimeZ" step="0.1"/>
 
                 <label class="form-label mt-3" title="{SOLDER_SAFE_Z}">Solder Safe Z</label>
                 <input type="number" class="form-control" v-model="solderSafeZ" step="0.1"/>

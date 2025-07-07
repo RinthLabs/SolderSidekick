@@ -119,8 +119,9 @@
               <th title="Seconds spent preheating the pad and the part">Soak</th>
               <th title="Amount of solder to extrude (mm)">Feed</th>
               <th title="Seconds spent holding the soldering iron after applying solder">Dwell</th>
-              <th title="Lead offset (mm), used to offset from drill point for different lead widths"><i class="fas fa-dot-circle"></i> <i class="fas fa-long-arrow-alt-right"></i></th>
-              <th title="Z offset (mm), used for parts that are raised or lowered from the PCB surface"><i class="fas fa-arrows-alt-v"></i> Z</th>
+              <th title="X offset (mm) from drill point"><i class="fas fa-arrows-alt-h"></i> X</th>
+              <th title="Y offset (mm) from drill point"><i class="fas fa-arrows-alt-v"></i> Y</th>
+              <th title="Z offset (mm) from top of PCB surface"><i class="fa-solid fa-layer-group"></i> Z</th>
             </tr>
           </thead>
           
@@ -181,12 +182,22 @@
                 <input
                   type="number"
                   class="form-control form-control-sm"
-                  :value="hole.solderOffset"
-                  min="0"
+                  :value="hole.xOffset"
                   step="0.1"
                   style="max-width: 70px;"
                   @click.stop
-                  @change="updateField(hole, 'solderOffset', $event.target.valueAsNumber)"
+                  @change="updateField(hole, 'xOffset', $event.target.valueAsNumber)"
+                />
+              </td>
+               <td>
+                <input
+                  type="number"
+                  class="form-control form-control-sm"
+                  :value="hole.yOffset"
+                  step="0.1"
+                  style="max-width: 70px;"
+                  @click.stop
+                  @change="updateField(hole, 'yOffset', $event.target.valueAsNumber)"
                 />
               </td>
                <td>
@@ -1270,7 +1281,7 @@ function downloadExampleDrillFile() {
 }
 
 .right-panel {
-  width: 495px;
+  width: 520px;
   display: flex;
   flex-direction: column;
   position: relative;

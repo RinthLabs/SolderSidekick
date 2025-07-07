@@ -116,9 +116,9 @@ const endGcode = computed({
 });
 
 // Add new computed property for point offset X
-const pointOffsetX = computed({
-  get: () => drillStore.profiles[drillStore.currentProfile].pointOffsetX ?? 0,
-  set: (val) => drillStore.updateCurrentProfileSettings({ pointOffsetX: val })
+const solderOffset = computed({
+  get: () => drillStore.profiles[drillStore.currentProfile].solderOffset ?? 0,
+  set: (val) => drillStore.updateCurrentProfileSettings({ solderOffset: val })
 });
 
 function resetToDefaults() {
@@ -203,8 +203,8 @@ function resetToDefaults() {
                 <label class="form-label mt-3" title="{PRIME_RETRACT}">Solder Prime Retract</label>
                 <input type="number" class="form-control" v-model="feedRetract" step="0.1"/>
 
-                <label class="form-label mt-3" title="{POINT_OFFSET_X}">Solder Point Offset X</label>
-                <input type="number" class="form-control" v-model="pointOffsetX" step="0.1" />
+                <label class="form-label mt-3" title="{SOLDER_OFFSET}">Solder Offset</label>
+                <input type="number" class="form-control" v-model="solderOffset" step="0.1" />
 
                 <label class="form-label mt-3" title="{RETRACT}">Solder Retract</label>
                 <input type="number" class="form-control" v-model="retractAfterSolder" step="0.1"/>

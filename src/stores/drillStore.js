@@ -23,12 +23,12 @@ G0 X0 Y0 Z{START_SAFE_Z} F600 ; Initial lift height
 const perPointTemplate = `; Solder Point G-code
 M117 Soldering {INDEX + 1}/{TOTAL_POINTS}
 M73 P{INDEX / TOTAL_POINTS * 100} ; Set progress bar %
-G0 X{X + LEAD_OFFSET + POINT_OFFSET_X} Y{Y} F6000 ; Move to point with lead width offset
+G0 X{X + X_OFFSET + SOLDER_OFFSET} Y{Y + Y_OFFSET} F6000 ; Move slightly to the right of the point
 G1 Z{Z_OFFSET + SOLDER_PRIME_Z} F600; ; Get near the point
 G1 E{PRIME} F300 ; Prime soldering iron with a small amount of solder
 G1 E-{PRIME_RETRACT} F600 ; Retract solder from touching soldering iron
 G1 Z{Z_OFFSET} F600; Move to PCB height
-G1 X{X + LEAD_OFFSET} F600 ; Move to solder point
+G1 X{X + X_OFFSET} F600 ; Move to solder point
 G4 S{SOAK} ; Soak time
 G1 E{FEED} F300 ; Solder the point
 G1 E-{RETRACT} F600 ; Retract solder from touching soldering iron
@@ -70,7 +70,9 @@ export const useDrillStore = defineStore("drill", {
     defaultSolderFeed: 2.0,
     defaultSoakTime: 3.0,
     defaultDwellTime: 1.0,
-    defaultLeadOffset: 0.1,
+    defaultSolderOffset: 0.1,
+    defaultXOffset: 0.1,
+    defaultYOffset: 0.0,
     defaultZOffset: 0.0,
     defaultSolderAllPoints: false,
 
@@ -89,7 +91,10 @@ export const useDrillStore = defineStore("drill", {
       feedRetract: 0.25,
       retractAfterSolder: 0.5,
       playBeep: true,
+      solderOffset: 0.1,
       pointOffsetX: 0.1, // Additional X offset at each solder point
+      pointOffsetY: 0.0, // Additional Y offset at each solder point
+      pointOffsetZ: 0.0, // Additional Z offset at each solder point
       startGcode: startGcodeTemplate,
       perPointGcode: perPointTemplate,
       endGcode: endGcodeTemplate,
@@ -321,7 +326,8 @@ export const useDrillStore = defineStore("drill", {
         feed: this.defaultSolderFeed,
         soak: this.defaultSoakTime,
         dwell: this.defaultDwellTime,
-        solderOffset: this.defaultLeadOffset,
+        xOffset: this.defaultXOffset,
+        yOffset: this.defaultYOffset,
         zOffset: this.defaultZOffset
       }));
       

@@ -149,7 +149,7 @@
                   :value="hole.soak"
                   min="0"
                   step="0.1"
-                  style="max-width: 50px;"
+                  style="max-width: 60px;"
                   @click.stop
                   @change="updateField(hole, 'soak', $event.target.valueAsNumber)"
                 />
@@ -161,7 +161,7 @@
                   :value="hole.feed"
                   min="0"
                   step="0.1"
-                  style="max-width: 50px;"
+                  style="max-width: 60px;"
                   @click.stop
                   @change="updateField(hole, 'feed', $event.target.valueAsNumber)"
                 />
@@ -173,7 +173,7 @@
                   :value="hole.dwell"
                   min="0"
                   step="0.1"
-                  style="max-width: 50px;"
+                  style="max-width: 60px;"
                   @click.stop
                   @change="updateField(hole, 'dwell', $event.target.valueAsNumber)"
                 />
@@ -1281,7 +1281,7 @@ function downloadExampleDrillFile() {
 }
 
 .right-panel {
-  width: 520px;
+  width: 550px;
   display: flex;
   flex-direction: column;
   position: relative;

@@ -76,10 +76,24 @@
 
         <div class="align-items-center">
   <div class="mx-3 my-2">
+
+    <div class="profile-content">
     <div class="d-flex align-items-center my-2">
       <label class="form-label profile-label me-2">Machine Profile</label>
       <ProfileManager />
     </div>
+
+     <div class="my-2">
+      <label class="form-label">PCB Thickness (mm) <i class="fas fa-layer-group"></i></label>
+      <input
+        type="number"
+        class="form-control d-inline w-auto pcb-input ms-2"
+        step="0.1"
+        v-model.number="pcbThickness"
+      />
+    </div>
+
+    
 
     <div class="d-flex align-items-center sidebar-home-origin my-2">
       <label class="form-label profile-label">Origin X</label>
@@ -90,19 +104,35 @@
       <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroZ" step="0.1"/>
     </div>
 
-    <div class="my-2">
-      <label class="form-label">PCB Thickness (mm) <i class="fas fa-layer-group"></i></label>
-      <input
-        type="number"
-        class="form-control d-inline w-auto pcb-input ms-2"
-        step="0.1"
-        v-model.number="pcbThickness"
-      />
+    <button class="btn btn-outline-dark my-1" @click=""><i class="fa-solid fa-bullseye"></i> Measure Origin From PCB</button>
+
+
+    <div v-if="zeroX === null || zeroY === null || zeroZ === null" class="measure-note my-1">
+      <p class="text-muted">Measure/enter the origin offset for your machine</p>
     </div>
 
-    <div v-if="zeroX === null || zeroY === null || zeroZ === null" class="measure-note my-2">
-      <a href="#" target="_blank"><p>Measure homing origin XYZ on your machine</p></a>
     </div>
+
+    <div class="origin-calculator">
+    <button class="btn btn-outline-dark close-calculator" @click="closeCalculator"><i class="fa-solid fa-xmark"></i></button>
+    <h3>Select a Point</h3>
+    <p>Move 3D printer to selected point, and enter XYZ position</p>
+    <div class="d-flex align-items-center sidebar-home-origin my-2">
+      <label class="form-label profile-label">Point X</label>
+      <input type="number" class="form-control d-inline w-auto ms-2" v-model="zeroX" step="0.1"/>
+      <label class="form-label profile-label mw-1">Y</label>
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroY" step="0.1"/>
+      <label class="form-label profile-label mw-1">Z</label>
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroZ" step="0.1"/>
+    </div>
+    
+    <button class="btn btn-outline-dark my-1" @click=""><i class="fa-solid fa-calculator"></i> Calculate Origin</button>
+    </div>
+
+
+    
+
+    
   </div>
 </div>
        
@@ -1445,6 +1475,15 @@ table th {
 
 .mw-1{
   margin-left: 1rem;
+}
+
+.origin-calculator{
+  position: relative;
+}
+
+.close-calculator{
+  position: absolute;
+  right: 0;
 }
 
 

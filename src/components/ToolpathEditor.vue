@@ -77,7 +77,7 @@
         <div class="align-items-center">
   <div class="mx-3 my-2">
 
-    <div class="profile-content">
+    <div class="profile-content" v-if="!showOriginCalculator">
     <div class="d-flex align-items-center my-2">
       <label class="form-label profile-label me-2">Machine Profile</label>
       <ProfileManager />
@@ -104,7 +104,7 @@
       <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroZ" step="0.1"/>
     </div>
 
-    <button class="btn btn-outline-dark my-1" @click=""><i class="fa-solid fa-bullseye"></i> Measure Origin From PCB</button>
+    <button class="btn btn-outline-dark my-1" @click="toggleOriginCalculator"><i class="fa-solid fa-bullseye"></i> Measure Origin From PCB</button>
 
 
     <div v-if="zeroX === null || zeroY === null || zeroZ === null" class="measure-note my-1">
@@ -113,20 +113,20 @@
 
     </div>
 
-    <div class="origin-calculator">
+    <div class="origin-calculator" v-if="showOriginCalculator">
     <button class="btn btn-outline-dark close-calculator" @click="closeCalculator"><i class="fa-solid fa-xmark"></i></button>
     <h3>Select a Point</h3>
     <p>Move 3D printer to selected point, and enter XYZ position</p>
     <div class="d-flex align-items-center sidebar-home-origin my-2">
       <label class="form-label profile-label">Point X</label>
-      <input type="number" class="form-control d-inline w-auto ms-2" v-model="zeroX" step="0.1"/>
+      <input type="number" class="form-control d-inline w-auto ms-2" v-model="pointX" step="0.1"/>
       <label class="form-label profile-label mw-1">Y</label>
-      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroY" step="0.1"/>
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="pointY" step="0.1"/>
       <label class="form-label profile-label mw-1">Z</label>
-      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroZ" step="0.1"/>
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="pointZ" step="0.1"/>
     </div>
     
-    <button class="btn btn-outline-dark my-1" @click=""><i class="fa-solid fa-calculator"></i> Calculate Origin</button>
+    <button class="btn btn-outline-dark my-1" @click="calculateOrigin"><i class="fa-solid fa-calculator"></i> Calculate Origin</button>
     </div>
 
 
@@ -357,6 +357,14 @@ let selectionEnd = null;
 let isDraggingOrigin = false;
 let dragOriginStart = null;
 
+// Origin calculator state
+const showOriginCalculator = ref(false);
+const pointX = ref(null);
+const pointY = ref(null);
+const pointZ = ref(null);
+const isSelectingOriginPoint = ref(false);
+const selectedOriginPoint = ref(null);
+
 const pcbThickness = computed({
   get: () => drillStore.profiles[drillStore.currentProfile].pcbThickness ?? drillStore.pcbThickness,
   set: (val) => {
@@ -574,6 +582,71 @@ const saveOffsetUndoState = () => {
     }
   });
   drillStore.redoStack = [];
+};
+
+const toggleOriginCalculator = () => {
+  showOriginCalculator.value = true;
+  isSelectingOriginPoint.value = true;
+  selectedOriginPoint.value = null;
+  // Clear any existing selections
+  drillStore.drillData.forEach(d => d.selected = false);
+  updateCanvas();
+};
+
+const closeCalculator = () => {
+  showOriginCalculator.value = false;
+  isSelectingOriginPoint.value = false;
+  selectedOriginPoint.value = null;
+  pointX.value = null;
+  pointY.value = null;
+  pointZ.value = null;
+  updateCanvas();
+};
+
+const calculateOrigin = () => {
+  if (!selectedOriginPoint.value || pointX.value === null || pointY.value === null || pointZ.value === null) {
+    alert("Please select a point on the PCB and enter the Point X, Y, Z values");
+    return;
+  }
+
+  const selectedDrill = drillStore.drillData.find(d => d.id === selectedOriginPoint.value);
+  if (!selectedDrill) return;
+
+  // Get the transformed coordinates with PCB offset/rotation/flip factored in
+  const transformed = getTransformedCoordinates(selectedDrill);
+  
+  // Calculate new origin by subtracting Point XY from selected point's XY
+  const newOriginX = transformed.x - pointX.value;
+  const newOriginY = transformed.y - pointY.value;
+  
+  // Calculate new origin Z by subtracting PCB thickness from Point Z
+  const newOriginZ = pointZ.value - pcbThickness.value;
+
+  // Update the origin values - round to nearest 0.01
+  zeroX.value = Math.round(newOriginX * 100) / 100;
+  zeroY.value = Math.round(newOriginY * 100) / 100;
+  zeroZ.value = Math.round(newOriginZ * 100) / 100;
+
+  // Close the calculator
+  closeCalculator();
+};
+
+const getTransformedCoordinates = (drill) => {
+  // Match exactly how coordinates are transformed in the mouse handling code
+  // This uses negative rotation because it's transforming from drill space to screen space
+  const rad = -(drillStore.rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  
+  // Apply rotation first (matching the handleMouseDown logic)
+  const rotatedX = drill.x * cos - drill.y * sin;
+  const rotatedY = drill.x * sin + drill.y * cos;
+
+  // Then apply offsets (translate after rotation)
+  const x = rotatedX + drillStore.originOffsetX;
+  const y = rotatedY + drillStore.originOffsetY;
+
+  return { x, y };
 };
 
 
@@ -835,9 +908,18 @@ const drawDrillHoles = () => {
     const x = d.x, y = -d.y;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI);
-    ctx.fillStyle = d.solder ? "red" : "gray";
-    ctx.strokeStyle = d.selected ? "cyan" : "black";
-    ctx.lineWidth = 2 / scale;
+    
+    // Highlight the selected origin point in yellow
+    if (isSelectingOriginPoint.value && d.id === selectedOriginPoint.value) {
+      ctx.fillStyle = "yellow";
+      ctx.strokeStyle = "orange";
+      ctx.lineWidth = 3 / scale;
+    } else {
+      ctx.fillStyle = d.solder ? "red" : "gray";
+      ctx.strokeStyle = d.selected ? "cyan" : "black";
+      ctx.lineWidth = 2 / scale;
+    }
+    
     ctx.fill();
     ctx.stroke();
   }
@@ -946,8 +1028,8 @@ const handleMouseDown = (e) => {
   const dy = mouse.y - drillStore.originOffsetY;
   const distanceToOrigin = Math.hypot(dx, dy);
 
-  if (e.button === 0 && distanceToOrigin < 2) {
-    // Begin dragging origin if close to it
+  if (e.button === 0 && distanceToOrigin < 2 && !isSelectingOriginPoint.value) {
+    // Begin dragging origin if close to it (but not in origin selection mode)
     drillStore.saveTransformUndoState();
     isDraggingOrigin = true;
     dragOriginStart = { x: e.clientX, y: e.clientY, offsetX: drillStore.originOffsetX, offsetY: drillStore.originOffsetY };
@@ -975,6 +1057,19 @@ const handleMouseDown = (e) => {
 
     return Math.hypot(rotatedX - mouse.x, rotatedY - mouse.y) < 1;
   });
+
+  if (isSelectingOriginPoint.value) {
+    // In origin selection mode - only allow selecting a single point
+    drillStore.drillData.forEach(d => d.selected = false);
+    if (clicked) {
+      selectedOriginPoint.value = clicked.id;
+      clicked.selected = true;
+    } else {
+      selectedOriginPoint.value = null;
+    }
+    updateCanvas();
+    return;
+  }
 
   if (clicked) {
   if (e.ctrlKey) {
@@ -1354,7 +1449,7 @@ function downloadExampleDrillFile() {
 }
 
 .sidebar-home-origin input{
-  width: 4.5rem !important;
+  width: 5.5rem !important;
 }
 
 .profile-dropdown{

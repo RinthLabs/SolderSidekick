@@ -252,7 +252,7 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick  } from "vue";
 import GettingStarted from "@/components/GettingStarted.vue";
 import ProfileManager from '@/components/ProfileManager.vue';
-import { useDrillStore } from "@/stores/drillStore";
+import { useDrillStore } from "@/stores/store";
 import { useFileHandlers } from "@/composables/useFileHandlers";
 import { useGcodeGenerator } from "@/composables/useGcodeGenerator";
 const { parseDrillFile, parseProjectFile, saveProject } = useFileHandlers();

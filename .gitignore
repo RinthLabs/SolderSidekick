@@ -36,3 +36,4 @@ src/components/DrillPreview copy.vue
 src/components/SolderToolpathEditor.vue
 src/stores/drillStore copy.js
 public/privacy.html
+.claude/settings.local.json

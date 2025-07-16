@@ -94,7 +94,7 @@
 <script setup>
 import { RouterLink, RouterView, useRoute  } from 'vue-router'
 import { ref, onMounted, computed} from "vue";
-import { useDrillStore } from '@/stores/drillStore'
+import { useDrillStore } from '@/stores/store'
 
 const isMobile = ref(false)
 const route = useRoute();

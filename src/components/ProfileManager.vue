@@ -135,7 +135,7 @@
 
 <script setup>
 import { ref, computed, nextTick, watch } from 'vue';
-import { useDrillStore } from '@/stores/drillStore';
+import { useDrillStore } from '@/stores/store';
 
 const drillStore = useDrillStore();
 

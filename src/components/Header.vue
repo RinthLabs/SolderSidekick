@@ -60,7 +60,7 @@
   <script setup>
   import { RouterLink, RouterView } from 'vue-router'
   import { ref } from "vue";
-  import { useDrillStore } from "@/stores/drillStore";
+  import { useDrillStore } from "@/stores/store";
   import UploadDrillFile from "@/components/UploadDrillFile.vue";
   import { useFileHandlers } from "@/composables/useFileHandlers";
   const { saveProject } = useFileHandlers();

@@ -86,7 +86,7 @@ export const useDrillStore = defineStore("drill", {
       solderSafeZ: 5,
       solderPrimeZ: 3,
       endSafeZ: 12,
-      solderFeedMultiplier: 105,
+      solderFeedMultiplier: 104,
       feedPrime: 2.0,
       feedRetract: 0.25,
       retractAfterSolder: 0.5,

@@ -1,4 +1,4 @@
-import { useDrillStore } from "@/stores/drillStore";
+import { useDrillStore } from "@/stores/store";
 
 export function useGcodeGenerator() {
   const drillStore = useDrillStore();

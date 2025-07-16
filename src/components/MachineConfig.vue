@@ -3,7 +3,7 @@ import { ref, watch, onMounted, computed  } from "vue";
 import ProfileManager from './ProfileManager.vue';
 import GcodeEditor from './GcodeEditor.vue'; // Adjust path if needed
 
-import { useDrillStore } from "@/stores/drillStore";
+import { useDrillStore } from "@/stores/store";
 
 
 const drillStore = useDrillStore();

@@ -97,14 +97,14 @@
 
     <div class="d-flex align-items-center sidebar-home-origin my-2">
       <label class="form-label profile-label">Origin X</label>
-      <input type="number" class="form-control d-inline w-auto ms-2" v-model="zeroX" step="0.1"/>
+      <input type="number" class="form-control d-inline w-auto ms-2" v-model="zeroX" step="0.01"/>
       <label class="form-label profile-label mw-1">Y</label>
-      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroY" step="0.1"/>
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroY" step="0.01"/>
       <label class="form-label profile-label mw-1">Z</label>
-      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroZ" step="0.1"/>
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="zeroZ" step="0.01"/>
     </div>
 
-    <button class="btn btn-outline-dark my-1" @click="toggleOriginCalculator"><i class="fa-solid fa-bullseye"></i> Measure Origin From PCB</button>
+    <button class="btn btn-outline-dark my-1" @click="toggleOriginCalculator"><i class="fa-solid fa-location-crosshairs"></i> Measure Origin From PCB</button>
 
 
     <div v-if="zeroX === null || zeroY === null || zeroZ === null" class="measure-note my-1">
@@ -119,11 +119,11 @@
     <p>Move 3D printer to selected point, and enter XYZ position</p>
     <div class="d-flex align-items-center sidebar-home-origin my-2">
       <label class="form-label profile-label">Point X</label>
-      <input type="number" class="form-control d-inline w-auto ms-2" v-model="pointX" step="0.1"/>
+      <input type="number" class="form-control d-inline w-auto ms-2" v-model="pointX" step="0.01"/>
       <label class="form-label profile-label mw-1">Y</label>
-      <input type="number" class="form-control d-inline w-auto ms-1" v-model="pointY" step="0.1"/>
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="pointY" step="0.01"/>
       <label class="form-label profile-label mw-1">Z</label>
-      <input type="number" class="form-control d-inline w-auto ms-1" v-model="pointZ" step="0.1"/>
+      <input type="number" class="form-control d-inline w-auto ms-1" v-model="pointZ" step="0.01"/>
     </div>
     
     <button class="btn btn-outline-dark my-1" @click="calculateOrigin"><i class="fa-solid fa-calculator"></i> Calculate Origin</button>
@@ -616,8 +616,8 @@ const calculateOrigin = () => {
   const transformed = getTransformedCoordinates(selectedDrill);
   
   // Calculate new origin by subtracting Point XY from selected point's XY
-  const newOriginX = transformed.x - pointX.value;
-  const newOriginY = transformed.y - pointY.value;
+  const newOriginX = (transformed.x - pointX.value) * -1.0;
+  const newOriginY = (transformed.y - pointY.value) * -1.0;
   
   // Calculate new origin Z by subtracting PCB thickness from Point Z
   const newOriginZ = pointZ.value - pcbThickness.value;

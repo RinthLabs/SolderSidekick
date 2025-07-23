@@ -12,7 +12,7 @@ Solder Sidekick™ is a semi-assembled hardware kit and web interface that turns
 The system includes:
 - A web-based G-code generator that takes **drill files** from Gerber PCB exports
 - A mechanical mount to install a **soldering iron vertically** on the Ender-3
-- A **direct solder wire feed** using the Ender-3's original Bowden tube
+- A **direct solder wire feed** using the Ender-3's Bowden extruder
 - **Connecting bricks** on the bed to hold PCBs of various sizes without complex tooling
 
 The kit aims to make robotic soldering **accessible and practical** without expensive or proprietary equipment.
@@ -26,7 +26,7 @@ The **Ender-3** was selected because:
 - 💵 **Low cost**: Affordable worldwide, often under $200 USD.
 - 🔧 **Open-source**: Easy to source parts, mods, and firmware support.
 - 🛠️ **Large build volume**: Supports PCBs up to ~200mm x 200mm.
-- 📦 **Bowden extruder**: The stock Bowden tube can guide 1mm solder wire **without modification**.
+- 📦 **Bowden extruder**: With a 3d printed pulley, the Bowden tube can guide 0.6mm solder wire.
 - 🧩 **Modular**: Frame and motion system are easy to customize for different projects.
 
 We wanted a platform that users can **trust**, **easily repair**, and **modify**.

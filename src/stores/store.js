@@ -5,18 +5,18 @@ const startGcodeTemplate = `; Start G-code
 M117 Homing XYZ
 G28 X Y ; Home X and Y
 G28 Z ; Home Z
-G0 Z{START_SAFE_Z} F600 ; Initial lift height
+G0 Z{START_SAFE_Z} F800 ; Initial lift height
 
 M117 Moving to 0,0,0
-G0 X{ORIGIN_X} Y{ORIGIN_Y} F600 ; Move to start position X and Y
-G0 Z{ORIGIN_Z + PCB_THICKNESS} F600 ; Move to start position Z + PCB Thickness
+G0 X{ORIGIN_X} Y{ORIGIN_Y} F6000 ; Move to start position X and Y
+G0 Z{ORIGIN_Z + PCB_THICKNESS} F800 ; Move to start position Z + PCB Thickness
 G92 X0 Y0 Z0 ; Set current position as 0,0,0
 
 M221 S{MULTIPLIER} ; Extruder multiplier
 M302 S0 ; Allow cold extrusion
 M83 ; Set extruder to relative mode
 
-G0 X0 Y0 Z{START_SAFE_Z} F600 ; Initial lift height
+G0 X0 Y0 Z{START_SAFE_Z} F800 ; Initial lift height
 `;
 
 
@@ -24,21 +24,21 @@ const perPointTemplate = `; Solder Point G-code
 M117 Soldering {INDEX + 1}/{TOTAL_POINTS}
 M73 P{INDEX / TOTAL_POINTS * 100} ; Set progress bar %
 G0 X{X + X_OFFSET + SOLDER_OFFSET} Y{Y + Y_OFFSET} F6000 ; Move slightly to the right of the point
-G1 Z{Z_OFFSET + SOLDER_PRIME_Z} F600; ; Get near the point
-G1 E{PRIME} F300 ; Prime soldering iron with a small amount of solder
-G1 E-{PRIME_RETRACT} F600 ; Retract solder from touching soldering iron
-G1 Z{Z_OFFSET} F600; Move to PCB height
-G1 X{X + X_OFFSET} F600 ; Move to solder point
+G1 Z{Z_OFFSET + SOLDER_PRIME_Z} F800; ; Get near the point
+G1 E{PRIME} F600 ; Prime soldering iron with a small amount of solder
+G1 E-{PRIME_RETRACT} F800 ; Retract solder from touching soldering iron
+G1 Z{Z_OFFSET} F800; Move to PCB height
+G1 X{X + X_OFFSET} F800 ; Move to solder point
 G4 S{SOAK} ; Soak time
-G1 E{FEED} F300 ; Solder the point
-G1 E-{RETRACT} F600 ; Retract solder from touching soldering iron
+G1 E{FEED} F500 ; Solder the point
+G1 E-{RETRACT} F800 ; Retract solder from touching soldering iron
 G4 S{DWELL} ; Dwell time
-G1 Z{SOLDER_SAFE_Z} F600 ; Lift soldering iron`;
+G1 Z{SOLDER_SAFE_Z} F800 ; Lift soldering iron`;
 
 const endGcodeTemplate = `; End G-code
 M117 Solder Sidekick Done!
 M73 P100 ; Set progress bar to 100%
-G0 Z{END_SAFE_Z} F600 ; Lift soldering iron
+G0 Z{END_SAFE_Z} F800 ; Lift soldering iron
 
 M300 S440 P{BEEP} ; Beep
 G4 P500 ; Wait for 0.5 seconds
@@ -64,14 +64,14 @@ export const useDrillStore = defineStore("drill", {
     originOffsetY: 16,
     pcbThickness: 1.6,
     mountHeight: 28.8,
-    feedPrime: 2.0,
+    feedPrime: 2.75,
     feedRetract: 0.25,
     rotation: 0,
-    defaultSoakTime: 4.0,
-    defaultSolderFeed: 3.0,
+    defaultSoakTime: 2.5,
+    defaultSolderFeed: 7.0,
     defaultDwellTime: 1.0,
     defaultSolderOffset: 0.2,
-    defaultXOffset: 0.1,
+    defaultXOffset: 0.0,
     defaultYOffset: 0.0,
     defaultZOffset: 0.0,
     defaultSolderAllPoints: false,
@@ -83,16 +83,16 @@ export const useDrillStore = defineStore("drill", {
       zeroZ: null,
       pcbThickness: 1.6,
       startSafeZ: 12,
-      solderSafeZ: 5,
-      solderPrimeZ: 3,
+      solderSafeZ: 3.5,
+      solderPrimeZ: 3.5,
       endSafeZ: 12,
       solderFeedMultiplier: 104,
       feedPrime: 2.0,
       feedRetract: 0.25,
       retractAfterSolder: 0.5,
       playBeep: true,
-      solderOffset: 0.1,
-      pointOffsetX: 0.1, // Additional X offset at each solder point
+      solderOffset: 0.15,
+      pointOffsetX: 0.0, // Additional X offset at each solder point
       pointOffsetY: 0.0, // Additional Y offset at each solder point
       pointOffsetZ: 0.0, // Additional Z offset at each solder point
       startGcode: startGcodeTemplate,

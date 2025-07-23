@@ -100,10 +100,10 @@ Solder Sidekick is designed specifically for the Ender-3 3D printer. Other print
 ---
 
 🧵 Recommended Solder
-We suggest using 1.0mm solder for optimal feed performance and joint coverage.
+We suggest using 0.6mm solder for optimal feed performance and joint coverage.
 
-[![Ender 3 3D Printer](./docs/solder-1mm-small.jpg)
-<br>👉 Buy on Amazon](https://amzn.to/43n6xuv)
+[![Ender 3 3D Printer](./docs/solder-0.6mm-small.jpg)
+<br>👉 Buy on Amazon](https://amzn.to/44WLI9R)
 
 ---
 

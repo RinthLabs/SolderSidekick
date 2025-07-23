@@ -81,7 +81,7 @@
           },
           {
             question: 'What type of solder should I use?',
-            answer: 'We recommend using 1.0mm solder for best results.<br><a href="https://amzn.to/43n6xuv" target="_blank"><img src="/faq/solder-1mm.jpg" alt="1mm Solder"><br>Buy on Amazon</a>',
+            answer: 'We recommend using 0.6mm solder for best results.<br><a href="https://amzn.to/44WLI9R" target="_blank"><img src="/faq/solder-0.6mm.jpg" alt="0.6mm Solder"><br>Buy on Amazon</a>',
             open: false,
           },
         ],

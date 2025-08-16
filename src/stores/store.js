@@ -67,10 +67,10 @@ export const useDrillStore = defineStore("drill", {
     feedPrime: 2.75,
     feedRetract: 0.25,
     rotation: 0,
-    defaultSoakTime: 2.5,
-    defaultSolderFeed: 7.0,
-    defaultDwellTime: 1.0,
-    defaultSolderOffset: 0.2,
+    defaultSoakTime: 4.0,
+    defaultSolderFeed: 5.0,
+    defaultDwellTime: 1.5,
+    defaultSolderOffset: 0.25,
     defaultXOffset: 0.0,
     defaultYOffset: 0.0,
     defaultZOffset: 0.0,
@@ -91,7 +91,7 @@ export const useDrillStore = defineStore("drill", {
       feedRetract: 0.25,
       retractAfterSolder: 0.5,
       playBeep: true,
-      solderOffset: 0.15,
+      solderOffset: 0.25,
       pointOffsetX: 0.0, // Additional X offset at each solder point
       pointOffsetY: 0.0, // Additional Y offset at each solder point
       pointOffsetZ: 0.0, // Additional Z offset at each solder point

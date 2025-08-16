@@ -2,7 +2,8 @@
 
 Turn your Ender-3 3D printer into a **robotic soldering machine** for through-hole PCBs — powered by open-source software and hardware.
 
-[![Notification Sign Up](/docs/solder-sidekick-logo-white.png)](https://rinthlabs.com/products/solder-sidekick-notification-sign-up)
+
+[![Notification Sign Up](/docs/solder-sidekick-1.jpg)](https://rinthlabs.com/products/solder-sidekick-notification-sign-up)
 
 👉 [**This project is still being developed, sign up to be one of the first to know when it's released!**](https://rinthlabs.com/products/solder-sidekick-notification-sign-up)
 
@@ -54,6 +55,8 @@ While Solder Sidekick™ is open-source, sourcing the parts and machining the cu
 ## 🧪 Example PCB Breadboard
 
 Want to test out the Solder Sidekick™ right away? We include a custom breadboard-style PCB in each kit as a sample project — great for demos and getting started.
+
+[![Notification Sign Up](/docs/solder-sidekick-breadboard.jpg)
 
 ![PCB Breadboard](/example/screenshot.png)
 

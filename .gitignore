@@ -37,3 +37,4 @@ src/components/SolderToolpathEditor.vue
 src/stores/drillStore copy.js
 public/privacy.html
 .claude/settings.local.json
+easyeda-example.drl

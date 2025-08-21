@@ -16,6 +16,8 @@ export function useFileHandlers() {
       let unitMode = "inch";
       let isEagle = false;
       let isAltium = false;
+      let isEasyEDA = false;
+      let easyEDAFormat = null; // Will store format like "3:3" for decimal placement
       let lastX = null;
       let lastY = null;
   
@@ -24,7 +26,23 @@ export function useFileHandlers() {
         if (line.includes("METRIC")) unitMode = "mm";
         if (line.includes("INCH")) unitMode = "inch";
         if (line.includes("M72")) isEagle = true;
-        if (line.startsWith("METRIC,LZ")) isAltium = true;
+        if (line.startsWith("METRIC,LZ")) {
+          // Check if it's EasyEDA by looking for their specific comment
+          isEasyEDA = lines.some(l => l.includes("EasyEDA"));
+          if (!isEasyEDA) {
+            isAltium = true;
+          }
+        }
+        // Parse EasyEDA file format (e.g., ;FILE_FORMAT=3:3)
+        if (line.includes("FILE_FORMAT=")) {
+          const formatMatch = line.match(/FILE_FORMAT=(\d+):(\d+)/);
+          if (formatMatch) {
+            easyEDAFormat = {
+              beforeDecimal: parseInt(formatMatch[1]),
+              afterDecimal: parseInt(formatMatch[2])
+            };
+          }
+        }
       }
   
       const parsedDrills = [];
@@ -74,6 +92,18 @@ export function useFileHandlers() {
             // Eagle uses implied decimals and is in inches
             x = inchesToMm(x / 10000);
             y = inchesToMm(y / 10000);
+          } else if (isEasyEDA) {
+            // EasyEDA uses FILE_FORMAT to specify decimal placement
+            if (easyEDAFormat) {
+              // Apply decimal placement based on FILE_FORMAT (e.g., 3:3 means 3 digits before, 3 after decimal)
+              const divisor = Math.pow(10, easyEDAFormat.afterDecimal);
+              x = x / divisor;
+              y = y / divisor;
+            } else {
+              // Fallback: assume coordinates are in mils if no format specified
+              x = inchesToMm(x / 1000);
+              y = inchesToMm(y / 1000);
+            }
           } else if (isAltium) {
             // Altium's METRIC,LZ format uses explicit values in mm, no scaling needed
             // Use x and y as-is
@@ -99,6 +129,7 @@ export function useFileHandlers() {
       console.log("Format detected:", {
         isEagle,
         isAltium,
+        isEasyEDA,
         unitMode,
         file: file.name
       });

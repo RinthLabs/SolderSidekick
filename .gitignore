@@ -38,3 +38,4 @@ src/stores/drillStore copy.js
 public/privacy.html
 .claude/settings.local.json
 easyeda-example.drl
+easyeda-example2.drl

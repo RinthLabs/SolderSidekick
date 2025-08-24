@@ -93,14 +93,17 @@ export function useFileHandlers() {
             x = inchesToMm(x / 10000);
             y = inchesToMm(y / 10000);
           } else if (isEasyEDA) {
-            // EasyEDA uses FILE_FORMAT to specify decimal placement
+            // EasyEDA can use different formats:
             if (easyEDAFormat) {
-              // Apply decimal placement based on FILE_FORMAT (e.g., 3:3 means 3 digits before, 3 after decimal)
+              // 1. FILE_FORMAT specified: Apply decimal placement based on FILE_FORMAT (e.g., 3:3 means 3 digits before, 3 after decimal)
               const divisor = Math.pow(10, easyEDAFormat.afterDecimal);
               x = x / divisor;
               y = y / divisor;
+            } else if (unitMode === "mm") {
+              // 2. Metric mode with explicit decimals (EasyEDA Pro v2.x): coordinates are already in mm
+              // No conversion needed, values are already correct
             } else {
-              // Fallback: assume coordinates are in mils if no format specified
+              // 3. Fallback for inch mode or older formats: assume coordinates are in mils
               x = inchesToMm(x / 1000);
               y = inchesToMm(y / 1000);
             }

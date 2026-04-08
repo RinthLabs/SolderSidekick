@@ -76,6 +76,7 @@ export const useDrillStore = defineStore("drill", {
     defaultZOffset: 0.0,
     defaultSolderAllPoints: false,
     viaFilterDiameter: 0.4, // Filter out drill holes smaller than this diameter (mm)
+    noGoZones: [], // Array of { id, x1, y1, x2, y2 } in bed coordinate space
 
     // --- Profile management ---
     defaultProfileSettings: {
@@ -314,6 +315,7 @@ export const useDrillStore = defineStore("drill", {
       this.path = [];
       this.toolSizes = {};
       this.undoStack = [];
+      this.noGoZones = [];
       this.originOffsetX = 16;
       this.originOffsetY = 16;
       this.rotation = 0;
@@ -502,86 +504,222 @@ export const useDrillStore = defineStore("drill", {
         if (d) d.pathIndex = i;
       });
     },
-    autoOptimizePath() {
-      const unsorted = this.drillData.filter(d => d.solder);
+    addNoGoZone(zone) {
+      this.noGoZones.push({
+        id: Date.now() + Math.random(),
+        x1: Math.min(zone.x1, zone.x2),
+        y1: Math.min(zone.y1, zone.y2),
+        x2: Math.max(zone.x1, zone.x2),
+        y2: Math.max(zone.y1, zone.y2),
+      });
+    },
+    removeNoGoZone(id) {
+      this.noGoZones = this.noGoZones.filter(z => z.id !== id);
+    },
+    clearNoGoZones() {
+      this.noGoZones = [];
+    },
+    drillToBedSpace(drill) {
+      const rad = -(this.rotation * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      return {
+        x: drill.x * cos - drill.y * sin + this.originOffsetX,
+        y: drill.x * sin + drill.y * cos + this.originOffsetY,
+      };
+    },
+    isPointInNoGoZone(drill) {
+      if (this.noGoZones.length === 0) return false;
+      const bed = this.drillToBedSpace(drill);
+      return this.noGoZones.some(z =>
+        bed.x >= z.x1 && bed.x <= z.x2 && bed.y >= z.y1 && bed.y <= z.y2
+      );
+    },
+    segmentCrossesNoGoZone(ax, ay, bx, by) {
+      const dx = bx - ax;
+      const dy = by - ay;
+      for (const z of this.noGoZones) {
+        let tmin = 0, tmax = 1;
+        if (dx !== 0) {
+          let t1 = (z.x1 - ax) / dx;
+          let t2 = (z.x2 - ax) / dx;
+          if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
+          tmin = Math.max(tmin, t1);
+          tmax = Math.min(tmax, t2);
+          if (tmin > tmax) continue;
+        } else {
+          if (ax < z.x1 || ax > z.x2) continue;
+        }
+        if (dy !== 0) {
+          let t1 = (z.y1 - ay) / dy;
+          let t2 = (z.y2 - ay) / dy;
+          if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
+          tmin = Math.max(tmin, t1);
+          tmax = Math.min(tmax, t2);
+          if (tmin > tmax) continue;
+        } else {
+          if (ay < z.y1 || ay > z.y2) continue;
+        }
+        return true;
+      }
+      return false;
+    },
+    getNoGoCorners(margin) {
+      margin = margin ?? 0.5;
+      const corners = [];
+      for (const z of this.noGoZones) {
+        const candidates = [
+          { x: z.x1 - margin, y: z.y1 - margin },
+          { x: z.x2 + margin, y: z.y1 - margin },
+          { x: z.x2 + margin, y: z.y2 + margin },
+          { x: z.x1 - margin, y: z.y2 + margin },
+        ];
+        for (const c of candidates) {
+          const insideAny = this.noGoZones.some(oz =>
+            c.x > oz.x1 && c.x < oz.x2 && c.y > oz.y1 && c.y < oz.y2
+          );
+          if (!insideAny) corners.push(c);
+        }
+      }
+      return corners;
+    },
+    computeRouteAroundZones(ax, ay, bx, by) {
+      if (this.noGoZones.length === 0) return [];
+      if (!this.segmentCrossesNoGoZone(ax, ay, bx, by)) return [];
+
+      const corners = this.getNoGoCorners();
+      const nodes = [{ x: ax, y: ay }, ...corners, { x: bx, y: by }];
+      const n = nodes.length;
+      const endIdx = n - 1;
+
+      const dist = new Array(n).fill(Infinity);
+      const prev = new Array(n).fill(-1);
+      const visited = new Array(n).fill(false);
+      dist[0] = 0;
+
+      for (let step = 0; step < n; step++) {
+        let u = -1;
+        for (let i = 0; i < n; i++) {
+          if (!visited[i] && (u === -1 || dist[i] < dist[u])) u = i;
+        }
+        if (u === -1 || dist[u] === Infinity) break;
+        if (u === endIdx) break;
+        visited[u] = true;
+
+        for (let v = 0; v < n; v++) {
+          if (visited[v]) continue;
+          if (this.segmentCrossesNoGoZone(nodes[u].x, nodes[u].y, nodes[v].x, nodes[v].y)) continue;
+          const d = dist[u] + Math.hypot(nodes[u].x - nodes[v].x, nodes[u].y - nodes[v].y);
+          if (d < dist[v]) {
+            dist[v] = d;
+            prev[v] = u;
+          }
+        }
+      }
+
+      if (dist[endIdx] === Infinity) return [];
+
+      const route = [];
+      let cur = endIdx;
+      while (cur !== -1) {
+        route.push(cur);
+        cur = prev[cur];
+      }
+      route.reverse();
+      return route.slice(1, -1).map(i => nodes[i]);
+    },
+    routedDistance(ax, ay, bx, by) {
+      if (this.noGoZones.length === 0 || !this.segmentCrossesNoGoZone(ax, ay, bx, by)) {
+        return Math.hypot(bx - ax, by - ay);
+      }
+      const waypoints = this.computeRouteAroundZones(ax, ay, bx, by);
+      let d = 0;
+      let cx = ax, cy = ay;
+      for (const wp of waypoints) {
+        d += Math.hypot(wp.x - cx, wp.y - cy);
+        cx = wp.x; cy = wp.y;
+      }
+      d += Math.hypot(bx - cx, by - cy);
+      return d;
+    },
+
+    _nearestNeighborWithZoneAvoidance(points) {
+      if (points.length === 0) return [];
+      const hasZones = this.noGoZones.length > 0;
+
+      const bedCoords = new Map();
+      if (hasZones) {
+        for (const d of points) {
+          bedCoords.set(d.id, this.drillToBedSpace(d));
+        }
+      }
+
       const path = [];
       const visited = new Set();
-      let current = unsorted[0];
+      let current = points[0];
       path.push(current.id);
       visited.add(current.id);
 
-      while (path.length < unsorted.length) {
-        const next = unsorted
-          .filter(d => !visited.has(d.id))
-          .sort((a, b) => {
-            const distA = Math.hypot(current.x - a.x, current.y - a.y);
-            const distB = Math.hypot(current.x - b.x, current.y - b.y);
-            return distA - distB;
-          })[0];
+      while (path.length < points.length) {
+        const remaining = points.filter(d => !visited.has(d.id));
+        if (remaining.length === 0) break;
 
-        if (next) {
-          path.push(next.id);
-          visited.add(next.id);
-          current = next;
+        let best = null;
+        if (hasZones) {
+          const curBed = bedCoords.get(current.id);
+          const scored = remaining.map(d => {
+            const dBed = bedCoords.get(d.id);
+            return {
+              drill: d,
+              dist: this.routedDistance(curBed.x, curBed.y, dBed.x, dBed.y),
+            };
+          });
+          scored.sort((a, b) => a.dist - b.dist);
+          best = scored[0].drill;
         } else {
-          break;
+          remaining.sort((a, b) =>
+            Math.hypot(current.x - a.x, current.y - a.y) -
+            Math.hypot(current.x - b.x, current.y - b.y)
+          );
+          best = remaining[0];
         }
+
+        path.push(best.id);
+        visited.add(best.id);
+        current = best;
       }
+
+      return path;
+    },
+
+    autoOptimizePath() {
+      const unsorted = this.drillData.filter(d => d.solder && !this.isPointInNoGoZone(d));
+      if (unsorted.length === 0) return;
 
       this.addUndoSnapshot({
         path: [...this.path],
         solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
       });
-      
-      this.path = path;
+
+      this.path = this._nearestNeighborWithZoneAvoidance(unsorted);
       this.updatePathIndices();
     },
     optimizeSelection() {
       const selected = this.drillData.filter(d => d.selected);
       if (selected.length < 2) return;
-    
-      // Capture a single undo snapshot BEFORE modifying solder/path
+
       this.addUndoSnapshot({
         path: [...this.path],
         solderStates: this.drillData.map(d => ({ id: d.id, solder: d.solder }))
       });
       this.redoStack = [];
-    
-      // Mark selected points as soldered
-      selected.forEach(d => {
-        d.solder = true;
-      });
-    
-      // Nearest-neighbor order
-      const newOrder = [];
-      const visited = new Set();
-      let current = selected[0];
-      newOrder.push(current.id);
-      visited.add(current.id);
-    
-      while (newOrder.length < selected.length) {
-        const next = selected
-          .filter(d => !visited.has(d.id))
-          .sort((a, b) => {
-            const distA = Math.hypot(current.x - a.x, current.y - a.y);
-            const distB = Math.hypot(current.x - b.x, current.y - b.y);
-            return distA - distB;
-          })[0];
-    
-        if (next) {
-          newOrder.push(next.id);
-          visited.add(next.id);
-          current = next;
-        } else {
-          break;
-        }
-      }
-    
-      // Remove selected points from current path
+
+      selected.forEach(d => { d.solder = true; });
+
+      const newOrder = this._nearestNeighborWithZoneAvoidance(selected);
+
       const idsToReplace = new Set(selected.map(d => d.id));
       this.path = this.path.filter(id => !idsToReplace.has(id));
-    
-      // Insert new optimized path for selected
       this.path.push(...newOrder);
       this.updatePathIndices();
     }

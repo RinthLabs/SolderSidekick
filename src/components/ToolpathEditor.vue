@@ -38,7 +38,11 @@
     <div class="toolbar d-flex align-items-center mb-3">
       <button class="btn btn-primary" @click="autoOptimizePath"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto Optimize Path</button>
       <button class="btn btn-secondary" @click="optimizeSelected"><i class="fa-solid fa-border-all"></i> Optimize Selection</button>
-      
+
+      <button class="btn" :class="isDrawingNoGoZone ? 'btn-danger' : 'btn-outline-danger'" @click="toggleNoGoZoneMode">
+        <i class="fa-solid fa-ban"></i> No-Go Zone
+      </button>
+
       <label class="form-label">Solder</label>
       <button class="btn btn-success" @click="setSelectedSolder(true)"><i class="fa-solid fa-check"></i></button>
       <button class="btn btn-secondary" @click="setSelectedSolder(false)"><i class="fa-solid fa-xmark"></i></button>
@@ -52,6 +56,7 @@
         <canvas
           ref="canvas"
           class="toolpath-canvas"
+          :class="{ 'nogo-cursor': isDrawingNoGoZone }"
           @mousedown="handleMouseDown"
           @mousemove="handleMouseMove"
           @mouseup="handleMouseUp"
@@ -263,14 +268,13 @@
         </div>
       </div>
 
-      <div class="bottom-button-container">
-         
-
-                 <!-- Save G-code Button -->
+      <div class="bottom-button-container d-flex">
+  <button class="simulate-button btn btn-primary" @click="openSimulator">
+    <i class="fa-solid fa-play me-1"></i> Simulate
+  </button>
   <button class="save-button btn btn-success" @click="saveGcode">
     <i class="fa-solid fa-save me-1"></i> Save G-code
   </button>
-
       </div>
 
 
@@ -279,11 +283,13 @@
     </div>
 
 <GettingStarted ref="introModal" />
+<GcodeSimulator ref="simulatorRef" />
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick  } from "vue";
 import GettingStarted from "@/components/GettingStarted.vue";
+import GcodeSimulator from "@/components/GcodeSimulator.vue";
 import ProfileManager from '@/components/ProfileManager.vue';
 import { useDrillStore } from "@/stores/store";
 import { useFileHandlers } from "@/composables/useFileHandlers";
@@ -294,6 +300,7 @@ const { generateGcode, saveGcodeFile } = useGcodeGenerator();
 
 const drillStore = useDrillStore();
 const canvas = ref(null);
+const simulatorRef = ref(null);
 
 // Profile selection
 const selectedProfile = computed({
@@ -339,6 +346,7 @@ const editorLabels = ref([
   { html: '<span class="key-icon">Ctrl</span> +<img src="/mouse-left.svg" alt="Left Click Mouse"> to <b>Remove Points from Path</b>' },
   { html: '<img src="/mouse-left.svg" alt="Left Click Mouse"> <b>Drag to Box Select</b>' },
   { html: '<img src="/mouse-left.svg" alt="Left Click Mouse"> drag <img src="/origin-icon.svg" alt="Origin Icon"> to <b>Position PCB</b>' },
+  { html: '<i class="fa-solid fa-ban" style="color:red"></i> <b>No-Go Zones</b> exclude areas from Auto Optimize' },
 ]);
 
 const currentLabelIndex = ref(0);
@@ -359,6 +367,12 @@ let selectionEnd = null;
 
 let isDraggingOrigin = false;
 let dragOriginStart = null;
+
+const isDrawingNoGoZone = ref(false);
+let isDrawingNoGoRect = false;
+let noGoZoneStart = null;
+let noGoZoneEnd = null;
+let resizingZone = null;
 
 // Origin calculator state
 const showOriginCalculator = ref(false);
@@ -400,6 +414,26 @@ const saveGcode = () => {
   } catch (error) {
     console.error("Error generating G-code:", error);
     alert(`Error generating G-code: ${error.message}`);
+  }
+};
+
+const openSimulator = () => {
+  try {
+    const profile = drillStore.profiles[drillStore.currentProfile];
+    if (profile.zeroX === null || profile.zeroY === null || profile.zeroZ === null) {
+      alert("Please set the Origin X, Y, and Z values before simulating.");
+      return;
+    }
+    const solderPoints = drillStore.drillData.filter(d => d.solder && drillStore.path.includes(d.id));
+    if (solderPoints.length === 0) {
+      alert("No solder points selected! Please select points to solder.");
+      return;
+    }
+    const gcode = generateGcode();
+    simulatorRef.value.show(gcode);
+  } catch (error) {
+    console.error("Error opening simulator:", error);
+    alert(`Error: ${error.message}`);
   }
 };
 
@@ -810,6 +844,9 @@ const updateCanvas = () => {
   // Draw 16mm grid lines clipped to print bed
   drawClippedGrid(ctx, bedWidth, bedHeight, 16);
 
+  // Draw no-go zones (bed coordinate space, Y flipped for canvas)
+  drawNoGoZones(ctx);
+
   // 💡 Apply offset only to drill data
   ctx.translate(drillStore.originOffsetX, -drillStore.originOffsetY);
   ctx.rotate((drillStore.rotation * Math.PI) / 180);
@@ -858,22 +895,192 @@ const updateCanvas = () => {
 };
 
 
-// Draw all path lines (after transform applied)
+const drawNoGoZones = (ctx) => {
+  const zones = [...drillStore.noGoZones];
+
+  if (isDrawingNoGoRect && noGoZoneStart && noGoZoneEnd) {
+    zones.push({
+      id: 'preview',
+      x1: Math.min(noGoZoneStart.x, noGoZoneEnd.x),
+      y1: Math.min(noGoZoneStart.y, noGoZoneEnd.y),
+      x2: Math.max(noGoZoneStart.x, noGoZoneEnd.x),
+      y2: Math.max(noGoZoneStart.y, noGoZoneEnd.y),
+    });
+  }
+
+  if (zones.length === 0) return;
+
+  const editMode = isDrawingNoGoZone.value;
+
+  for (const z of zones) {
+    const x = z.x1;
+    const y = -z.y2;
+    const w = z.x2 - z.x1;
+    const h = z.y2 - z.y1;
+
+    ctx.save();
+
+    ctx.fillStyle = "rgba(255, 60, 60, 0.18)";
+    ctx.fillRect(x, y, w, h);
+
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip();
+
+    ctx.strokeStyle = "rgba(255, 60, 60, 0.35)";
+    ctx.lineWidth = 1 / scale;
+    const step = 4;
+    for (let i = -Math.max(w, h); i < Math.max(w, h) * 2; i += step) {
+      ctx.beginPath();
+      ctx.moveTo(x + i, y);
+      ctx.lineTo(x + i + h, y + h);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(220, 40, 40, 0.7)";
+    ctx.lineWidth = 1.5 / scale;
+    ctx.setLineDash([4 / scale, 3 / scale]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.setLineDash([]);
+
+    if (w * scale > 50 && h * scale > 20) {
+      ctx.save();
+      const fontSize = Math.min(12 / scale, h * 0.4, w * 0.2);
+      ctx.font = `bold ${fontSize}px sans-serif`;
+      ctx.fillStyle = "rgba(200, 30, 30, 0.6)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("NO-GO", x + w / 2, y + h / 2);
+      ctx.restore();
+    }
+
+    if (editMode && z.id !== 'preview') {
+      const hs = 3.5 / scale;
+      const cx = (z.x1 + z.x2) / 2;
+      const cy = (z.y1 + z.y2) / 2;
+      const handlePositions = [
+        z.x1, z.y1, z.x2, z.y1, z.x1, z.y2, z.x2, z.y2,
+        cx, z.y1, cx, z.y2, z.x1, cy, z.x2, cy,
+      ];
+      ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+      ctx.strokeStyle = "rgba(180, 30, 30, 0.85)";
+      ctx.lineWidth = 1.2 / scale;
+      for (let i = 0; i < handlePositions.length; i += 2) {
+        const hx = handlePositions[i];
+        const hy = -handlePositions[i + 1];
+        ctx.fillRect(hx - hs, hy - hs, hs * 2, hs * 2);
+        ctx.strokeRect(hx - hs, hy - hs, hs * 2, hs * 2);
+      }
+
+      // Delete button at top-right corner
+      const btnR = 7 / scale;
+      const btnX = z.x2 + btnR * 0.3;
+      const btnY = -(z.y2 + btnR * 0.3);
+      ctx.save();
+      ctx.fillStyle = "rgba(200, 40, 40, 0.92)";
+      ctx.beginPath();
+      ctx.arc(btnX, btnY, btnR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.5 / scale;
+      const xOff = btnR * 0.45;
+      ctx.beginPath();
+      ctx.moveTo(btnX - xOff, btnY - xOff);
+      ctx.lineTo(btnX + xOff, btnY + xOff);
+      ctx.moveTo(btnX + xOff, btnY - xOff);
+      ctx.lineTo(btnX - xOff, btnY + xOff);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+};
+
+// Convert bed-space waypoint to drill-space for drawing inside the rotated canvas context
+const bedToDrillCanvas = (wp) => {
+  const rad = (drillStore.rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const dx = wp.x - drillStore.originOffsetX;
+  const dy = wp.y - drillStore.originOffsetY;
+  return { x: dx * cos - dy * sin, y: -(dx * sin + dy * cos) };
+};
+
+// Draw all path lines (after transform applied), routing around no-go zones
 const drawPathLines = () => {
   const path = drillStore.path;
   if (!Array.isArray(path) || path.length < 2) return;
 
-  ctx.beginPath();
+  const hasZones = drillStore.noGoZones.length > 0;
+
   ctx.strokeStyle = "#999";
   ctx.lineWidth = 8 / scale;
+  ctx.beginPath();
+
+  let prevPt = null;
+  let prevBed = null;
 
   for (let i = 0; i < path.length; i++) {
-    const pt = drillStore.drillDataMap?.[path[i]] || drillStore.drillData.find(d => d.id === path[i]);
+    const pt = drillStore.drillData.find(d => d.id === path[i]);
     if (!pt) continue;
-    const x = pt.x, y = -pt.y;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+
+    if (!prevPt) {
+      ctx.moveTo(pt.x, -pt.y);
+      prevPt = pt;
+      if (hasZones) prevBed = drillStore.drillToBedSpace(pt);
+      continue;
+    }
+
+    if (hasZones) {
+      const curBed = drillStore.drillToBedSpace(pt);
+      const waypoints = drillStore.computeRouteAroundZones(
+        prevBed.x, prevBed.y, curBed.x, curBed.y
+      );
+      for (const wp of waypoints) {
+        const dc = bedToDrillCanvas(wp);
+        ctx.lineTo(dc.x, dc.y);
+      }
+      prevBed = curBed;
+    }
+
+    ctx.lineTo(pt.x, -pt.y);
+    prevPt = pt;
   }
   ctx.stroke();
+
+  // Draw waypoint markers as small diamonds so the detour is visible
+  if (hasZones) {
+    ctx.fillStyle = "rgba(255, 140, 0, 0.7)";
+    prevPt = null;
+    prevBed = null;
+    for (let i = 0; i < path.length; i++) {
+      const pt = drillStore.drillData.find(d => d.id === path[i]);
+      if (!pt) continue;
+      if (!prevPt) {
+        prevPt = pt;
+        prevBed = drillStore.drillToBedSpace(pt);
+        continue;
+      }
+      const curBed = drillStore.drillToBedSpace(pt);
+      const waypoints = drillStore.computeRouteAroundZones(
+        prevBed.x, prevBed.y, curBed.x, curBed.y
+      );
+      const markerSize = 3 / scale;
+      for (const wp of waypoints) {
+        const dc = bedToDrillCanvas(wp);
+        ctx.beginPath();
+        ctx.moveTo(dc.x, dc.y - markerSize);
+        ctx.lineTo(dc.x + markerSize, dc.y);
+        ctx.lineTo(dc.x, dc.y + markerSize);
+        ctx.lineTo(dc.x - markerSize, dc.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+      prevPt = pt;
+      prevBed = curBed;
+    }
+  }
 };
 
 // Draw all holes (after transform applied)
@@ -1021,6 +1228,25 @@ const handleMouseDown = (e) => {
 
   const mouse = getMousePosition(e, false); // don't apply offset
 
+  // No-go zone edit mode (left-click only, allow right-click panning)
+  if (isDrawingNoGoZone.value && e.button === 0) {
+    const delId = findNoGoDeleteBtn(mouse);
+    if (delId) {
+      drillStore.removeNoGoZone(delId);
+      updateCanvas();
+      return;
+    }
+    const handle = findResizeHandle(mouse);
+    if (handle) {
+      resizingZone = handle;
+      return;
+    }
+    isDrawingNoGoRect = true;
+    noGoZoneStart = { ...mouse };
+    noGoZoneEnd = { ...mouse };
+    return;
+  }
+
   const dx = mouse.x - drillStore.originOffsetX;
   const dy = mouse.y - drillStore.originOffsetY;
   const distanceToOrigin = Math.hypot(dx, dy);
@@ -1095,6 +1321,28 @@ updateCanvas();
 };
 
 const handleMouseMove = (e) => {
+  if (resizingZone) {
+    const mouse = getMousePosition(e, false);
+    const z = drillStore.noGoZones.find(zn => zn.id === resizingZone.zoneId);
+    if (z) {
+      const nb = { ...resizingZone.orig };
+      for (const p of resizingZone.dragProps) {
+        if (p === 'x1' || p === 'x2') nb[p] = mouse.x;
+        if (p === 'y1' || p === 'y2') nb[p] = mouse.y;
+      }
+      z.x1 = Math.min(nb.x1, nb.x2);
+      z.y1 = Math.min(nb.y1, nb.y2);
+      z.x2 = Math.max(nb.x1, nb.x2);
+      z.y2 = Math.max(nb.y1, nb.y2);
+    }
+    updateCanvas();
+    return;
+  }
+  if (isDrawingNoGoRect && noGoZoneStart) {
+    noGoZoneEnd = getMousePosition(e, false);
+    updateCanvas();
+    return;
+  }
   if (isDraggingOrigin && dragOriginStart) {
     const dx = (e.clientX - dragOriginStart.x) / scale;
     const dy = (e.clientY - dragOriginStart.y) / scale;
@@ -1124,6 +1372,30 @@ const handleMouseMove = (e) => {
 };
 
 const handleMouseUp = () => {
+
+  if (resizingZone) {
+    resizingZone = null;
+    updateCanvas();
+    return;
+  }
+
+  if (isDrawingNoGoRect && noGoZoneStart && noGoZoneEnd) {
+    const w = Math.abs(noGoZoneEnd.x - noGoZoneStart.x);
+    const h = Math.abs(noGoZoneEnd.y - noGoZoneStart.y);
+    if (w > 0.5 && h > 0.5) {
+      drillStore.addNoGoZone({
+        x1: noGoZoneStart.x,
+        y1: noGoZoneStart.y,
+        x2: noGoZoneEnd.x,
+        y2: noGoZoneEnd.y,
+      });
+    }
+    isDrawingNoGoRect = false;
+    noGoZoneStart = null;
+    noGoZoneEnd = null;
+    updateCanvas();
+    return;
+  }
 
   if (isDraggingOrigin) {
     isDraggingOrigin = false;
@@ -1246,6 +1518,55 @@ const redo = () => {
   updateCanvas();
 };
 
+const toggleNoGoZoneMode = () => {
+  isDrawingNoGoZone.value = !isDrawingNoGoZone.value;
+  isDrawingNoGoRect = false;
+  noGoZoneStart = null;
+  noGoZoneEnd = null;
+  resizingZone = null;
+};
+
+const findNoGoDeleteBtn = (pt) => {
+  const btnR = 7 / scale;
+  for (let i = drillStore.noGoZones.length - 1; i >= 0; i--) {
+    const z = drillStore.noGoZones[i];
+    const btnX = z.x2 + btnR * 0.3;
+    const btnY = z.y2 + btnR * 0.3;
+    if (Math.hypot(pt.x - btnX, pt.y - btnY) < btnR * 1.5) {
+      return z.id;
+    }
+  }
+  return null;
+};
+
+const findResizeHandle = (pt) => {
+  const hitR = 5 / scale;
+  for (let i = drillStore.noGoZones.length - 1; i >= 0; i--) {
+    const z = drillStore.noGoZones[i];
+    const cx = (z.x1 + z.x2) / 2;
+    const cy = (z.y1 + z.y2) / 2;
+    const handles = [
+      { hx: z.x1, hy: z.y1, dp: ['x1', 'y1'] },
+      { hx: z.x2, hy: z.y1, dp: ['x2', 'y1'] },
+      { hx: z.x1, hy: z.y2, dp: ['x1', 'y2'] },
+      { hx: z.x2, hy: z.y2, dp: ['x2', 'y2'] },
+      { hx: cx, hy: z.y1, dp: ['y1'] },
+      { hx: cx, hy: z.y2, dp: ['y2'] },
+      { hx: z.x1, hy: cy, dp: ['x1'] },
+      { hx: z.x2, hy: cy, dp: ['x2'] },
+    ];
+    for (const h of handles) {
+      if (Math.abs(pt.x - h.hx) < hitR && Math.abs(pt.y - h.hy) < hitR) {
+        return {
+          zoneId: z.id,
+          dragProps: h.dp,
+          orig: { x1: z.x1, y1: z.y1, x2: z.x2, y2: z.y2 },
+        };
+      }
+    }
+  }
+  return null;
+};
 
 const clearFile = () => {
   drillStore.clearDrillFile();
@@ -1422,17 +1743,18 @@ function downloadExampleDrillFile() {
   /* margin-bottom: 3.5rem; */
 }
 
-.save-button {
- 
+.save-button,
+.simulate-button {
   display: flex;
-  align-items: center;      /* vertical centering */
-  justify-content: center;  /* horizontal centering */
-  width: 100%;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
   height: 4rem;
   padding: 0.5rem 1rem;
-  gap: 0.5rem;               /* spacing between icon and text */
+  gap: 0.5rem;
   font-weight: 600;
   font-size: 1.1rem;
+  border-radius: 0;
 }
 
 .bottom-button-container{
@@ -1578,7 +1900,9 @@ table th {
   right: 0;
 }
 
-
+.nogo-cursor {
+  cursor: crosshair !important;
+}
 
 </style>
 

@@ -176,6 +176,7 @@ export function useFileHandlers() {
     drillStore.feedRetract = project.feedRetract || 0.5;
     drillStore.defaultSolderAllPoints = project.defaultSolderAllPoints ?? false;
     drillStore.viaFilterDiameter = project.viaFilterDiameter ?? 0.4;
+    drillStore.noGoZones = project.noGoZones || [];
 
     // Handle both old format (single profileSettings) and new format (all profiles)
     if (project.profiles) {
@@ -214,6 +215,7 @@ export function useFileHandlers() {
     feedRetract: drillStore.feedRetract,
     defaultSolderAllPoints: drillStore.defaultSolderAllPoints,
     viaFilterDiameter: drillStore.viaFilterDiameter,
+    noGoZones: drillStore.noGoZones,
     currentProfile: drillStore.currentProfile,
     // Save ALL profiles, not just the current one
     profiles: drillStore.profiles,

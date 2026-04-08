@@ -30,12 +30,23 @@ export function useGcodeGenerator() {
     });
     gcode += "\n\n";
 
-    // Generate per-point G-code
+    // Generate per-point G-code with waypoints around no-go zones
     solderPoints.forEach((point, index) => {
+      if (index > 0) {
+        const prev = solderPoints[index - 1];
+        const waypoints = drillStore.computeRouteAroundZones(
+          prev.transformedX, prev.transformedY,
+          point.transformedX, point.transformedY
+        );
+        if (waypoints.length > 0) {
+          gcode += "; Route around no-go zone\n";
+          for (const wp of waypoints) {
+            gcode += `G0 X${wp.x.toFixed(2)} Y${wp.y.toFixed(2)} F6000\n`;
+          }
+          gcode += "\n";
+        }
+      }
 
-      console.log("point", point);
-
-      // Pre-calculate integer values
       const pointNumber = index + 1;
       const progressPercent = Math.round((index / solderPoints.length) * 100);
       
@@ -56,7 +67,6 @@ export function useGcodeGenerator() {
         RETRACT: profile.retractAfterSolder,
         SOLDER_SAFE_Z: profile.solderSafeZ,
         SOLDER_PRIME_Z: profile.solderPrimeZ,
-        // Add pre-calculated values
         POINT_NUMBER: pointNumber,
         PROGRESS_PERCENT: progressPercent,
       };

@@ -74,6 +74,80 @@ You can find the gerber and drill files for the example [**PCB Breadboard**](./e
 
 ---
 
+## 🚫 No-Go Zones
+
+No-Go Zones let you mark **rectangular areas on the build plate** that the soldering path must avoid — for example, where clamps, fixtures, or tall components block the soldering iron.
+
+### How it works
+
+1. Click the **No-Go Zone** button in the toolbar (it turns red when active, and the cursor becomes a crosshair)
+2. **Click and drag** on the canvas to draw a rectangular exclusion area
+3. Draw as many zones as you need — each is shown as a hatched red rectangle labeled "NO-GO"
+4. **Click on an existing zone** (while in No-Go mode) to **delete** it
+5. Click the **No-Go Zone** button again to exit drawing mode
+
+### Effect on path generation
+
+- **Auto Optimize Path** will never route the travel path through a no-go zone. When the direct line between two solder points crosses a zone, the path is automatically routed around the zone corners using the shortest detour.
+- **Points inside a no-go zone** are excluded from the optimized path entirely.
+- **Manually added points** (clicked directly on the canvas) are unaffected — no-go zones only filter the auto optimizer.
+- The **Optimize Selection** command also respects no-go zones when ordering selected points.
+- No-go zones are **saved and loaded** with project files (`.soldersidekick.json`).
+
+### How the routing works
+
+When a straight-line path between two solder points would cross a no-go zone, the system computes the shortest clear detour around it:
+
+1. The offset corners of each zone (with a small clearance margin) serve as potential waypoints
+2. A visibility graph is built — two waypoints are connected only if the line between them doesn't cross any zone
+3. Dijkstra's shortest-path algorithm finds the optimal route through the waypoints
+4. The resulting detour waypoints appear as **orange diamond markers** on the canvas
+5. In the generated G-code, the detour is emitted as `G0` rapid moves at safe Z height between solder points
+
+---
+
+## 🎬 G-code Simulator
+
+The built-in simulator lets you **preview the entire soldering run in 3D** before sending G-code to the printer.
+
+### Opening the simulator
+
+Click the **Simulate** button (next to "Save G-code") in the toolbar. A fullscreen modal opens with an interactive Three.js viewport.
+
+### What you'll see
+
+- **Build plate** with a tiled texture matching the interconnecting brick plate pattern from the 2D editor
+- **PCB board** rendered at the correct thickness from your profile settings, with colors matching the 2D view branding
+- **Drill holes** (dark circles) and **solder pads** (red rings) at the exact positions from your drill file
+- **No-go zones** shown as translucent red boxes
+- **Toolpath line** tracing the full G-code route
+- **Animated soldering iron** that moves through the G-code in real time — tilted 10° to match the physical iron angle, with a glowing tip effect when near the PCB surface
+
+### Playback controls
+
+- **Play / Pause** and **Restart** buttons
+- **Previous / Next solder point** skip buttons to jump between solder points
+- **Timeline scrubber** with orange markers showing each solder point's position — click any marker to jump there
+- **Point counter** showing which solder point you're at (e.g. "12/42")
+- **Speed selector** (1×, 2×, 5×, 10×, 25×, 50×)
+- **M117 status messages** from the G-code are displayed in the header
+
+### Loading a custom 3D model (GLB/GLTF/STL/STEP/IGES)
+
+You can optionally replace the default green PCB with an actual 3D model of your board and components:
+
+1. Click **Load 3D Model** in the simulator header
+2. Select a `.glb`, `.gltf`, `.stl`, `.step`/`.stp`, or `.iges`/`.igs` file — KiCad 8+ can export GLB or STEP directly. STEP and IGES files are parsed natively in the browser using a WebAssembly engine (~8 MB one-time download on first use). Models are loaded at their native scale, so they should match your drill data if exported from the same design.
+3. Use the **Adjust Model** overlay panel (top-right of the viewport) to align the model:
+   - **Rotate** the model in 90° steps around the X, Y, or Z axis
+   - **Offset** the model along any axis with a selectable step size (0.1 / 0.5 / 1 / 5 mm)
+   - **Reset** to snap back to the initial position
+   - **Save** the adjustment settings to a `model-alignment.json` file so you can reuse them
+   - **Load** a previously saved settings file to instantly restore alignment — useful when you use the same model and tooling across multiple sessions
+4. Click **Remove Model** to revert to the default generated PCB
+
+---
+
 ## 🚀 Getting Started Guide
 
 Ready to bring your Solder Sidekick™ to life?
